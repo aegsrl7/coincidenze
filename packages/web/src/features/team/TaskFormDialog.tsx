@@ -10,24 +10,26 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useTasksStore } from '@/stores/tasksStore'
 import { useTeamStore } from '@/stores/teamStore'
-import { CATEGORY_LABELS, type EventCategory } from '@/types'
+import { CATEGORY_LABELS, type EventCategory, type Task } from '@/types'
 
 interface Props {
   open: boolean
   onClose: () => void
+  task?: Task
 }
 
-export function TaskFormDialog({ open, onClose }: Props) {
-  const { createTask } = useTasksStore()
+export function TaskFormDialog({ open, onClose, task }: Props) {
+  const { createTask, updateTask } = useTasksStore()
   const { members } = useTeamStore()
+  const isEditing = !!task
   const [form, setForm] = useState({
-    title: '',
-    description: '',
-    status: 'todo' as const,
-    priority: 'medium' as 'low' | 'medium' | 'high',
-    assigneeId: '',
-    category: '' as EventCategory | '',
-    dueDate: '',
+    title: task?.title || '',
+    description: task?.description || '',
+    status: task?.status || 'todo' as Task['status'],
+    priority: task?.priority || 'medium' as Task['priority'],
+    assigneeId: task?.assignee_id || '',
+    category: (task?.category || '') as EventCategory | '',
+    dueDate: task?.due_date || '',
   })
   const [saving, setSaving] = useState(false)
 
@@ -35,12 +37,17 @@ export function TaskFormDialog({ open, onClose }: Props) {
     if (!form.title) return
     setSaving(true)
     try {
-      await createTask({
+      const payload = {
         ...form,
         category: (form.category || undefined) as EventCategory | undefined,
         assigneeId: form.assigneeId || undefined,
         dueDate: form.dueDate || undefined,
-      } as any)
+      } as any
+      if (isEditing) {
+        await updateTask(task.id, payload)
+      } else {
+        await createTask(payload)
+      }
       onClose()
     } finally {
       setSaving(false)
@@ -51,7 +58,7 @@ export function TaskFormDialog({ open, onClose }: Props) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nuovo Task</DialogTitle>
+          <DialogTitle>{isEditing ? 'Modifica Task' : 'Nuovo Task'}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -96,6 +103,21 @@ export function TaskFormDialog({ open, onClose }: Props) {
             </div>
           </div>
 
+          {isEditing && (
+            <div>
+              <label className="text-xs font-medium text-ink-muted">Stato</label>
+              <select
+                className="mt-1 w-full rounded-md border border-navy/20 bg-crema px-3 py-2 text-sm"
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value as any })}
+              >
+                <option value="todo">Da Fare</option>
+                <option value="in_progress">In Corso</option>
+                <option value="done">Completato</option>
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="text-xs font-medium text-ink-muted">Assegnatario</label>
             <select
@@ -128,7 +150,7 @@ export function TaskFormDialog({ open, onClose }: Props) {
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Annulla</Button>
           <Button onClick={handleSave} disabled={saving || !form.title}>
-            {saving ? 'Salvataggio...' : 'Crea Task'}
+            {saving ? 'Salvataggio...' : isEditing ? 'Salva' : 'Crea Task'}
           </Button>
         </DialogFooter>
       </DialogContent>

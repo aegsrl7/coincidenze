@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Users, Plus, GripVertical, User, Trash2, UserPlus, X } from 'lucide-react'
+import { Users, Plus, GripVertical, User, Trash2, UserPlus, X, CalendarDays } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { useTasksStore } from '@/stores/tasksStore'
 import { useTeamStore } from '@/stores/teamStore'
 import { useAuthStore } from '@/stores/authStore'
-import { CATEGORY_LABELS, CATEGORY_COLORS, type EventCategory } from '@/types'
+import { CATEGORY_LABELS, CATEGORY_COLORS, type EventCategory, type Task } from '@/types'
 import { TaskFormDialog } from './TaskFormDialog'
 
 const COLUMNS = [
@@ -23,6 +23,7 @@ export function TeamPage() {
   const { members, fetchMembers, createMember, deleteMember } = useTeamStore()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const [showForm, setShowForm] = useState(false)
+  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined)
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
   const [showAddMember, setShowAddMember] = useState(false)
   const [newMemberName, setNewMemberName] = useState('')
@@ -81,7 +82,7 @@ export function TeamPage() {
         <h2 className="font-display text-2xl font-bold text-navy">Team & Task</h2>
         {isAuthenticated && (
           <div className="flex gap-2">
-            <Button onClick={() => setShowForm(true)}>
+            <Button onClick={() => { setEditingTask(undefined); setShowForm(true) }}>
               <Plus className="h-4 w-4" /> Nuovo Task
             </Button>
           </div>
@@ -177,6 +178,12 @@ export function TeamPage() {
                   key={task.id}
                   draggable={isAuthenticated}
                   onDragStart={isAuthenticated ? () => handleDragStart(task.id) : undefined}
+                  onClick={() => {
+                    if (isAuthenticated) {
+                      setEditingTask(task)
+                      setShowForm(true)
+                    }
+                  }}
                   className={`${isAuthenticated ? 'cursor-grab active:cursor-grabbing' : ''} transition-all ${
                     draggedTaskId === task.id ? 'opacity-50' : ''
                   }`}
@@ -202,6 +209,12 @@ export function TeamPage() {
                             >
                               {CATEGORY_LABELS[task.category as EventCategory]}
                             </Badge>
+                          )}
+                          {task.due_date && (
+                            <span className="flex items-center gap-0.5 text-[10px] text-ink-muted">
+                              <CalendarDays className="h-2.5 w-2.5" />
+                              {new Date(task.due_date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
+                            </span>
                           )}
                           {getMemberName(task.assignee_id) && (
                             <span className="text-[10px] text-ink-muted">
@@ -229,7 +242,9 @@ export function TeamPage() {
         ))}
       </div>
 
-      {isAuthenticated && showForm && <TaskFormDialog open={showForm} onClose={() => setShowForm(false)} />}
+      {isAuthenticated && showForm && (
+        <TaskFormDialog open={showForm} onClose={() => { setShowForm(false); setEditingTask(undefined) }} task={editingTask} />
+      )}
     </div>
   )
 }

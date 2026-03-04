@@ -12,6 +12,7 @@ import {
   CATEGORY_LABELS,
   CATEGORY_COLORS,
   type EventCategory,
+  type Event,
 } from '@/types'
 import { EVENT_DATE } from '@/lib/constants'
 import { EventFormDialog } from './EventFormDialog'
@@ -22,6 +23,7 @@ export function ProgrammaPage() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const [activeFilter, setActiveFilter] = useState<EventCategory | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [editingEvent, setEditingEvent] = useState<Event | undefined>(undefined)
 
   useEffect(() => {
     fetchEvents()
@@ -57,7 +59,7 @@ export function ProgrammaPage() {
           </p>
         </div>
         {isAuthenticated && (
-          <Button onClick={() => setShowForm(true)}>+ Nuovo Evento</Button>
+          <Button onClick={() => { setEditingEvent(undefined); setShowForm(true) }}>+ Nuovo Evento</Button>
         )}
       </div>
 
@@ -98,6 +100,12 @@ export function ProgrammaPage() {
               <Card
                 key={event.id}
                 className="overflow-hidden transition-shadow hover:shadow-md cursor-pointer"
+                onClick={() => {
+                  if (isAuthenticated) {
+                    setEditingEvent(event)
+                    setShowForm(true)
+                  }
+                }}
               >
                 <div className="flex">
                   <div className="w-1.5 shrink-0" style={{ backgroundColor: color }} />
@@ -145,7 +153,9 @@ export function ProgrammaPage() {
         )}
       </div>
 
-      {isAuthenticated && showForm && <EventFormDialog open={showForm} onClose={() => setShowForm(false)} />}
+      {isAuthenticated && showForm && (
+        <EventFormDialog open={showForm} onClose={() => { setShowForm(false); setEditingEvent(undefined) }} event={editingEvent} />
+      )}
     </div>
   )
 }

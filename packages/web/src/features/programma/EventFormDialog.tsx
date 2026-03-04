@@ -10,27 +10,29 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useEventsStore } from '@/stores/eventsStore'
 import { useArtistsStore } from '@/stores/artistsStore'
-import { CATEGORY_LABELS, type EventCategory } from '@/types'
+import { CATEGORY_LABELS, type EventCategory, type Event } from '@/types'
 import { EVENT_DATE } from '@/lib/constants'
 
 interface Props {
   open: boolean
   onClose: () => void
+  event?: Event
 }
 
-export function EventFormDialog({ open, onClose }: Props) {
-  const { createEvent } = useEventsStore()
+export function EventFormDialog({ open, onClose, event }: Props) {
+  const { createEvent, updateEvent } = useEventsStore()
   const { artists } = useArtistsStore()
+  const isEditing = !!event
   const [form, setForm] = useState({
-    title: '',
-    description: '',
-    date: EVENT_DATE,
-    startTime: '',
-    endTime: '',
-    location: '',
-    category: '' as EventCategory | '',
-    artistId: '',
-    notes: '',
+    title: event?.title || '',
+    description: event?.description || '',
+    date: event?.date || EVENT_DATE,
+    startTime: event?.start_time || '',
+    endTime: event?.end_time || '',
+    location: event?.location || '',
+    category: (event?.category || '') as EventCategory | '',
+    artistId: event?.artist_id || '',
+    notes: event?.notes || '',
   })
   const [saving, setSaving] = useState(false)
 
@@ -38,11 +40,16 @@ export function EventFormDialog({ open, onClose }: Props) {
     if (!form.title || !form.category || !form.startTime) return
     setSaving(true)
     try {
-      await createEvent({
+      const payload = {
         ...form,
         category: form.category as EventCategory,
         artistId: form.artistId || undefined,
-      } as any)
+      } as any
+      if (isEditing) {
+        await updateEvent(event.id, payload)
+      } else {
+        await createEvent(payload)
+      }
       onClose()
     } finally {
       setSaving(false)
@@ -53,7 +60,7 @@ export function EventFormDialog({ open, onClose }: Props) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nuovo Evento</DialogTitle>
+          <DialogTitle>{isEditing ? 'Modifica Evento' : 'Nuovo Evento'}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -136,7 +143,7 @@ export function EventFormDialog({ open, onClose }: Props) {
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Annulla</Button>
           <Button onClick={handleSave} disabled={saving || !form.title || !form.category || !form.startTime}>
-            {saving ? 'Salvataggio...' : 'Crea Evento'}
+            {saving ? 'Salvataggio...' : isEditing ? 'Salva' : 'Crea Evento'}
           </Button>
         </DialogFooter>
       </DialogContent>
