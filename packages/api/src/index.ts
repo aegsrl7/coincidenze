@@ -21,7 +21,15 @@ const app = new Hono<Env>()
 
 // CORS
 app.use('/api/*', cors({
-  origin: '*',
+  origin: (origin) => {
+    if (!origin) return 'https://coincidenze.pages.dev'
+    if (
+      origin === 'https://coincidenze.pages.dev' ||
+      origin.endsWith('.coincidenze.pages.dev') ||
+      origin.startsWith('http://localhost')
+    ) return origin
+    return 'https://coincidenze.pages.dev'
+  },
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type'],
   credentials: true,

@@ -30,9 +30,10 @@ authRoutes.post('/login', async (c) => {
   const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(timestamp))
   const token = `${timestamp}.${btoa(String.fromCharCode(...new Uint8Array(signature)))}`
 
+  const isLocal = new URL(c.req.url).hostname === 'localhost'
   setCookie(c, 'auth_token', token, {
     httpOnly: true,
-    secure: false, // dev: allow HTTP
+    secure: !isLocal,
     sameSite: 'Lax',
     path: '/',
     maxAge: 60 * 60 * 24 * 7, // 7 days
