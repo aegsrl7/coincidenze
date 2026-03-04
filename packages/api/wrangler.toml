@@ -1,0 +1,11 @@
+name = "coincidenze-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+[vars]
+AUTH_SECRET = "coincidenze-admin-2026"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "coincidenze-db"
+database_id = "local"

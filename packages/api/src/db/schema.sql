@@ -1,0 +1,109 @@
+-- COINCIDENZE Database Schema
+
+CREATE TABLE IF NOT EXISTS artists (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  bio TEXT DEFAULT '',
+  category TEXT NOT NULL,
+  image_url TEXT DEFAULT '',
+  website TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS exhibitors (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  category TEXT NOT NULL,
+  contact_info TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS events (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  date TEXT NOT NULL,
+  start_time TEXT NOT NULL,
+  end_time TEXT DEFAULT '',
+  location TEXT DEFAULT '',
+  category TEXT NOT NULL,
+  artist_id TEXT REFERENCES artists(id) ON DELETE SET NULL,
+  exhibitor_id TEXT REFERENCES exhibitors(id) ON DELETE SET NULL,
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS team_members (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  role TEXT DEFAULT '',
+  email TEXT DEFAULT '',
+  phone TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS tasks (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  status TEXT DEFAULT 'todo' CHECK(status IN ('todo', 'in_progress', 'done')),
+  priority TEXT DEFAULT 'medium' CHECK(priority IN ('low', 'medium', 'high')),
+  assignee_id TEXT REFERENCES team_members(id) ON DELETE SET NULL,
+  due_date TEXT,
+  category TEXT,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS media_items (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  type TEXT NOT NULL CHECK(type IN ('audio', 'video', 'image')),
+  url TEXT NOT NULL,
+  thumbnail_url TEXT DEFAULT '',
+  artist_id TEXT REFERENCES artists(id) ON DELETE SET NULL,
+  category TEXT,
+  duration INTEGER,
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS canvas_nodes (
+  id TEXT PRIMARY KEY,
+  type TEXT NOT NULL CHECK(type IN ('event', 'artist', 'exhibitor', 'media', 'group')),
+  entity_id TEXT,
+  label TEXT DEFAULT '',
+  position_x REAL DEFAULT 0,
+  position_y REAL DEFAULT 0,
+  width REAL,
+  height REAL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS canvas_edges (
+  id TEXT PRIMARY KEY,
+  source TEXT NOT NULL REFERENCES canvas_nodes(id) ON DELETE CASCADE,
+  target TEXT NOT NULL REFERENCES canvas_nodes(id) ON DELETE CASCADE,
+  label TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_events_date ON events(date);
+CREATE INDEX IF NOT EXISTS idx_events_category ON events(category);
+CREATE INDEX IF NOT EXISTS idx_events_artist ON events(artist_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON tasks(assignee_id);
+CREATE INDEX IF NOT EXISTS idx_media_artist ON media_items(artist_id);
+CREATE INDEX IF NOT EXISTS idx_canvas_nodes_type ON canvas_nodes(type);
