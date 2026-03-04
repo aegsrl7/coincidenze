@@ -25,6 +25,7 @@ export function TeamPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined)
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
+  const [didDrag, setDidDrag] = useState(false)
   const [showAddMember, setShowAddMember] = useState(false)
   const [newMemberName, setNewMemberName] = useState('')
   const [newMemberRole, setNewMemberRole] = useState('')
@@ -44,6 +45,7 @@ export function TeamPage() {
 
   const handleDragStart = (taskId: string) => {
     setDraggedTaskId(taskId)
+    setDidDrag(true)
   }
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -56,7 +58,6 @@ export function TeamPage() {
     if (task && task.status !== status) {
       await updateTask(draggedTaskId, { ...task, status })
     }
-    setDraggedTaskId(null)
   }
 
   const handleAddMember = async () => {
@@ -178,8 +179,9 @@ export function TeamPage() {
                   key={task.id}
                   draggable={isAuthenticated}
                   onDragStart={isAuthenticated ? () => handleDragStart(task.id) : undefined}
+                  onDragEnd={() => { setDraggedTaskId(null); setTimeout(() => setDidDrag(false), 0) }}
                   onClick={() => {
-                    if (isAuthenticated) {
+                    if (isAuthenticated && !didDrag) {
                       setEditingTask(task)
                       setShowForm(true)
                     }
