@@ -54,21 +54,32 @@ export function EdizioneV2Page() {
   }, [checkAuth, fetchContent])
 
   useEffect(() => {
+    if (navType !== 'POP') return
     const key = `edizione1v2:scroll:${activeTab}`
-    if (navType === 'POP') {
-      const saved = Number(sessionStorage.getItem(key) || 0)
-      if (saved > 0) {
-        const attempts = [60, 180, 360, 600, 1000]
-        attempts.forEach((ms) =>
-          window.setTimeout(() => {
-            if (Math.abs(window.scrollY - saved) > 4) window.scrollTo(0, saved)
-          }, ms)
-        )
-      }
-    } else {
-      window.scrollTo(0, 0)
+    const saved = Number(sessionStorage.getItem(key) || 0)
+    if (saved > 0) {
+      const attempts = [60, 180, 360, 600, 1000]
+      attempts.forEach((ms) =>
+        window.setTimeout(() => {
+          if (Math.abs(window.scrollY - saved) > 4) window.scrollTo(0, saved)
+        }, ms)
+      )
     }
   }, [activeTab, navType])
+
+  useEffect(() => {
+    const key = `edizione1v2:scroll:${activeTab}`
+    let t: number | undefined
+    const save = () => {
+      if (t) window.clearTimeout(t)
+      t = window.setTimeout(() => sessionStorage.setItem(key, String(window.scrollY)), 80)
+    }
+    window.addEventListener('scroll', save, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', save)
+      sessionStorage.setItem(key, String(window.scrollY))
+    }
+  }, [activeTab])
 
   const scheduledEvents = events.filter((e) => !isAllDay(e)).sort((a, b) => a.start_time.localeCompare(b.start_time))
   const allDayEvents = events.filter(isAllDay)
@@ -97,19 +108,15 @@ export function EdizioneV2Page() {
 
         <div className="relative z-10 max-w-3xl">
           <img
-            src="/logo-coincidenze-bianco.png"
-            alt="COINCIDENZE"
-            className="w-full max-w-[380px] sm:max-w-[520px] mx-auto mb-10"
+            src="/logo-coincidenze-bianco-sottotitolo.png"
+            alt="COINCIDENZE — raffinate casualità, occhi attenti"
+            className="w-full max-w-[460px] sm:max-w-[620px] mx-auto mb-10"
           />
 
-          <p className="font-display italic text-white/95 text-3xl sm:text-5xl leading-tight">
-            raffinate casualità,<br />occhi attenti
-          </p>
-
-          <div className="mt-10 flex flex-col items-center gap-1 text-white/75 text-sm sm:text-base">
+          <div className="flex flex-col items-center gap-1 text-white/80 text-sm sm:text-base">
             <p className="tracking-wider uppercase text-xs">Edizione 1</p>
             <p>Sabato 25 aprile 2026</p>
-            <p className="text-white/60">Marsam Locanda · Bene Vagienna</p>
+            <p className="text-white/65">Marsam Locanda · Bene Vagienna</p>
           </div>
 
           <Link
@@ -119,7 +126,7 @@ export function EdizioneV2Page() {
             <Ticket className="h-4 w-4" />
             Accreditati gratuitamente
           </Link>
-          <p className="text-xs text-white/50 mt-3">Ingresso libero previo accredito online</p>
+          <p className="text-xs text-white/55 mt-3">Ingresso libero previo accredito online</p>
         </div>
 
         {/* indicator "scroll giù" */}
@@ -133,7 +140,7 @@ export function EdizioneV2Page() {
       </section>
 
       {/* INTRO editoriale */}
-      <section className="max-w-2xl mx-auto px-6 py-20 text-center">
+      <section className="max-w-3xl mx-auto px-6 py-20 text-center">
         <h2 className="font-display text-4xl sm:text-5xl font-semibold text-navy mb-6">
           Una corte delle meraviglie
         </h2>
@@ -158,7 +165,7 @@ export function EdizioneV2Page() {
 
       {/* NAV editoriale */}
       <nav className="sticky top-0 z-30 bg-beige/90 backdrop-blur-sm border-b border-navy/10">
-        <div className="max-w-[900px] mx-auto px-4 flex items-center justify-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar">
+        <div className="max-w-5xl mx-auto px-4 flex items-center justify-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar">
           {TABS.map((t, i) => {
             const active = activeTab === t.id
             return (
@@ -184,7 +191,7 @@ export function EdizioneV2Page() {
       </nav>
 
       {/* TAB content */}
-      <div className="max-w-[900px] mx-auto px-4 sm:px-6 py-12">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
         {activeTab === 'programma' && (
           <>
             <SectionHeader title="Programma" subtitle="Tutto quello che succede il 25 aprile, dalle 10 alle 20." />
