@@ -114,7 +114,7 @@ export function Edizione1Page() {
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              'linear-gradient(180deg, rgba(31,42,74,0.55) 0%, rgba(44,62,107,0.60) 45%, rgba(107,63,160,0.55) 100%)',
+              'linear-gradient(180deg, rgba(20,28,52,0.78) 0%, rgba(44,62,107,0.80) 45%, rgba(107,63,160,0.78) 100%)',
           }}
           aria-hidden="true"
         />
