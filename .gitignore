@@ -7,3 +7,5 @@ dist/
 .claude/
 .playwright-mcp/
 *.tsbuildinfo
+token.md
+RESUME.MD
