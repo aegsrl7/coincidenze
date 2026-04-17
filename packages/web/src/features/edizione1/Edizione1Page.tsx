@@ -216,7 +216,7 @@ export function Edizione1Page() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
         {activeTab === 'programma' && (
           <>
-            <SectionHeader title="Programma" subtitle="Tutto quello che succede il 25 aprile, dalle 10 alle 20." />
+            <SectionHeader title="Programma" subtitle="Tutto quello che succede il 25 aprile, dalle 10:30 alle 20." />
             <ProgrammaTab scheduledEvents={scheduledEvents} allDayEvents={allDayEvents} />
           </>
         )}
