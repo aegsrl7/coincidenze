@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input'
 import { useMediaStore } from '@/stores/mediaStore'
 import { useArtistsStore } from '@/stores/artistsStore'
 import { useAuthStore } from '@/stores/authStore'
-import { CATEGORY_LABELS, CATEGORY_COLORS, type EventCategory, type MediaItem } from '@/types'
+import { useCategoryMaps } from '@/stores/categoriesStore'
+import { type MediaItem } from '@/types'
 import { MediaFormDialog } from './MediaFormDialog'
 
 const typeIcons = { audio: Music, video: Video, image: Image }
@@ -18,6 +19,7 @@ export function MediaPage() {
   const { items, fetchMedia } = useMediaStore()
   const { artists, fetchArtists } = useArtistsStore()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const { labels, colors } = useCategoryMaps('artist')
   const [showForm, setShowForm] = useState(false)
   const [editingItem, setEditingItem] = useState<MediaItem | null>(null)
   const [search, setSearch] = useState('')
@@ -88,7 +90,7 @@ export function MediaPage() {
           {filtered.map((item) => {
             const Icon = typeIcons[item.type as keyof typeof typeIcons] || Music
             const artistName = getArtistName(item.artist_id)
-            const color = item.category ? CATEGORY_COLORS[item.category as EventCategory] : '#2C3E6B'
+            const color = item.category ? colors[item.category] : '#2C3E6B'
 
             return (
               <Card
@@ -130,7 +132,7 @@ export function MediaPage() {
                     </Badge>
                     {item.category && (
                       <Badge className="text-[10px]" style={{ backgroundColor: color }}>
-                        {CATEGORY_LABELS[item.category as EventCategory]}
+                        {labels[item.category]}
                       </Badge>
                     )}
                   </div>

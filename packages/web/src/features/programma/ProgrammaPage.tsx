@@ -8,12 +8,8 @@ import { Button } from '@/components/ui/button'
 import { useEventsStore } from '@/stores/eventsStore'
 import { useArtistsStore } from '@/stores/artistsStore'
 import { useAuthStore } from '@/stores/authStore'
-import {
-  CATEGORY_LABELS,
-  CATEGORY_COLORS,
-  type EventCategory,
-  type Event,
-} from '@/types'
+import { useCategoryMaps } from '@/stores/categoriesStore'
+import { type Event } from '@/types'
 import { EVENT_DATE } from '@/lib/constants'
 import { EventFormDialog } from './EventFormDialog'
 
@@ -21,7 +17,8 @@ export function ProgrammaPage() {
   const { events, fetchEvents } = useEventsStore()
   const { artists, fetchArtists } = useArtistsStore()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const [activeFilter, setActiveFilter] = useState<EventCategory | null>(null)
+  const { labels, colors, list: artistCats } = useCategoryMaps('artist')
+  const [activeFilter, setActiveFilter] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [editingEvent, setEditingEvent] = useState<Event | undefined>(undefined)
 
@@ -48,7 +45,7 @@ export function ProgrammaPage() {
     return names.length > 0 ? names.join(', ') : null
   }
 
-  const categories = Object.keys(CATEGORY_LABELS) as EventCategory[]
+  const categories = artistCats.map((c) => c.slug)
 
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
@@ -77,9 +74,9 @@ export function ProgrammaPage() {
             variant={activeFilter === cat ? 'default' : 'outline'}
             size="sm"
             onClick={() => setActiveFilter(activeFilter === cat ? null : cat)}
-            style={activeFilter === cat ? { backgroundColor: CATEGORY_COLORS[cat] } : {}}
+            style={activeFilter === cat ? { backgroundColor: colors[cat] } : {}}
           >
-            {CATEGORY_LABELS[cat]}
+            {labels[cat]}
           </Button>
         ))}
       </div>
@@ -88,11 +85,11 @@ export function ProgrammaPage() {
       <div className="space-y-3">
         {sortedEvents.length === 0 ? (
           <div className="py-16 text-center text-ink-muted">
-            <p>Nessun evento{activeFilter ? ` per "${CATEGORY_LABELS[activeFilter]}"` : ''}</p>
+            <p>Nessun evento{activeFilter ? ` per "${labels[activeFilter]}"` : ''}</p>
           </div>
         ) : (
           sortedEvents.map((event) => {
-            const color = CATEGORY_COLORS[event.category as EventCategory] || '#2C3E6B'
+            const color = colors[event.category] || '#2C3E6B'
             const artistName = getArtistNames(event.artist_ids)
             return (
               <Card
@@ -118,7 +115,7 @@ export function ProgrammaPage() {
                             className="text-[10px]"
                             style={{ backgroundColor: color }}
                           >
-                            {CATEGORY_LABELS[event.category as EventCategory]}
+                            {labels[event.category]}
                           </Badge>
                         </div>
                         {artistName && (

@@ -10,7 +10,8 @@ import { Input } from '@/components/ui/input'
 import { ImageUpload } from '@/components/ui/image-upload'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useArtistsStore } from '@/stores/artistsStore'
-import { CATEGORY_LABELS, type EventCategory, type Artist } from '@/types'
+import { useCategoryMaps } from '@/stores/categoriesStore'
+import { type EventCategory, type Artist } from '@/types'
 
 function prettifyCategory(slug: string): string {
   return slug.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
@@ -24,22 +25,21 @@ interface Props {
 
 export function ArtistFormDialog({ open, onClose, editItem }: Props) {
   const { artists, createArtist, updateArtist, deleteArtist } = useArtistsStore()
+  const { list: dbCategories } = useCategoryMaps('artist')
 
-  // Unione tra le categorie hardcoded e quelle già presenti nel DB.
+  // Unione tra categorie DB (gestite da admin) e quelle già usate da artisti.
   const categorySuggestions = useMemo(() => {
     const map = new Map<string, string>()
-    // Categorie predefinite (slug → label)
-    for (const [slug, label] of Object.entries(CATEGORY_LABELS)) {
-      map.set(slug, label)
+    for (const c of dbCategories) {
+      map.set(c.slug, c.label)
     }
-    // Categorie già usate da artisti esistenti (compresi valori custom)
     for (const a of artists) {
       if (a.category && !map.has(a.category)) {
         map.set(a.category, prettifyCategory(a.category))
       }
     }
     return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]))
-  }, [artists])
+  }, [artists, dbCategories])
   const [form, setForm] = useState({
     name: '',
     bio: '',

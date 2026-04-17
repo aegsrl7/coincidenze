@@ -12,6 +12,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/piano-editoriale': 'Piano Editoriale',
   '/admin/accrediti': 'Accrediti',
   '/admin/menu': 'Menù',
+  '/admin/categorie': 'Categorie',
 }
 
 interface HeaderProps {

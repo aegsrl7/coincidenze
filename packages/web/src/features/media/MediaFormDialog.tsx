@@ -11,7 +11,8 @@ import { ImageUpload } from '@/components/ui/image-upload'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useMediaStore } from '@/stores/mediaStore'
 import { useArtistsStore } from '@/stores/artistsStore'
-import { CATEGORY_LABELS, type EventCategory, type MediaItem } from '@/types'
+import { useCategoryMaps } from '@/stores/categoriesStore'
+import { type EventCategory, type MediaItem } from '@/types'
 
 interface Props {
   open: boolean
@@ -22,6 +23,7 @@ interface Props {
 export function MediaFormDialog({ open, onClose, editItem }: Props) {
   const { createMedia, updateMedia, deleteMedia } = useMediaStore()
   const { artists } = useArtistsStore()
+  const { list: artistCats } = useCategoryMaps('artist')
   const [form, setForm] = useState({
     title: '',
     type: 'video' as 'audio' | 'video' | 'image',
@@ -127,8 +129,8 @@ export function MediaFormDialog({ open, onClose, editItem }: Props) {
                   onChange={(e) => setForm({ ...form, category: e.target.value as EventCategory })}
                 >
                   <option value="">-- Nessuna --</option>
-                  {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
+                  {artistCats.map((c) => (
+                    <option key={c.slug} value={c.slug}>{c.label}</option>
                   ))}
                 </select>
               </div>

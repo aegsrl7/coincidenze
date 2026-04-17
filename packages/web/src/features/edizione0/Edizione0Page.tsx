@@ -5,8 +5,8 @@ import { useEdizione0Store } from '@/stores/edizione0Store'
 import { useAuthStore } from '@/stores/authStore'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { api } from '@/lib/api'
+import { useCategoryMaps } from '@/stores/categoriesStore'
 import {
-  CATEGORY_COLORS,
   type EventCategory,
 } from '@/types'
 
@@ -29,6 +29,7 @@ const ED0_ARTISTS: { name: string; category: string; categoryKey: EventCategory 
 export function Edizione0Page() {
   const { gallery, content, fetchGallery, fetchContent, addImage, deleteImage, reorderGallery, setGalleryLocal, updateContent } = useEdizione0Store()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const { colors } = useCategoryMaps('artist')
 
   const [editingIntro, setEditingIntro] = useState(false)
   const [introDraft, setIntroDraft] = useState('')
@@ -218,7 +219,7 @@ export function Edizione0Page() {
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {ED0_ARTISTS.map((artist) => {
-            const color = CATEGORY_COLORS[artist.categoryKey] || '#2C3E6B'
+            const color = colors[artist.categoryKey] || '#2C3E6B'
             return (
               <div
                 key={artist.name}

@@ -1,7 +1,8 @@
 import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { Store } from 'lucide-react'
-import { CATEGORY_LABELS, CATEGORY_COLORS, type EventCategory } from '@/types'
+import { useCategoryMaps } from '@/stores/categoriesStore'
+import { type EventCategory } from '@/types'
 
 interface ExhibitorNodeData {
   label: string
@@ -12,7 +13,8 @@ interface ExhibitorNodeData {
 
 export const ExhibitorNode = memo(({ data, selected }: NodeProps) => {
   const d = data as ExhibitorNodeData
-  const color = d.category ? CATEGORY_COLORS[d.category] : '#8B2252'
+  const { labels, colors } = useCategoryMaps('artist')
+  const color = d.category ? colors[d.category] : '#8B2252'
 
   return (
     <div
@@ -32,7 +34,7 @@ export const ExhibitorNode = memo(({ data, selected }: NodeProps) => {
         </div>
         {d.category && (
           <span className="text-[10px] mt-1 inline-block" style={{ color }}>
-            {CATEGORY_LABELS[d.category]}
+            {labels[d.category]}
           </span>
         )}
         {d.description && (

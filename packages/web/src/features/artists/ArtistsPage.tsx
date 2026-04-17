@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useArtistsStore } from '@/stores/artistsStore'
 import { useAuthStore } from '@/stores/authStore'
-import { CATEGORY_LABELS, CATEGORY_COLORS, type EventCategory, type Artist } from '@/types'
+import { useCategoryMaps } from '@/stores/categoriesStore'
+import { type Artist } from '@/types'
 import { ArtistFormDialog } from './ArtistFormDialog'
 
 function SocialIcon({ url, className }: { url: string; className?: string }) {
@@ -36,10 +37,11 @@ function SocialIcon({ url, className }: { url: string; className?: string }) {
 export function ArtistsPage() {
   const { artists, fetchArtists } = useArtistsStore()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const { labels, colors } = useCategoryMaps('artist')
   const [showForm, setShowForm] = useState(false)
   const [editingItem, setEditingItem] = useState<Artist | null>(null)
   const [search, setSearch] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState<EventCategory | null>(null)
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
 
   useEffect(() => {
     fetchArtists()
@@ -51,7 +53,7 @@ export function ArtistsPage() {
     return matchesSearch && matchesCategory
   })
 
-  const usedCategories = [...new Set(artists.map((a) => a.category).filter(Boolean))] as EventCategory[]
+  const usedCategories = [...new Set(artists.map((a) => a.category).filter(Boolean))]
 
   return (
     <div className="p-4 sm:p-6">
@@ -86,9 +88,9 @@ export function ArtistsPage() {
                 variant={categoryFilter === cat ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setCategoryFilter(categoryFilter === cat ? null : cat)}
-                style={categoryFilter === cat ? { backgroundColor: CATEGORY_COLORS[cat] } : {}}
+                style={categoryFilter === cat ? { backgroundColor: colors[cat] } : {}}
               >
-                {CATEGORY_LABELS[cat]}
+                {labels[cat]}
               </Button>
             ))}
           </div>
@@ -104,7 +106,7 @@ export function ArtistsPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map((artist) => {
-            const color = artist.category ? CATEGORY_COLORS[artist.category as EventCategory] : '#2C3E6B'
+            const color = artist.category ? colors[artist.category] : '#2C3E6B'
 
             return (
               <Card
@@ -129,7 +131,7 @@ export function ArtistsPage() {
                   <div className="mt-2 flex items-center gap-2">
                     {artist.category && (
                       <Badge className="text-[10px]" style={{ backgroundColor: color }}>
-                        {CATEGORY_LABELS[artist.category as EventCategory]}
+                        {labels[artist.category]}
                       </Badge>
                     )}
                     {artist.website && (

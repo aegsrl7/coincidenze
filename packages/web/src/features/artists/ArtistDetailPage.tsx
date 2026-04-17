@@ -3,14 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Clock, MapPin, ExternalLink, Loader2, AlertCircle, Music, Instagram, Facebook } from 'lucide-react'
 import ReactPlayer from 'react-player'
 import { PublicFooter } from '@/components/PublicFooter'
+import { useCategoryMaps } from '@/stores/categoriesStore'
 import { api } from '@/lib/api'
 import {
-  CATEGORY_COLORS,
-  CATEGORY_LABELS,
   type Artist,
   type Event,
   type MediaItem,
-  type EventCategory,
 } from '@/types'
 
 function detectSocial(url: string): { label: string; Icon: typeof Instagram } | null {
@@ -29,6 +27,7 @@ function detectSocial(url: string): { label: string; Icon: typeof Instagram } | 
 export function ArtistDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { labels, colors } = useCategoryMaps('artist')
 
   const goBack = () => {
     // Se la history contiene la pagina di arrivo, usa il back vero (trigger scroll restore)
@@ -84,7 +83,7 @@ export function ArtistDetailPage() {
     )
   }
 
-  const accent = CATEGORY_COLORS[artist.category as EventCategory] || '#2C3E6B'
+  const accent = colors[artist.category]
 
   return (
     <div className="min-h-screen bg-beige">
@@ -119,7 +118,7 @@ export function ArtistDetailPage() {
               className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium text-white mb-2"
               style={{ backgroundColor: accent }}
             >
-              {CATEGORY_LABELS[artist.category as EventCategory] || artist.category}
+              {labels[artist.category]}
             </div>
             <h1 className="font-display text-3xl sm:text-4xl font-bold text-navy">{artist.name}</h1>
             {artist.website && (() => {
@@ -166,7 +165,7 @@ export function ArtistDetailPage() {
                   </div>
                   <div
                     className="w-1 self-stretch rounded-full shrink-0"
-                    style={{ backgroundColor: CATEGORY_COLORS[event.category as EventCategory] || '#2C3E6B' }}
+                    style={{ backgroundColor: colors[event.category] }}
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-navy">{event.title}</p>

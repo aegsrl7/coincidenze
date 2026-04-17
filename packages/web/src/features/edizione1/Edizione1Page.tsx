@@ -8,13 +8,11 @@ import { Button } from '@/components/ui/button'
 import { PublicFooter } from '@/components/PublicFooter'
 import { useEdizione1Store } from '@/stores/edizione1Store'
 import { useAuthStore } from '@/stores/authStore'
+import { useCategoryMaps } from '@/stores/categoriesStore'
 import { api } from '@/lib/api'
 import {
-  CATEGORY_COLORS,
-  CATEGORY_LABELS,
   type Event,
   type Artist,
-  type EventCategory,
   type MenuItem,
 } from '@/types'
 
@@ -39,16 +37,6 @@ function isAllDay(event: Event): boolean {
   const start = parseInt(event.start_time.split(':')[0], 10)
   const end = parseInt(event.end_time.split(':')[0], 10)
   return end - start >= 8
-}
-
-function categoryColor(cat: EventCategory): string {
-  return CATEGORY_COLORS[cat] || '#2C3E6B'
-}
-
-function categoryLabel(cat: EventCategory): string {
-  if (CATEGORY_LABELS[cat]) return CATEGORY_LABELS[cat]
-  const raw = String(cat || '')
-  return raw.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 export function Edizione1Page() {
@@ -293,6 +281,7 @@ function ProgrammaTab({
 }
 
 function EventRow({ event, allDay }: { event: Event; allDay?: boolean }) {
+  const { colors } = useCategoryMaps('artist')
   return (
     <div className="bg-white/60 rounded-lg border border-navy/8 p-3 flex gap-3 items-start">
       <div className="shrink-0 w-16 text-right">
@@ -303,7 +292,7 @@ function EventRow({ event, allDay }: { event: Event; allDay?: boolean }) {
       </div>
       <div
         className="w-1 self-stretch rounded-full shrink-0"
-        style={{ backgroundColor: categoryColor(event.category) }}
+        style={{ backgroundColor: colors[event.category] }}
       />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-navy">{event.title}</p>
@@ -322,6 +311,7 @@ function EventRow({ event, allDay }: { event: Event; allDay?: boolean }) {
 }
 
 function ArtistiTab({ artists }: { artists: Artist[] }) {
+  const { labels, colors } = useCategoryMaps('artist')
   if (artists.length === 0) {
     return <EmptyState>La lista degli artisti sarà presto disponibile.</EmptyState>
   }
@@ -343,14 +333,14 @@ function ArtistiTab({ artists }: { artists: Artist[] }) {
           ) : (
             <div
               className="h-12 w-12 rounded-full shrink-0 flex items-center justify-center text-white font-semibold"
-              style={{ backgroundColor: categoryColor(artist.category) }}
+              style={{ backgroundColor: colors[artist.category] }}
             >
               {artist.name.charAt(0).toUpperCase()}
             </div>
           )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-navy truncate">{artist.name}</p>
-            <p className="text-xs text-ink-muted">{categoryLabel(artist.category)}</p>
+            <p className="text-xs text-ink-muted">{labels[artist.category]}</p>
           </div>
           <ChevronRight className="h-4 w-4 text-ink-muted shrink-0" />
         </Link>

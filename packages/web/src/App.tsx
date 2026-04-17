@@ -16,15 +16,19 @@ import { BigliettoPage } from '@/features/accrediti/BigliettoPage'
 import { AdminAccreditiPage } from '@/features/accrediti/AdminAccreditiPage'
 import { ArtistDetailPage } from '@/features/artists/ArtistDetailPage'
 import { AdminMenuPage } from '@/features/menu/AdminMenuPage'
+import { AdminCategoriesPage } from '@/features/categories/AdminCategoriesPage'
 import { PrivacyPage } from '@/features/legal/PrivacyPage'
 import { useAuthStore } from '@/stores/authStore'
+import { useCategoriesStore } from '@/stores/categoriesStore'
 
 export default function App() {
   const checkAuth = useAuthStore((s) => s.checkAuth)
+  const fetchCategories = useCategoriesStore((s) => s.fetch)
 
   useEffect(() => {
     checkAuth()
-  }, [checkAuth])
+    fetchCategories()
+  }, [checkAuth, fetchCategories])
 
   return (
     <BrowserRouter>
@@ -60,6 +64,7 @@ export default function App() {
             <Route path="/admin/piano-editoriale" element={<PianoEditorialePage />} />
             <Route path="/admin/accrediti" element={<AdminAccreditiPage />} />
             <Route path="/admin/menu" element={<AdminMenuPage />} />
+            <Route path="/admin/categorie" element={<AdminCategoriesPage />} />
           </Route>
         </Route>
 

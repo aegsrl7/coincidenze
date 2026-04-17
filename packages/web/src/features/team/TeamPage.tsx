@@ -8,7 +8,8 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useTasksStore } from '@/stores/tasksStore'
 import { useTeamStore } from '@/stores/teamStore'
 import { useAuthStore } from '@/stores/authStore'
-import { CATEGORY_LABELS, CATEGORY_COLORS, type EventCategory, type Task, type TeamMember } from '@/types'
+import { useCategoryMaps } from '@/stores/categoriesStore'
+import { type Task, type TeamMember } from '@/types'
 import { TaskFormDialog } from './TaskFormDialog'
 import { MemberFormDialog } from './MemberFormDialog'
 
@@ -24,6 +25,7 @@ export function TeamPage() {
   const { tasks, fetchTasks, updateTask, deleteTask } = useTasksStore()
   const { members, fetchMembers, createMember, deleteMember } = useTeamStore()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const { labels, colors } = useCategoryMaps('artist')
   const [showForm, setShowForm] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined)
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
@@ -233,9 +235,9 @@ export function TeamPage() {
                           {task.category && (
                             <Badge
                               className="text-[10px]"
-                              style={{ backgroundColor: CATEGORY_COLORS[task.category as EventCategory] }}
+                              style={{ backgroundColor: colors[task.category] }}
                             >
-                              {CATEGORY_LABELS[task.category as EventCategory]}
+                              {labels[task.category]}
                             </Badge>
                           )}
                           {task.due_date && (

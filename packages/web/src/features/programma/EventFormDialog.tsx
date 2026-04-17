@@ -10,7 +10,8 @@ import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useEventsStore } from '@/stores/eventsStore'
 import { useArtistsStore } from '@/stores/artistsStore'
-import { CATEGORY_LABELS, type EventCategory, type Event } from '@/types'
+import { useCategoryMaps } from '@/stores/categoriesStore'
+import { type EventCategory, type Event } from '@/types'
 import { EVENT_DATE } from '@/lib/constants'
 
 interface Props {
@@ -22,6 +23,7 @@ interface Props {
 export function EventFormDialog({ open, onClose, event }: Props) {
   const { createEvent, updateEvent, deleteEvent } = useEventsStore()
   const { artists } = useArtistsStore()
+  const { list: artistCats } = useCategoryMaps('artist')
   const isEditing = !!event
   const [saving, setSaving] = useState(false)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
@@ -125,8 +127,8 @@ export function EventFormDialog({ open, onClose, event }: Props) {
                 onChange={(e) => setForm({ ...form, category: e.target.value as EventCategory })}
               >
                 <option value="">-- Seleziona --</option>
-                {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
+                {artistCats.map((c) => (
+                  <option key={c.slug} value={c.slug}>{c.label}</option>
                 ))}
               </select>
             </div>

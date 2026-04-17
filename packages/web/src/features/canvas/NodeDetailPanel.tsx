@@ -9,11 +9,13 @@ import { useEventsStore } from '@/stores/eventsStore'
 import { useArtistsStore } from '@/stores/artistsStore'
 import { useMediaStore } from '@/stores/mediaStore'
 import { api } from '@/lib/api'
-import { CATEGORY_LABELS, type EventCategory } from '@/types'
+import { useCategoryMaps } from '@/stores/categoriesStore'
+import { type EventCategory } from '@/types'
 
 export function NodeDetailPanel() {
   const { nodes, selectedNodeId, selectNode, removeNode, setNodes } = useCanvasStore()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const { list: artistCats } = useCategoryMaps('artist')
   const updateEvent = useEventsStore((s) => s.updateEvent)
   const updateArtist = useArtistsStore((s) => s.updateArtist)
   const updateMedia = useMediaStore((s) => s.updateMedia)
@@ -138,8 +140,8 @@ export function NodeDetailPanel() {
               disabled={!isAuthenticated}
             >
               <option value="">-- Seleziona --</option>
-              {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
-                <option key={key} value={key}>{label}</option>
+              {artistCats.map((c) => (
+                <option key={c.slug} value={c.slug}>{c.label}</option>
               ))}
             </select>
           </div>

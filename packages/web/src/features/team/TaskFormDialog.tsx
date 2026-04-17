@@ -10,7 +10,8 @@ import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useTasksStore } from '@/stores/tasksStore'
 import { useTeamStore } from '@/stores/teamStore'
-import { CATEGORY_LABELS, type EventCategory, type Task } from '@/types'
+import { useCategoryMaps } from '@/stores/categoriesStore'
+import { type EventCategory, type Task } from '@/types'
 
 interface Props {
   open: boolean
@@ -21,6 +22,7 @@ interface Props {
 export function TaskFormDialog({ open, onClose, task }: Props) {
   const { createTask, updateTask, deleteTask } = useTasksStore()
   const { members } = useTeamStore()
+  const { list: artistCats } = useCategoryMaps('artist')
   const isEditing = !!task
   const [form, setForm] = useState({
     title: '',
@@ -167,8 +169,8 @@ export function TaskFormDialog({ open, onClose, task }: Props) {
                 onChange={(e) => setForm({ ...form, category: e.target.value as EventCategory })}
               >
                 <option value="">-- Nessuna --</option>
-                {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
+                {artistCats.map((c) => (
+                  <option key={c.slug} value={c.slug}>{c.label}</option>
                 ))}
               </select>
             </div>

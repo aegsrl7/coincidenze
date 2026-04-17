@@ -2,7 +2,8 @@ import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { Calendar, Clock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { CATEGORY_LABELS, CATEGORY_COLORS, type EventCategory } from '@/types'
+import { useCategoryMaps } from '@/stores/categoriesStore'
+import { type EventCategory } from '@/types'
 
 interface EventNodeData {
   label: string
@@ -16,7 +17,8 @@ interface EventNodeData {
 
 export const EventNode = memo(({ data, selected }: NodeProps) => {
   const d = data as EventNodeData
-  const color = d.category ? CATEGORY_COLORS[d.category] : '#2C3E6B'
+  const { labels, colors } = useCategoryMaps('artist')
+  const color = d.category ? colors[d.category] : '#2C3E6B'
 
   return (
     <div
@@ -37,7 +39,7 @@ export const EventNode = memo(({ data, selected }: NodeProps) => {
               className="shrink-0 text-[10px]"
               style={{ backgroundColor: color }}
             >
-              {CATEGORY_LABELS[d.category]}
+              {labels[d.category]}
             </Badge>
           )}
         </div>

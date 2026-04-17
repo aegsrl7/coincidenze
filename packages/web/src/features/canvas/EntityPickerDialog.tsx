@@ -8,7 +8,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Search, Plus, Calendar, User, Store, Music } from 'lucide-react'
-import { CATEGORY_LABELS, CATEGORY_COLORS, type EventCategory } from '@/types'
+import { useCategoryMaps } from '@/stores/categoriesStore'
+import { type EventCategory } from '@/types'
 import type { Event, Artist, Exhibitor, MediaItem } from '@/types'
 
 export type PickerEntityType = 'event' | 'artist' | 'exhibitor' | 'media'
@@ -87,9 +88,10 @@ function mapMediaToNodeData(item: MediaItem): EntityPickerResult {
 }
 
 function CategoryBadge({ category }: { category?: EventCategory }) {
+  const { labels, colors } = useCategoryMaps('artist')
   if (!category) return null
-  const label = CATEGORY_LABELS[category]
-  const color = CATEGORY_COLORS[category]
+  const label = labels[category]
+  const color = colors[category]
   if (!label) return null
   return (
     <span

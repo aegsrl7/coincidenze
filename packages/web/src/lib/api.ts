@@ -118,4 +118,11 @@ export const api = {
   updateMenuItem: (id: string, data: any) => request<any>(`/menu/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteMenuItem: (id: string) => request<void>(`/menu/${id}`, { method: 'DELETE' }),
   reorderMenu: (order: string[]) => request<any>('/menu/reorder', { method: 'PUT', body: JSON.stringify({ order }) }),
+
+  // Categories
+  getCategories: () => request<any[]>('/categories'),
+  createCategory: (data: any) => request<any>('/categories', { method: 'POST', body: JSON.stringify(data) }),
+  updateCategory: (id: string, data: any) => request<any>(`/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteCategory: (id: string) => request<void>(`/categories/${id}`, { method: 'DELETE' }),
+  reorderCategories: (order: string[]) => request<any>('/categories/reorder', { method: 'PUT', body: JSON.stringify({ order }) }),
 }

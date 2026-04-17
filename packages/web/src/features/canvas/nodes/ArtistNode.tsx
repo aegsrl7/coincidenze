@@ -2,7 +2,8 @@ import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { User } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { CATEGORY_LABELS, CATEGORY_COLORS, type EventCategory } from '@/types'
+import { useCategoryMaps } from '@/stores/categoriesStore'
+import { type EventCategory } from '@/types'
 
 interface ArtistNodeData {
   label: string
@@ -13,7 +14,8 @@ interface ArtistNodeData {
 
 export const ArtistNode = memo(({ data, selected }: NodeProps) => {
   const d = data as ArtistNodeData
-  const color = d.category ? CATEGORY_COLORS[d.category] : '#6B3FA0'
+  const { labels, colors } = useCategoryMaps('artist')
+  const color = d.category ? colors[d.category] : '#6B3FA0'
 
   return (
     <div
@@ -38,7 +40,7 @@ export const ArtistNode = memo(({ data, selected }: NodeProps) => {
             </h3>
             {d.category && (
               <span className="text-[10px]" style={{ color }}>
-                {CATEGORY_LABELS[d.category]}
+                {labels[d.category]}
               </span>
             )}
           </div>

@@ -269,3 +269,15 @@ export interface MenuItem {
   updated_at: string
 }
 
+// Categoria dinamica (DB-backed)
+export interface Category {
+  id: string
+  type: 'artist' | 'menu'
+  slug: string
+  label: string
+  color: string
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+

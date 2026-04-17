@@ -182,6 +182,18 @@ CREATE TABLE IF NOT EXISTS menu_items (
   updated_at TEXT DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS categories (
+  id TEXT PRIMARY KEY,
+  type TEXT NOT NULL CHECK(type IN ('artist', 'menu')),
+  slug TEXT NOT NULL,
+  label TEXT NOT NULL,
+  color TEXT DEFAULT '',
+  sort_order INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(type, slug)
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_events_date ON events(date);
 CREATE INDEX IF NOT EXISTS idx_events_category ON events(category);
@@ -196,3 +208,4 @@ CREATE INDEX IF NOT EXISTS idx_accreditations_email ON accreditations(email);
 CREATE INDEX IF NOT EXISTS idx_accreditations_ticket ON accreditations(ticket_code);
 CREATE INDEX IF NOT EXISTS idx_accreditations_created ON accreditations(created_at);
 CREATE INDEX IF NOT EXISTS idx_menu_items_category ON menu_items(category);
+CREATE INDEX IF NOT EXISTS idx_categories_type_sort ON categories(type, sort_order);

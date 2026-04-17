@@ -3,16 +3,16 @@ import { Plus, Pencil, Trash2, X, Check, Loader2, GripVertical } from 'lucide-re
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { useCategoryMaps } from '@/stores/categoriesStore'
 import { api } from '@/lib/api'
 import type { MenuItem } from '@/types'
-
-const DEFAULT_CATEGORY_SUGGESTIONS = ['Antipasti', 'Primi', 'Secondi', 'Dolci', 'Vini', 'Bevande', 'Altro']
 
 function emptyDraft(): Omit<MenuItem, 'id' | 'created_at' | 'updated_at' | 'sort_order'> {
   return { category: '', name: '', description: '', price: '', notes: '' }
 }
 
 export function AdminMenuPage() {
+  const { list: menuCats } = useCategoryMaps('menu')
   const [items, setItems] = useState<MenuItem[]>([])
   const [loading, setLoading] = useState(true)
   const [draft, setDraft] = useState(emptyDraft())
@@ -37,14 +37,15 @@ export function AdminMenuPage() {
     load()
   }, [])
 
-  // Unione tra suggestions di default e categorie già presenti
+  // Unione tra categorie gestite in /admin/categorie e quelle già usate dai piatti
   const categorySuggestions = useMemo(() => {
-    const set = new Set<string>(DEFAULT_CATEGORY_SUGGESTIONS)
+    const set = new Set<string>()
+    for (const c of menuCats) set.add(c.label)
     for (const item of items) {
       if (item.category) set.add(item.category)
     }
     return Array.from(set).sort((a, b) => a.localeCompare(b))
-  }, [items])
+  }, [items, menuCats])
 
   const grouped = useMemo(() => {
     const map = new Map<string, MenuItem[]>()
