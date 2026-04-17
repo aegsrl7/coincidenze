@@ -34,7 +34,7 @@ authRoutes.post('/login', async (c) => {
   setCookie(c, 'auth_token', token, {
     httpOnly: true,
     secure: !isLocal,
-    sameSite: 'Lax',
+    sameSite: isLocal ? 'Lax' : 'None',
     path: '/',
     maxAge: 60 * 60 * 24 * 7, // 7 days
   })
@@ -44,7 +44,12 @@ authRoutes.post('/login', async (c) => {
 
 // POST /auth/logout
 authRoutes.post('/logout', async (c) => {
-  deleteCookie(c, 'auth_token', { path: '/' })
+  const isLocal = new URL(c.req.url).hostname === 'localhost'
+  deleteCookie(c, 'auth_token', {
+    path: '/',
+    secure: !isLocal,
+    sameSite: isLocal ? 'Lax' : 'None',
+  })
   return c.json({ authenticated: false })
 })
 

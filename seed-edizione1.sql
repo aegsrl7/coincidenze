@@ -1,0 +1,5 @@
+INSERT INTO edizione1_content (id, section, content) VALUES ('intro-1', 'intro', 'Anche quest''anno ritorna Coincidenze. Un evento nato da un''idea: incontrarsi nel nome della bellezza. La bellezza di stare insieme, di condividere esperienze, di portare all''interno di un contesto come Marsam Locanda, luogo di incontro, crocevia di gusto e tradizione, la voglia di fare del cambiamento una filosofia.
+
+Sempre con l''idea della bellezza condivisa torna la seconda edizione, sabato 25 aprile 2026, con tanti ospiti e momenti culturali pensati per trascorrere la giornata insieme.
+
+Come in una corte delle meraviglie, gli ospiti troveranno momenti di dialogo, sculture, dipinti e fotografie, alcune anche tratte da collezioni private. Suggestioni fisiche e metafisiche si intrecciano, viaggi sciamanici e dibattiti letterari, musica dal vivo e moderne suggestioni legate alle nuove tecnologie, come in un caleidoscopio di emozioni, faranno bella mostra di se'' durante tutta la giornata, condite dal buon cibo e dal vino di produttori selezionati per l''occasione.');

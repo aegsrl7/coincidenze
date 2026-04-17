@@ -1,0 +1,230 @@
+═══════════════════════════════════════════════════════════════
+                        COINCIDENZE
+              raffinate casualità, occhi attenti
+═══════════════════════════════════════════════════════════════
+
+Edizione:  1
+Data:      Sabato 25 aprile 2026
+Luogo:     Marsam Locanda, Bene Vagienna
+
+Palette colori evento:
+  - Sfondo: beige/crema #F5F0E8
+  - Primario: navy #2C3E6B
+  - Accento viola: #6B3FA0
+  - Accento bordeaux: #8B2252
+  - Testo: #1a1a1a
+  - Font titoli: Playfair Display
+  - Font corpo: Inter
+
+═══════════════════════════════════════════════════════════════
+                    RIEPILOGO
+═══════════════════════════════════════════════════════════════
+
+Artisti totali: 18
+Eventi in programma: 14
+
+Categorie attive:
+  - Musica (1 artista) — colore: #D4A017
+  - Scultura (4 artisti) — colore: #5F6B4E
+  - Fotografia (5 artisti) — colore: #2C3E6B
+  - Cucina (2 artisti) — colore: #8B4513
+  - Scrittura (1 artista) — colore: #6B3FA0
+  - Video AI (1 artista) — colore: #00ACC1
+  - Teatro (2 artisti) — colore: #8B2252
+  - Auto d'Epoca (1 artista) — colore: #4A4A4A
+  - Vino (1 artista) — colore: #722F37
+
+═══════════════════════════════════════════════════════════════
+                        ARTISTI
+═══════════════════════════════════════════════════════════════
+
+───────────────────── SCRITTURA ─────────────────────
+
+MICHELE MARZIANI
+  Bio:       Scrittore
+  Sito:      https://www.instagram.com/micmarziani/
+  Immagine:  https://coincidenze-api.lamaz7.workers.dev/api/media-file/ac953ec1-4dd7-4181-a5f5-769a9899d065.png
+
+───────────────────── TEATRO ─────────────────────
+
+DELFINA TESTA
+  Bio:       La cartomante della Gorra aspetta chi è titubante e preoccupato per leggere i consigli di Tarocchi chiacchieroni e sapienti
+  Immagine:  https://coincidenze-api.lamaz7.workers.dev/api/media-file/6f4136d8-068f-479e-8823-b2dc8544e239.png
+
+PETRA LINDBLOM
+  Bio:       Attrice, terapista gestalt e sciamana Svedese
+  Sito:      https://www.instagram.com/petramarialindblom/
+  Immagine:  https://coincidenze-api.lamaz7.workers.dev/api/media-file/2cf6c48a-b1d3-4f40-b5f0-1f3cac841e35.png
+
+───────────────────── FOTOGRAFIA ─────────────────────
+
+LUCA FUMERO
+  Bio:       Fotografo
+  Sito:      https://www.instagram.com/iamluchino/
+  Immagine:  https://coincidenze-api.lamaz7.workers.dev/api/media-file/16e71f15-7bf3-4658-92af-28a333313ea6.png
+
+MAURO CURTI
+  Bio:       Fotografo rurale di Bene Vagienna
+  Sito:      https://www.instagram.com/maurocurti_/
+  Immagine:  https://coincidenze-api.lamaz7.workers.dev/api/media-file/fd459ff7-54b5-4896-b78d-723c8281c46b.png
+
+OWEN ZACCAGNINO
+  Bio:       Fotografo, Videomaker
+  Sito:      https://www.facebook.com/OwenZaccagninoPh/photos
+  Immagine:  https://coincidenze-api.lamaz7.workers.dev/api/media-file/23ad3f2c-0f4d-491a-bf3d-152376d2792b.png
+
+PAOLO SICCA
+  Bio:       Fotografo benese, specializzato in ritratti
+  Sito:      https://paoloemanuelesicca.it/contatti-info
+  Immagine:  https://coincidenze-api.lamaz7.workers.dev/api/media-file/2be8bcf8-67f9-427f-85b7-c138b8189ff2.png
+
+TAZIO SECCHIAROLI
+  Bio:       Fotoreporter
+  Immagine:  https://coincidenze-api.lamaz7.workers.dev/api/media-file/f53ad920-b06a-401d-aea9-f3c6b2324701.png
+
+───────────────────── SCULTURA ─────────────────────
+
+CRISTINA SAIMANDI
+  Bio:       Scultrice
+  Sito:      https://www.instagram.com/cristinasaimandiartist/
+  Immagine:  https://coincidenze-api.lamaz7.workers.dev/api/media-file/2df981b8-c14f-4d61-98be-eb3efe2e546d.png
+
+CRUX
+  Bio:       Scultore
+  Sito:      https://www.instagram.com/crux2019/
+  Immagine:  https://coincidenze-api.lamaz7.workers.dev/api/media-file/d9d9b2ff-a14b-402d-a45c-4f62a5d33ded.png
+
+FRANCO SEBASTIANO ALESSANDRIA
+  Bio:       Pittore e scultore residente a Piozzo, in provincia di Cuneo.
+  Sito:      https://www.instagram.com/francosebastianoalessandria/
+  Immagine:  https://coincidenze-api.lamaz7.workers.dev/api/media-file/06b3f7ee-e7ce-4b9d-9957-5e81ec69c9b6.png
+
+MARCO FIASCHI
+  Bio:       Ha lavorato nel campo del design e del marketing, per importanti marchi di sportswear. Artista autodidatta, in quegli anni di grande creatività affina la sua passione per l'arte iniziando a sperimentare l'uso dei materiali più vari sviluppando uno stile astratto dalla forte impronta materica. Gesso, cemento, sabbia, cartone, ferro, ossidi e juta sono lavorati per sovrapposizioni, che, come ere geologiche emergenti da un lontano passato, lasciano una potente traccia e una tridimensionalità quasi scultorea. Lasciandosi trasportare dall'improvvisazione creativa, interpreta temi legati alla natura e al contesto sociale sollecitando riflessioni tra materialità e spiritualità.
+  Sito:      https://marcofiaschi.com/
+  Immagine:  https://coincidenze-api.lamaz7.workers.dev/api/media-file/624534bc-42df-40d9-8f0f-b4b10111e4a1.png
+
+───────────────────── MUSICA ─────────────────────
+
+ANCREUS
+  Bio:       Musicista
+  Sito:      https://www.instagram.com/ancreus/
+  Immagine:  https://coincidenze-api.lamaz7.workers.dev/api/media-file/53f963b9-7fe1-4a86-8dcc-e678b17659b3.jpg
+
+───────────────────── VIDEO AI ─────────────────────
+
+PIETRO FANTONE
+  Bio:       Ai & Video maker
+  Sito:      https://www.instagram.com/pietrofantone/
+  Immagine:  https://coincidenze-api.lamaz7.workers.dev/api/media-file/e7c9bcec-086c-439f-8691-7ae598be96b2.png
+
+───────────────────── CUCINA ─────────────────────
+
+MARCO MARSAM
+  Bio:       Cuoco
+  Sito:      https://www.instagram.com/marsamlocanda/
+  Immagine:  https://coincidenze-api.lamaz7.workers.dev/api/media-file/2080b1b8-7bd0-4eff-be78-d161c5b318ca.png
+
+SERENA COLOMBO
+  Bio:       Coltivatrice di Bellezza
+  Immagine:  https://coincidenze-api.lamaz7.workers.dev/api/media-file/1646f9df-ac3d-4c84-960b-7383d4d8b016.png
+
+───────────────────── VINO ─────────────────────
+
+SILVIO ALTARE
+  Bio:       Selezionatore Vini
+
+───────────────────── AUTO D'EPOCA ─────────────────────
+
+AUTO D'EPOCA
+  Bio:       Selezione Auto d'Epoca
+  Immagine:  https://coincidenze-api.lamaz7.workers.dev/api/media-file/267aced0-564f-4ee1-a841-6f8f54dff640.png
+
+═══════════════════════════════════════════════════════════════
+                  PROGRAMMA — 25 APRILE 2026
+═══════════════════════════════════════════════════════════════
+
+10:00 — 20:00 | MOSTRA FOTOGRAFICA
+  Categoria:   Fotografia
+  Luogo:       Galleria
+  Artisti:     Luca Fumero, Marco Marsam, Mauro Curti, Owen Zaccagnino, Paolo Sicca, Tazio Secchiaroli
+  Descrizione: Esposizione collettiva.
+
+10:00 — 20:00 | MOSTRA PITTURA
+  Categoria:   Pittura
+  Luogo:       Sala Arte
+  Artisti:     Marco Fiaschi
+  Descrizione: Esposizione collettiva.
+
+10:00 — 20:00 | MOSTRA SCULTURA
+  Categoria:   Scultura
+  Luogo:       Giardino
+  Artisti:     Crux, Franco Sebastiano Alessandria
+  Descrizione: Esposizione collettiva
+
+10:00 — 20:00 | DEGUSTAZIONE VINO
+  Categoria:   Vino
+  Luogo:       Portico
+  Artisti:     Silvio Altare
+  Descrizione: Grande selezione di Vini dedicata alla giornata di Coincidenze
+
+10:00 — 20:00 | LA CUCINA DI MARSAM
+  Categoria:   Cucina
+  Luogo:       Ristorante e Giardino
+  Artisti:     Marco Marsam
+  Descrizione: La cucina di Marco e Alice sarà aperta tutto il giorno con la loro fantastica proposta culinaria.
+
+11:00 — 11:30 | ANCREUS LIVE - PART 1
+  Categoria:   Musica
+  Luogo:       Sala Superiore
+  Artisti:     Ancreus
+  Descrizione: Prima parte del live del trio acustico formato da Alberto Calandri, Diego Cavallero e Giorgia Bruno. Tre voci, due chitarre per una sola emozione in un viaggio attraverso l'interpretazione di brani italiani e internazionali.
+
+11:30 — 12:30 | MICHELE MARZIANI - LO SCIAMANO DELLE ALPI
+  Categoria:   Scrittura
+  Luogo:       Orto Romano
+  Artisti:     Michele Marziani
+  Descrizione: Presentazione libro - Lo Sciamano delle Alpi. Conduce la presentazione Samantha Viva
+
+12:00 — 16:00 | LETTURA TAROCCHI
+  Categoria:   Teatro
+  Luogo:       Tenda nel giardino
+  Artisti:     Delfina Testa
+  Descrizione: La cartomante della Gorra aspetta chi è titubante e preoccupato per leggere i consigli di Tarocchi chiacchieroni e sapienti
+
+13:00 — 13:30 | L'AI ED IL VIDEO
+  Categoria:   Video AI
+  Luogo:       Sala Superiore
+  Artisti:     Pietro Fantone
+  Descrizione: Un viaggio nel nuovo mondo dell'AI per il video Con Pietro Fantone
+
+14:00 — 14:30 | RICONNETTIAMOCI CON LA TERRA
+  Categoria:   Teatro
+  Luogo:       Giardino
+  Artisti:     Petra Lindblom
+
+15:00 — 15:30 | MICHELE MARZIANI 2 LIBRO
+  Categoria:   Scrittura
+  Luogo:       Orto Romano
+  Artisti:     Michele Marziani
+  Descrizione: Presentazione secondo libro. Conduce la presentazione Samantha Viva
+
+16:00 — 16:30 | ANCREUS LIVE - PART 2
+  Categoria:   Musica
+  Luogo:       Sala Superiore
+  Artisti:     Ancreus
+  Descrizione: Seconda parte del live del trio acustico formato da Alberto Calandri, Diego Cavallero e Giorgia Bruno. Tre voci, due chitarre per una sola emozione in un viaggio attraverso l'interpretazione di brani italiani e internazionali.
+
+17:00 — 17:45 | CORTO: "A PASSO LENTO"
+  Categoria:   Video
+  Luogo:       Sala Superiore
+  Artisti:     Cristina Saimandi
+  Descrizione: Cristina Saimandi, artista e scalatrice, intraprende un cammino dal cuore delle campagne saviglianesi fino alla cima del Monviso, esplorando passo dopo passo sé stessa, la sua espressione artistica intrinsecamente legata al senso profondo dell'esistenza, in un viaggio intimo e spirituale, dove ogni passo diventa un dialogo con la natura, l'arte, il mistero del vivere. Questo viaggio non è una sfida fisica, ma un percorso interiore, caratterizzato da una camminata lenta, in controtendenza con i ritmi della vita quotidiana. La lentezza come esperienza spirituale che ti permette di guardarti intorno, riconnettendoti anche con gli ambienti intorno con la consapevolezza dell'importanza della loro salvaguardia.
+
+18:00 — 19:00 | PASTA COMUNE
+  Categoria:   Cucina
+  Luogo:       Giardino
+  Artisti:     Marco Marsam
+  Descrizione: Un momento dove il cuoco di Marsam, Marco cucinerà per noi un piatto delizioso
+
+═══════════════════════════════════════════════════════════════

@@ -8,12 +8,18 @@ import { teamRoutes } from './routes/team'
 import { mediaRoutes } from './routes/media'
 import { canvasRoutes } from './routes/canvas'
 import { authRoutes } from './routes/auth'
+import { uploadRoutes } from './routes/upload'
+import { datiRoutes } from './routes/dati'
+import { editorialRoutes } from './routes/editorial'
+import { edizione0Routes } from './routes/edizione0'
+import { edizione1Routes } from './routes/edizione1'
 import { requireAuth } from './middleware/auth'
 
 export type Env = {
   Bindings: {
     DB: D1Database
     AUTH_SECRET: string
+    MEDIA_BUCKET: R2Bucket
   }
 }
 
@@ -41,6 +47,12 @@ app.get('/api/health', (c) => c.json({ status: 'ok', service: 'coincidenze-api' 
 // Auth (no middleware)
 app.route('/api/auth', authRoutes)
 
+// Pagina dati statica (no auth, no CORS — serve HTML)
+app.route('/dati', datiRoutes)
+
+// Upload (auth handled internally, GET public)
+app.route('/api', uploadRoutes)
+
 // Protected routes (requireAuth only blocks POST/PUT/DELETE)
 app.use('/api/events/*', requireAuth)
 app.use('/api/artists/*', requireAuth)
@@ -49,6 +61,9 @@ app.use('/api/tasks/*', requireAuth)
 app.use('/api/team/*', requireAuth)
 app.use('/api/media/*', requireAuth)
 app.use('/api/canvas/*', requireAuth)
+app.use('/api/editorial/*', requireAuth)
+app.use('/api/edizione0/*', requireAuth)
+app.use('/api/edizione1/*', requireAuth)
 
 // Routes
 app.route('/api/events', eventsRoutes)
@@ -58,5 +73,8 @@ app.route('/api/tasks', tasksRoutes)
 app.route('/api/team', teamRoutes)
 app.route('/api/media', mediaRoutes)
 app.route('/api/canvas', canvasRoutes)
+app.route('/api/editorial', editorialRoutes)
+app.route('/api/edizione0', edizione0Routes)
+app.route('/api/edizione1', edizione1Routes)
 
 export default app

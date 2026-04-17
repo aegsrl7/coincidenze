@@ -1,14 +1,87 @@
-import { X, Trash2 } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import { X, Trash2, Link2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ImageUpload } from '@/components/ui/image-upload'
 import { useCanvasStore } from '@/stores/canvasStore'
 import { useAuthStore } from '@/stores/authStore'
+import { useEventsStore } from '@/stores/eventsStore'
+import { useArtistsStore } from '@/stores/artistsStore'
+import { useMediaStore } from '@/stores/mediaStore'
+import { api } from '@/lib/api'
 import { CATEGORY_LABELS, type EventCategory } from '@/types'
 
 export function NodeDetailPanel() {
   const { nodes, selectedNodeId, selectNode, removeNode, setNodes } = useCanvasStore()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const updateEvent = useEventsStore((s) => s.updateEvent)
+  const updateArtist = useArtistsStore((s) => s.updateArtist)
+  const updateMedia = useMediaStore((s) => s.updateMedia)
   const node = nodes.find((n) => n.id === selectedNodeId)
+  const syncTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
+
+  const entityId = node?.data?.entityId as string | undefined
+
+  // Sync Node → Entity (debounced 1s)
+  const syncKey = entityId && node ? JSON.stringify({
+    label: node.data?.label,
+    category: node.data?.category,
+    startTime: node.data?.startTime,
+    endTime: node.data?.endTime,
+    location: node.data?.location,
+    bio: node.data?.bio,
+    imageUrl: node.data?.imageUrl,
+    mediaType: node.data?.mediaType,
+    url: node.data?.url,
+    thumbnailUrl: node.data?.thumbnailUrl,
+    description: node.data?.description,
+  }) : null
+
+  useEffect(() => {
+    if (!entityId || !node || !syncKey) return
+
+    clearTimeout(syncTimeoutRef.current)
+    syncTimeoutRef.current = setTimeout(() => {
+      const d = node.data as Record<string, unknown>
+      switch (node.type) {
+        case 'event':
+          updateEvent(entityId, {
+            title: d.label,
+            category: d.category,
+            startTime: d.startTime,
+            endTime: d.endTime,
+            location: d.location,
+          } as any).catch(() => {})
+          break
+        case 'artist':
+          updateArtist(entityId, {
+            name: d.label,
+            category: d.category,
+            bio: d.bio,
+            imageUrl: d.imageUrl,
+          } as any).catch(() => {})
+          break
+        case 'media':
+          updateMedia(entityId, {
+            title: d.label,
+            type: d.mediaType,
+            url: d.url,
+            thumbnailUrl: d.thumbnailUrl,
+          } as any).catch(() => {})
+          break
+        case 'exhibitor':
+          api.updateExhibitor(entityId, {
+            name: d.label as string,
+            category: d.category as EventCategory,
+            description: d.description as string,
+          }).catch(() => {})
+          break
+      }
+    }, 1000)
+
+    return () => clearTimeout(syncTimeoutRef.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [syncKey])
 
   if (!node) return null
 
@@ -38,6 +111,13 @@ export function NodeDetailPanel() {
           <label className="text-xs font-medium text-ink-muted">Tipo</label>
           <p className="text-sm capitalize text-navy">{node.type}</p>
         </div>
+
+        {entityId && (
+          <div className="flex items-center gap-1.5 rounded-md bg-violet/10 px-2.5 py-1.5 text-xs text-violet">
+            <Link2 className="h-3.5 w-3.5" />
+            <span>Collegato — modifiche sincronizzate</span>
+          </div>
+        )}
 
         <div>
           <label className="text-xs font-medium text-ink-muted">Etichetta</label>
@@ -99,15 +179,6 @@ export function NodeDetailPanel() {
         {node.type === 'media' && (
           <>
             <div>
-              <label className="text-xs font-medium text-ink-muted">URL (YouTube, SoundCloud, file...)</label>
-              <Input
-                value={(node.data?.url as string) || ''}
-                onChange={(e) => updateNodeData('url', e.target.value)}
-                placeholder="https://youtube.com/watch?v=..."
-                disabled={!isAuthenticated}
-              />
-            </div>
-            <div>
               <label className="text-xs font-medium text-ink-muted">Tipo</label>
               <select
                 className="mt-1 w-full rounded-md border border-navy/20 bg-crema px-3 py-2 text-sm disabled:opacity-60"
@@ -121,15 +192,22 @@ export function NodeDetailPanel() {
                 <option value="image">Immagine</option>
               </select>
             </div>
-            <div>
-              <label className="text-xs font-medium text-ink-muted">URL Thumbnail</label>
-              <Input
+            <ImageUpload
+              label="URL / File"
+              value={(node.data?.url as string) || ''}
+              onChange={(url) => updateNodeData('url', url)}
+              placeholder="Carica file o inserisci URL"
+              disabled={!isAuthenticated}
+            />
+            {(node.data?.mediaType as string) !== 'image' && (
+              <ImageUpload
+                label="Thumbnail"
                 value={(node.data?.thumbnailUrl as string) || ''}
-                onChange={(e) => updateNodeData('thumbnailUrl', e.target.value)}
-                placeholder="Opzionale (auto per YouTube)"
+                onChange={(url) => updateNodeData('thumbnailUrl', url)}
+                placeholder="Carica o inserisci URL"
                 disabled={!isAuthenticated}
               />
-            </div>
+            )}
           </>
         )}
 

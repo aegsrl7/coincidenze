@@ -32,7 +32,7 @@ export const MediaNode = memo(({ data, selected }: NodeProps) => {
   const url = d.url || ''
   const isPlayable = ReactPlayer.canPlay(url)
   const ytThumb = url ? getYouTubeThumbnail(url) : null
-  const thumbnail = d.thumbnailUrl || ytThumb
+  const thumbnail = d.thumbnailUrl || (d.mediaType === 'image' && url ? url : null) || ytThumb
 
   return (
     <div
@@ -40,7 +40,7 @@ export const MediaNode = memo(({ data, selected }: NodeProps) => {
         selected ? 'shadow-lg ring-2 ring-navy/30' : ''
       } ${playing ? 'w-[320px]' : 'min-w-[180px] max-w-[240px]'}`}
     >
-      <Handle type="target" position={Position.Top} className="!bg-navy !w-2 !h-2" />
+      <Handle type="target" position={Position.Top} className="!bg-navy !w-1.5 !h-1.5" />
 
       {/* Player inline */}
       {playing && isPlayable ? (
@@ -96,7 +96,7 @@ export const MediaNode = memo(({ data, selected }: NodeProps) => {
         </div>
       </div>
 
-      <Handle type="source" position={Position.Bottom} className="!bg-navy !w-2 !h-2" />
+      <Handle type="source" position={Position.Bottom} className="!bg-navy !w-1.5 !h-1.5" />
     </div>
   )
 })

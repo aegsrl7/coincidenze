@@ -7,3 +7,7 @@ compatibility_date = "2024-12-01"
 binding = "DB"
 database_name = "coincidenze-db"
 database_id = "36829bf3-c3e6-4c18-8df8-40dea1d2bc42"
+
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "coincidenze-media"

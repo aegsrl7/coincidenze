@@ -4,7 +4,9 @@ import {
   LayoutGrid,
   Calendar,
   Users,
+  User,
   Music,
+  Archive,
   LogIn,
   LogOut,
   X,
@@ -14,11 +16,13 @@ import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/authStore'
 import { LoginDialog } from '@/features/auth/LoginDialog'
 
-const navItems = [
-  { to: '/canvas', icon: LayoutGrid, label: 'Canvas' },
-  { to: '/programma', icon: Calendar, label: 'Programma' },
-  { to: '/team', icon: Users, label: 'Team' },
-  { to: '/media', icon: Music, label: 'Media' },
+const allNavItems = [
+  { to: '/canvas', icon: LayoutGrid, label: 'Canvas', authOnly: true },
+  { to: '/programma', icon: Calendar, label: 'Programma', authOnly: false },
+  { to: '/artisti', icon: User, label: 'Artisti', authOnly: false },
+  { to: '/team', icon: Users, label: 'Team', authOnly: true },
+  { to: '/media', icon: Music, label: 'Media', authOnly: true },
+  { to: '/piano-editoriale', icon: Calendar, label: 'Piano Editoriale', authOnly: true },
 ]
 
 interface SidebarProps {
@@ -60,7 +64,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
         {/* Nav */}
         <nav className="flex-1 space-y-1 px-3">
-          {navItems.map((item) => (
+          {allNavItems
+            .filter((item) => !item.authOnly || isAuthenticated)
+            .map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -78,6 +84,24 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               {item.label}
             </NavLink>
           ))}
+          <a
+            href="/edizione-1"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-ink-light hover:bg-beige-dark hover:text-navy transition-colors"
+          >
+            <Archive className="h-4 w-4" />
+            Edizione 1
+          </a>
+          <a
+            href="/edizione-0"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-ink-light hover:bg-beige-dark hover:text-navy transition-colors"
+          >
+            <Archive className="h-4 w-4" />
+            Edizione 0
+          </a>
         </nav>
 
         {/* Auth + Footer */}

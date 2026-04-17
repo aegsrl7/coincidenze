@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { useMediaStore } from '@/stores/mediaStore'
 import { useArtistsStore } from '@/stores/artistsStore'
 import { useAuthStore } from '@/stores/authStore'
-import { CATEGORY_LABELS, CATEGORY_COLORS, type EventCategory } from '@/types'
+import { CATEGORY_LABELS, CATEGORY_COLORS, type EventCategory, type MediaItem } from '@/types'
 import { MediaFormDialog } from './MediaFormDialog'
 
 const typeIcons = { audio: Music, video: Video, image: Image }
@@ -19,6 +19,7 @@ export function MediaPage() {
   const { artists, fetchArtists } = useArtistsStore()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const [showForm, setShowForm] = useState(false)
+  const [editingItem, setEditingItem] = useState<MediaItem | null>(null)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<'audio' | 'video' | 'image' | null>(null)
   const [playingUrl, setPlayingUrl] = useState<string | null>(null)
@@ -42,18 +43,13 @@ export function MediaPage() {
 
   return (
     <div className="p-4 sm:p-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h2 className="font-display text-2xl font-bold text-navy">Libreria Media</h2>
+      {/* Filtri */}
+      <div className="flex flex-wrap items-center gap-3 mb-6">
         {isAuthenticated && (
-          <Button onClick={() => setShowForm(true)}>
+          <Button onClick={() => { setEditingItem(null); setShowForm(true) }}>
             <Plus className="h-4 w-4" /> Aggiungi Media
           </Button>
         )}
-      </div>
-
-      {/* Filtri */}
-      <div className="flex flex-wrap items-center gap-3 mb-6">
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
           <Input
@@ -97,18 +93,20 @@ export function MediaPage() {
             return (
               <Card
                 key={item.id}
-                className="overflow-hidden transition-shadow hover:shadow-md group"
+                className="overflow-hidden transition-shadow hover:shadow-md group cursor-pointer"
+                onClick={() => { if (isAuthenticated) { setEditingItem(item); setShowForm(true) } }}
               >
                 {/* Thumbnail / placeholder */}
                 <div className="relative h-36 bg-beige-dark flex items-center justify-center">
-                  {item.thumbnail_url ? (
-                    <img src={item.thumbnail_url} alt={item.title} className="h-full w-full object-cover" />
+                  {(item.thumbnail_url || (item.type === 'image' && item.url)) ? (
+                    <img src={item.thumbnail_url || item.url} alt={item.title} className="h-full w-full object-cover" />
                   ) : (
                     <Icon className="h-10 w-10 text-navy/20" />
                   )}
                   {(item.type === 'audio' || item.type === 'video') && item.url && (
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation()
                         setPlayingUrl(item.url)
                         setPlayingTitle(item.title)
                       }}
@@ -166,7 +164,13 @@ export function MediaPage() {
         </div>
       )}
 
-      {isAuthenticated && showForm && <MediaFormDialog open={showForm} onClose={() => setShowForm(false)} />}
+      {isAuthenticated && showForm && (
+        <MediaFormDialog
+          open={showForm}
+          onClose={() => { setShowForm(false); setEditingItem(null) }}
+          editItem={editingItem}
+        />
+      )}
     </div>
   )
 }

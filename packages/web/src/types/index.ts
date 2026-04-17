@@ -13,6 +13,7 @@ export type EventCategory =
   | 'cucina'
   | 'auto-epoca'
   | 'libri'
+  | 'espositori'
 
 export type MacroCategory = 'arte' | 'musica' | 'video' | 'vino' | 'cucina' | 'auto-epoca' | 'libri'
 
@@ -30,6 +31,7 @@ export const CATEGORY_LABELS: Record<EventCategory, string> = {
   cucina: 'Cucina',
   'auto-epoca': 'Auto d\'Epoca',
   libri: 'Libri',
+  espositori: 'Espositori',
 }
 
 export const CATEGORY_COLORS: Record<EventCategory, string> = {
@@ -41,11 +43,12 @@ export const CATEGORY_COLORS: Record<EventCategory, string> = {
   grafica: '#C4697C',
   musica: '#D4A017',
   video: '#4A7C8F',
-  'video-ai': '#7B4F9D',
+  'video-ai': '#00ACC1',
   vino: '#722F37',
   cucina: '#8B4513',
   'auto-epoca': '#4A4A4A',
   libri: '#2C6B4F',
+  espositori: '#A0522D',
 }
 
 export const MACRO_TO_CATEGORIES: Record<MacroCategory, EventCategory[]> = {
@@ -68,7 +71,7 @@ export interface Event {
   end_time: string
   location: string
   category: EventCategory
-  artist_id?: string
+  artist_ids: string[]
   exhibitor_id?: string
   notes: string
   created_at: string
@@ -156,5 +159,65 @@ export interface CanvasEdge {
   target: string
   label?: string
   created_at: string
+}
+
+// Piano Editoriale
+export interface EditorialPost {
+  id: string
+  data: string
+  fase: number
+  tag: string
+  emoji: string
+  titolo: string
+  descrizione: string
+  caption_suggerita: string
+  formato: string
+  stato: 'da_fare' | 'in_progress' | 'pubblicato'
+  canva_design_id: string | null
+  artisti_coinvolti: string[]
+  note: string
+  created_at: string
+  updated_at: string
+}
+
+export const FASE_LABELS: Record<number, string> = {
+  1: 'Teaser',
+  2: 'Artisti',
+  3: 'Countdown',
+}
+
+export const FASE_COLORS: Record<number, string> = {
+  1: '#7F77DD',
+  2: '#1D9E75',
+  3: '#EF9F27',
+}
+
+export const STATO_LABELS: Record<string, string> = {
+  da_fare: 'Da fare',
+  in_progress: 'In progress',
+  pubblicato: 'Pubblicato',
+}
+
+export const STATO_COLORS: Record<string, string> = {
+  da_fare: '#9CA3AF',
+  in_progress: '#F59E0B',
+  pubblicato: '#10B981',
+}
+
+// Edizione 0
+export interface GalleryImage {
+  id: string
+  image_url: string
+  caption: string
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface ContentSection {
+  id: string
+  section: string
+  content: string
+  updated_at: string
 }
 

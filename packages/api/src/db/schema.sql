@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS events (
   location TEXT DEFAULT '',
   category TEXT NOT NULL,
   artist_id TEXT REFERENCES artists(id) ON DELETE SET NULL,
+  artist_ids TEXT DEFAULT '[]',
   exhibitor_id TEXT REFERENCES exhibitors(id) ON DELETE SET NULL,
   notes TEXT DEFAULT '',
   created_at TEXT DEFAULT (datetime('now')),
@@ -86,6 +87,7 @@ CREATE TABLE IF NOT EXISTS canvas_nodes (
   position_y REAL DEFAULT 0,
   width REAL,
   height REAL,
+  parent_id TEXT REFERENCES canvas_nodes(id) ON DELETE SET NULL,
   data TEXT DEFAULT '{}',
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now'))
@@ -99,6 +101,56 @@ CREATE TABLE IF NOT EXISTS canvas_edges (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS editorial_posts (
+  id TEXT PRIMARY KEY,
+  data TEXT NOT NULL,
+  fase INTEGER NOT NULL DEFAULT 1,
+  tag TEXT NOT NULL DEFAULT 'teaser',
+  emoji TEXT DEFAULT '',
+  titolo TEXT NOT NULL,
+  descrizione TEXT DEFAULT '',
+  caption_suggerita TEXT DEFAULT '',
+  formato TEXT DEFAULT '',
+  stato TEXT NOT NULL DEFAULT 'da_fare',
+  canva_design_id TEXT,
+  artisti_coinvolti TEXT DEFAULT '[]',
+  note TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS edizione0_gallery (
+  id TEXT PRIMARY KEY,
+  image_url TEXT NOT NULL,
+  caption TEXT DEFAULT '',
+  sort_order INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS edizione0_content (
+  id TEXT PRIMARY KEY,
+  section TEXT NOT NULL UNIQUE,
+  content TEXT DEFAULT '',
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS edizione1_gallery (
+  id TEXT PRIMARY KEY,
+  image_url TEXT NOT NULL,
+  caption TEXT DEFAULT '',
+  sort_order INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS edizione1_content (
+  id TEXT PRIMARY KEY,
+  section TEXT NOT NULL UNIQUE,
+  content TEXT DEFAULT '',
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_events_date ON events(date);
 CREATE INDEX IF NOT EXISTS idx_events_category ON events(category);
@@ -107,3 +159,5 @@ CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
 CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON tasks(assignee_id);
 CREATE INDEX IF NOT EXISTS idx_media_artist ON media_items(artist_id);
 CREATE INDEX IF NOT EXISTS idx_canvas_nodes_type ON canvas_nodes(type);
+CREATE INDEX IF NOT EXISTS idx_editorial_posts_data ON editorial_posts(data);
+CREATE INDEX IF NOT EXISTS idx_editorial_posts_fase ON editorial_posts(fase);

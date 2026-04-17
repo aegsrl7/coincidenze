@@ -6,8 +6,11 @@ import { Input } from '@/components/ui/input'
 const PAGE_TITLES: Record<string, string> = {
   '/canvas': 'Canvas',
   '/programma': 'Programma',
+  '/artisti': 'Artisti',
   '/team': 'Team & Task',
   '/media': 'Libreria Media',
+  '/piano-editoriale': 'Piano Editoriale',
+  '/edizione-0': 'Edizione 0 — 2025',
 }
 
 interface HeaderProps {

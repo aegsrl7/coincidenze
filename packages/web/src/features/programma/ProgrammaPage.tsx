@@ -40,24 +40,22 @@ export function ProgrammaPage() {
     return 0
   })
 
-  const getArtistName = (artistId: string | null | undefined) => {
-    if (!artistId) return null
-    const artist = artists.find((a) => a.id === artistId)
-    return artist?.name || null
+  const getArtistNames = (artistIds: string[] | undefined) => {
+    if (!artistIds || artistIds.length === 0) return null
+    const names = artistIds
+      .map((id) => artists.find((a) => a.id === id)?.name)
+      .filter(Boolean)
+    return names.length > 0 ? names.join(', ') : null
   }
 
   const categories = Object.keys(CATEGORY_LABELS) as EventCategory[]
 
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h2 className="font-display text-2xl font-bold text-navy">Programma</h2>
-          <p className="text-sm text-ink-muted">
-            {format(new Date(EVENT_DATE), "EEEE d MMMM yyyy", { locale: it })}
-          </p>
-        </div>
+        <p className="text-sm text-ink-muted">
+          {format(new Date(EVENT_DATE), "EEEE d MMMM yyyy", { locale: it })}
+        </p>
         {isAuthenticated && (
           <Button onClick={() => { setEditingEvent(undefined); setShowForm(true) }}>+ Nuovo Evento</Button>
         )}
@@ -95,7 +93,7 @@ export function ProgrammaPage() {
         ) : (
           sortedEvents.map((event) => {
             const color = CATEGORY_COLORS[event.category as EventCategory] || '#2C3E6B'
-            const artistName = getArtistName(event.artist_id)
+            const artistName = getArtistNames(event.artist_ids)
             return (
               <Card
                 key={event.id}

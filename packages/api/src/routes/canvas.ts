@@ -24,11 +24,33 @@ canvasRoutes.put('/', async (c) => {
     db.prepare('DELETE FROM canvas_nodes'),
   ]
 
-  for (const node of nodes) {
+  // Ordinamento topologico: genitori prima dei figli (per rispettare FK)
+  const sorted: typeof nodes = []
+  const remaining = [...nodes]
+  const inserted = new Set<string>()
+  while (remaining.length > 0) {
+    const before = remaining.length
+    for (let i = remaining.length - 1; i >= 0; i--) {
+      const n = remaining[i]
+      if (!n.parentId || inserted.has(n.parentId)) {
+        sorted.push(n)
+        inserted.add(n.id)
+        remaining.splice(i, 1)
+      }
+    }
+    if (remaining.length === before) {
+      // Ciclo o parent mancante — inserisci il resto senza parentId
+      for (const n of remaining) {
+        sorted.push({ ...n, parentId: null })
+      }
+      break
+    }
+  }
+  for (const node of sorted) {
     batch.push(
       db.prepare(
-        'INSERT INTO canvas_nodes (id, type, entity_id, label, position_x, position_y, width, height, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-      ).bind(node.id, node.type, node.entityId || null, node.label || '', node.positionX || 0, node.positionY || 0, node.width || null, node.height || null, JSON.stringify(node.data || {}))
+        'INSERT INTO canvas_nodes (id, type, entity_id, label, position_x, position_y, width, height, parent_id, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      ).bind(node.id, node.type, node.entityId || null, node.label || '', node.positionX || 0, node.positionY || 0, node.width || null, node.height || null, node.parentId || null, JSON.stringify(node.data || {}))
     )
   }
 

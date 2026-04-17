@@ -4,11 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useTasksStore } from '@/stores/tasksStore'
 import { useTeamStore } from '@/stores/teamStore'
 import { useAuthStore } from '@/stores/authStore'
-import { CATEGORY_LABELS, CATEGORY_COLORS, type EventCategory, type Task } from '@/types'
+import { CATEGORY_LABELS, CATEGORY_COLORS, type EventCategory, type Task, type TeamMember } from '@/types'
 import { TaskFormDialog } from './TaskFormDialog'
+import { MemberFormDialog } from './MemberFormDialog'
 
 const COLUMNS = [
   { id: 'todo', label: 'Da Fare', color: '#2C3E6B' },
@@ -25,10 +27,13 @@ export function TeamPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined)
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
-  const [didDrag, setDidDrag] = useState(false)
+  const [dragOverCol, setDragOverCol] = useState<ColumnId | null>(null)
   const [showAddMember, setShowAddMember] = useState(false)
   const [newMemberName, setNewMemberName] = useState('')
   const [newMemberRole, setNewMemberRole] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState<Task | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [editingMember, setEditingMember] = useState<TeamMember | null>(null)
 
   useEffect(() => {
     fetchTasks()
@@ -36,27 +41,51 @@ export function TeamPage() {
   }, [fetchTasks, fetchMembers])
 
   const getColumnTasks = (status: ColumnId) =>
-    tasks.filter((t) => (t.status || t.status) === status)
+    tasks.filter((t) => t.status === status)
 
   const getMemberName = (id: string | null | undefined) => {
     if (!id) return null
     return members.find((m) => m.id === id)?.name || null
   }
 
-  const handleDragStart = (taskId: string) => {
+  const handleDragStart = (e: React.DragEvent, taskId: string) => {
     setDraggedTaskId(taskId)
-    setDidDrag(true)
+    e.dataTransfer.effectAllowed = 'move'
   }
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, colId: ColumnId) => {
     e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverCol(colId)
+  }
+
+  const handleDragLeave = () => {
+    setDragOverCol(null)
   }
 
   const handleDrop = async (status: ColumnId) => {
+    setDragOverCol(null)
     if (!draggedTaskId) return
     const task = tasks.find((t) => t.id === draggedTaskId)
     if (task && task.status !== status) {
       await updateTask(draggedTaskId, { ...task, status })
+    }
+    setDraggedTaskId(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedTaskId(null)
+    setDragOverCol(null)
+  }
+
+  const handleDeleteTask = async () => {
+    if (!confirmDelete) return
+    setDeleting(true)
+    try {
+      await deleteTask(confirmDelete.id)
+      setConfirmDelete(null)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -77,37 +106,24 @@ export function TeamPage() {
   const priorityLabels = { high: 'Alta', medium: 'Media', low: 'Bassa' }
 
   return (
-    <div className="p-4 sm:p-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h2 className="font-display text-2xl font-bold text-navy">Team & Task</h2>
-        {isAuthenticated && (
-          <div className="flex gap-2">
-            <Button onClick={() => { setEditingTask(undefined); setShowForm(true) }}>
-              <Plus className="h-4 w-4" /> Nuovo Task
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Team members management */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-display text-sm font-semibold text-navy">Membri del Team</h3>
+    <div className="p-4 sm:p-6 pb-8 space-y-8">
+      {/* Sezione Membri */}
+      <section>
+        <div className="flex items-center gap-3 mb-4">
           {isAuthenticated && (
             <Button
-              variant="outline"
               size="sm"
               onClick={() => setShowAddMember(!showAddMember)}
             >
-              {showAddMember ? <X className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
-              {showAddMember ? 'Annulla' : 'Aggiungi'}
+              {showAddMember ? <X className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+              {showAddMember ? 'Annulla' : 'Aggiungi Membro'}
             </Button>
           )}
+          <h3 className="font-display text-sm font-semibold text-navy">Membri del Team</h3>
         </div>
 
         {isAuthenticated && showAddMember && (
-          <div className="flex flex-wrap gap-2 mb-3 p-3 rounded-md bg-beige-dark/50 border border-navy/10">
+          <div className="flex flex-wrap gap-2 mb-4 p-3 rounded-md bg-beige-dark/50 border border-navy/10">
             <Input
               placeholder="Nome"
               value={newMemberName}
@@ -133,36 +149,46 @@ export function TeamPage() {
             {members.map((m) => (
               <div
                 key={m.id}
-                className="flex items-center gap-2 rounded-full bg-crema border border-navy/10 px-3 py-1.5"
+                className={`flex items-center gap-2 rounded-full bg-crema border border-navy/10 px-3 py-1.5 ${
+                  isAuthenticated ? 'cursor-pointer hover:bg-beige-dark transition-colors' : ''
+                }`}
+                onClick={() => isAuthenticated && setEditingMember(m)}
               >
                 <div className="flex h-6 w-6 items-center justify-center rounded-full bg-navy/10">
                   <User className="h-3 w-3 text-navy" />
                 </div>
                 <span className="text-sm text-navy">{m.name}</span>
-                <span className="text-[10px] text-ink-muted">{m.role}</span>
-                {isAuthenticated && (
-                  <button
-                    onClick={() => deleteMember(m.id)}
-                    className="ml-1 text-ink-muted hover:text-bordeaux transition-colors"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
+                {m.role && <span className="text-[10px] text-ink-muted">{m.role}</span>}
               </div>
             ))}
           </div>
         ) : (
           <p className="text-sm text-ink-muted">Nessun membro nel team</p>
         )}
-      </div>
+      </section>
 
-      {/* Kanban board */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 overflow-x-auto">
+      {/* Sezione Task */}
+      <section>
+        <div className="flex items-center gap-3 mb-4">
+          {isAuthenticated && (
+            <Button size="sm" onClick={() => { setEditingTask(undefined); setShowForm(true) }}>
+              <Plus className="h-4 w-4" /> Nuovo Task
+            </Button>
+          )}
+          <h3 className="font-display text-sm font-semibold text-navy">Task</h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {COLUMNS.map((col) => (
           <div
             key={col.id}
-            className="min-w-[280px]"
-            onDragOver={isAuthenticated ? handleDragOver : undefined}
+            className={`min-w-[280px] rounded-lg border-2 border-dashed p-3 transition-colors min-h-[200px] ${
+              dragOverCol === col.id
+                ? 'border-navy/40 bg-navy/5'
+                : 'border-transparent bg-beige-dark/30'
+            }`}
+            onDragOver={isAuthenticated ? (e) => handleDragOver(e, col.id) : undefined}
+            onDragLeave={isAuthenticated ? handleDragLeave : undefined}
             onDrop={isAuthenticated ? () => handleDrop(col.id) : undefined}
           >
             <div className="flex items-center gap-2 mb-3">
@@ -173,21 +199,21 @@ export function TeamPage() {
               </Badge>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 pb-2">
               {getColumnTasks(col.id).map((task) => (
                 <Card
                   key={task.id}
                   draggable={isAuthenticated}
-                  onDragStart={isAuthenticated ? () => handleDragStart(task.id) : undefined}
-                  onDragEnd={() => { setDraggedTaskId(null); setTimeout(() => setDidDrag(false), 0) }}
+                  onDragStart={isAuthenticated ? (e) => handleDragStart(e, task.id) : undefined}
+                  onDragEnd={handleDragEnd}
                   onClick={() => {
-                    if (isAuthenticated && !didDrag) {
+                    if (isAuthenticated) {
                       setEditingTask(task)
                       setShowForm(true)
                     }
                   }}
                   className={`${isAuthenticated ? 'cursor-grab active:cursor-grabbing' : ''} transition-all ${
-                    draggedTaskId === task.id ? 'opacity-50' : ''
+                    draggedTaskId === task.id ? 'opacity-50 scale-95' : ''
                   }`}
                 >
                   <CardContent className="p-3">
@@ -230,7 +256,10 @@ export function TeamPage() {
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 shrink-0"
-                          onClick={() => deleteTask(task.id)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setConfirmDelete(task)
+                          }}
                         >
                           <Trash2 className="h-3 w-3 text-ink-muted" />
                         </Button>
@@ -239,14 +268,39 @@ export function TeamPage() {
                   </CardContent>
                 </Card>
               ))}
+
+              {getColumnTasks(col.id).length === 0 && (
+                <p className="py-8 text-center text-xs text-ink-muted/50">
+                  {isAuthenticated ? 'Trascina qui un task' : 'Nessun task'}
+                </p>
+              )}
             </div>
           </div>
         ))}
       </div>
 
+      </section>
+
       {isAuthenticated && showForm && (
         <TaskFormDialog open={showForm} onClose={() => { setShowForm(false); setEditingTask(undefined) }} task={editingTask} />
       )}
+
+      {isAuthenticated && editingMember && (
+        <MemberFormDialog
+          open={!!editingMember}
+          onClose={() => setEditingMember(null)}
+          member={editingMember}
+        />
+      )}
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Elimina Task"
+        message={`Eliminare "${confirmDelete?.title}"? L'azione non può essere annullata.`}
+        onConfirm={handleDeleteTask}
+        onCancel={() => setConfirmDelete(null)}
+        loading={deleting}
+      />
     </div>
   )
 }

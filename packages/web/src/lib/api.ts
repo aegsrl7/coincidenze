@@ -16,7 +16,25 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json()
 }
 
+async function uploadRequest(file: File): Promise<{ url: string; key: string }> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const res = await fetch(`${API_BASE}/upload`, {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+  })
+  if (!res.ok) {
+    const error = await res.text()
+    throw new Error(error || `Upload error: ${res.status}`)
+  }
+  return res.json()
+}
+
 export const api = {
+  // Upload
+  uploadFile: (file: File) => uploadRequest(file),
+
   // Auth
   login: (password: string) => request<{ authenticated: boolean }>('/auth/login', { method: 'POST', body: JSON.stringify({ password }) }),
   logout: () => request<{ authenticated: boolean }>('/auth/logout', { method: 'POST' }),
@@ -64,4 +82,26 @@ export const api = {
   getCanvasNodes: () => request<any[]>('/canvas/nodes'),
   getCanvasEdges: () => request<any[]>('/canvas/edges'),
   saveCanvas: (data: { nodes: any[]; edges: any[] }) => request<any>('/canvas', { method: 'PUT', body: JSON.stringify(data) }),
+
+  // Editorial
+  getEditorialPosts: () => request<any[]>('/editorial'),
+  createEditorialPost: (data: any) => request<any>('/editorial', { method: 'POST', body: JSON.stringify(data) }),
+  updateEditorialPost: (id: string, data: any) => request<any>(`/editorial/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteEditorialPost: (id: string) => request<void>(`/editorial/${id}`, { method: 'DELETE' }),
+
+  // Edizione 0
+  getEdizione0Gallery: () => request<any[]>('/edizione0/gallery'),
+  addEdizione0Image: (data: any) => request<any>('/edizione0/gallery', { method: 'POST', body: JSON.stringify(data) }),
+  deleteEdizione0Image: (id: string) => request<void>(`/edizione0/gallery/${id}`, { method: 'DELETE' }),
+  reorderEdizione0Gallery: (order: string[]) => request<any>('/edizione0/gallery/reorder', { method: 'PUT', body: JSON.stringify({ order }) }),
+  getEdizione0Content: () => request<any[]>('/edizione0/content'),
+  updateEdizione0Content: (section: string, content: string) => request<any>(`/edizione0/content/${section}`, { method: 'PUT', body: JSON.stringify({ content }) }),
+
+  // Edizione 1
+  getEdizione1Gallery: () => request<any[]>('/edizione1/gallery'),
+  addEdizione1Image: (data: any) => request<any>('/edizione1/gallery', { method: 'POST', body: JSON.stringify(data) }),
+  deleteEdizione1Image: (id: string) => request<void>(`/edizione1/gallery/${id}`, { method: 'DELETE' }),
+  reorderEdizione1Gallery: (order: string[]) => request<any>('/edizione1/gallery/reorder', { method: 'PUT', body: JSON.stringify({ order }) }),
+  getEdizione1Content: () => request<any[]>('/edizione1/content'),
+  updateEdizione1Content: (section: string, content: string) => request<any>(`/edizione1/content/${section}`, { method: 'PUT', body: JSON.stringify({ content }) }),
 }

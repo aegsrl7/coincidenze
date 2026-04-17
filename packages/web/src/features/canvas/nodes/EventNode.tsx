@@ -25,7 +25,7 @@ export const EventNode = memo(({ data, selected }: NodeProps) => {
       }`}
       style={{ borderColor: color }}
     >
-      <Handle type="target" position={Position.Top} className="!bg-navy !w-2 !h-2" />
+      <Handle type="target" position={Position.Top} className="!bg-navy !w-1.5 !h-1.5" />
 
       <div className="p-3">
         <div className="flex items-start justify-between gap-2">
@@ -62,7 +62,7 @@ export const EventNode = memo(({ data, selected }: NodeProps) => {
         </div>
       </div>
 
-      <Handle type="source" position={Position.Bottom} className="!bg-navy !w-2 !h-2" />
+      <Handle type="source" position={Position.Bottom} className="!bg-navy !w-1.5 !h-1.5" />
     </div>
   )
 })
