@@ -75,21 +75,24 @@ export function EdizioneV2Page() {
 
   return (
     <div className="min-h-screen bg-beige">
-      {/* HERO full-bleed, gradiente brand */}
+      {/* HERO full-bleed, foto di Marsam + overlay navy */}
       <section
-        className="relative min-h-[88vh] flex flex-col items-center justify-center px-6 text-center overflow-hidden"
-        style={{
-          background: 'linear-gradient(135deg, #1f2a4a 0%, #2C3E6B 35%, #6B3FA0 70%, #8B2252 100%)',
-        }}
+        className="relative min-h-[88vh] flex flex-col items-center justify-center px-6 text-center overflow-hidden bg-navy"
       >
-        {/* texture sottile di puntini, richiama "casualità" */}
+        {/* Foto di sfondo */}
         <div
-          className="absolute inset-0 opacity-[0.07] pointer-events-none"
+          className="absolute inset-0 bg-center bg-cover"
+          style={{ backgroundImage: "url('/foto-header.jpeg')" }}
+          aria-hidden="true"
+        />
+        {/* Overlay scuro per leggibilità testo (viola/navy tintato) */}
+        <div
+          className="absolute inset-0 pointer-events-none"
           style={{
-            backgroundImage:
-              'radial-gradient(circle at 1px 1px, #ffffff 1px, transparent 0)',
-            backgroundSize: '22px 22px',
+            background:
+              'linear-gradient(180deg, rgba(31,42,74,0.55) 0%, rgba(44,62,107,0.60) 45%, rgba(107,63,160,0.55) 100%)',
           }}
+          aria-hidden="true"
         />
 
         <div className="relative z-10 max-w-3xl">
