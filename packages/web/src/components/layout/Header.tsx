@@ -10,6 +10,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/team': 'Team & Task',
   '/admin/media': 'Libreria Media',
   '/admin/piano-editoriale': 'Piano Editoriale',
+  '/admin/accrediti': 'Accrediti',
 }
 
 interface HeaderProps {

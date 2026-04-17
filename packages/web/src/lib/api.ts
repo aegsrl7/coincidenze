@@ -104,4 +104,11 @@ export const api = {
   reorderEdizione1Gallery: (order: string[]) => request<any>('/edizione1/gallery/reorder', { method: 'PUT', body: JSON.stringify({ order }) }),
   getEdizione1Content: () => request<any[]>('/edizione1/content'),
   updateEdizione1Content: (section: string, content: string) => request<any>(`/edizione1/content/${section}`, { method: 'PUT', body: JSON.stringify({ content }) }),
+
+  // Accrediti
+  createAccreditation: (data: any) => request<{ ticket_code: string; existing?: boolean }>('/accrediti', { method: 'POST', body: JSON.stringify(data) }),
+  getAccreditationByCode: (code: string) => request<any>(`/accrediti/by-code/${encodeURIComponent(code)}`),
+  listAccreditations: () => request<any[]>('/accrediti'),
+  checkInAccreditation: (code: string) => request<any>(`/accrediti/${encodeURIComponent(code)}/check-in`, { method: 'POST' }),
+  deleteAccreditation: (id: string) => request<void>(`/accrediti/${id}`, { method: 'DELETE' }),
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Plus, Trash2, Pencil, X, Check, Image, Loader2, GripVertical, Clock, MapPin } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Plus, Trash2, Pencil, X, Check, Image, Loader2, GripVertical, Clock, MapPin, Ticket } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useEdizione1Store } from '@/stores/edizione1Store'
 import { useAuthStore } from '@/stores/authStore'
@@ -141,6 +142,17 @@ export function Edizione1Page() {
         </p>
         <p className="text-xs text-ink-muted mt-1 italic">
           raffinate casualit&agrave;, occhi attenti
+        </p>
+
+        <Link
+          to="/accrediti"
+          className="inline-flex items-center gap-2 mt-6 bg-navy text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-navy/90 transition-colors shadow-sm"
+        >
+          <Ticket className="h-4 w-4" />
+          Accreditati gratuitamente
+        </Link>
+        <p className="text-xs text-ink-muted mt-2">
+          Ingresso gratuito con accredito online
         </p>
       </div>
 

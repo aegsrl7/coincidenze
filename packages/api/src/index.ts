@@ -13,6 +13,7 @@ import { datiRoutes } from './routes/dati'
 import { editorialRoutes } from './routes/editorial'
 import { edizione0Routes } from './routes/edizione0'
 import { edizione1Routes } from './routes/edizione1'
+import { accreditationsRoutes } from './routes/accreditations'
 import { requireAuth } from './middleware/auth'
 
 export type Env = {
@@ -20,6 +21,9 @@ export type Env = {
     DB: D1Database
     AUTH_SECRET: string
     MEDIA_BUCKET: R2Bucket
+    RESEND_API_KEY?: string
+    RESEND_FROM?: string
+    PUBLIC_BASE_URL?: string
   }
 }
 
@@ -52,6 +56,9 @@ app.route('/dati', datiRoutes)
 
 // Upload (auth handled internally, GET public)
 app.route('/api', uploadRoutes)
+
+// Accrediti (auth gestito per-route: POST pubblico, GET by-code pubblico, resto admin)
+app.route('/api/accrediti', accreditationsRoutes)
 
 // Protected routes (requireAuth only blocks POST/PUT/DELETE)
 app.use('/api/events/*', requireAuth)

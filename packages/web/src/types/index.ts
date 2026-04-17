@@ -221,3 +221,51 @@ export interface ContentSection {
   updated_at: string
 }
 
+// Accrediti
+export interface Accreditation {
+  id: string
+  ticket_code: string
+  name: string
+  surname: string
+  email: string
+  phone: string
+  cap: string
+  birth_date: string
+  consent_privacy: 0 | 1
+  consent_newsletter: 0 | 1
+  consent_photo: 0 | 1
+  notes: string
+  email_sent_at: string | null
+  checked_in_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface AccreditationInput {
+  name: string
+  surname: string
+  email: string
+  phone?: string
+  cap?: string
+  birth_date?: string
+  consent_privacy: boolean
+  consent_newsletter: boolean
+  consent_photo: boolean
+  notes?: string
+  // honeypot — se compilato il form viene rifiutato
+  company?: string
+}
+
+// Menu
+export interface MenuItem {
+  id: string
+  category: string
+  name: string
+  description: string
+  price: string
+  notes: string
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
