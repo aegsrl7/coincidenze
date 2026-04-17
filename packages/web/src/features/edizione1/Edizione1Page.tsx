@@ -429,7 +429,7 @@ export function Edizione1Page() {
 
 // ---- Tabs ----
 
-function ProgrammaTab({
+export function ProgrammaTab({
   scheduledEvents,
   allDayEvents,
 }: {
@@ -480,7 +480,7 @@ function EventRow({ event, allDay }: { event: Event; allDay?: boolean }) {
   )
 }
 
-function ArtistiTab({ artists }: { artists: Artist[] }) {
+export function ArtistiTab({ artists }: { artists: Artist[] }) {
   if (artists.length === 0) {
     return <EmptyState>La lista degli artisti sarà presto disponibile.</EmptyState>
   }
@@ -518,7 +518,7 @@ function ArtistiTab({ artists }: { artists: Artist[] }) {
   )
 }
 
-function MenuTab({ items, isAdmin }: { items: MenuItem[]; isAdmin: boolean }) {
+export function MenuTab({ items, isAdmin }: { items: MenuItem[]; isAdmin: boolean }) {
   if (items.length === 0) {
     return (
       <EmptyState>
@@ -571,7 +571,7 @@ function MenuTab({ items, isAdmin }: { items: MenuItem[]; isAdmin: boolean }) {
   )
 }
 
-function InfoTab({
+export function InfoTab({
   content,
   isAdmin,
   onSave,
