@@ -14,6 +14,7 @@ import { editorialRoutes } from './routes/editorial'
 import { edizione0Routes } from './routes/edizione0'
 import { edizione1Routes } from './routes/edizione1'
 import { accreditationsRoutes } from './routes/accreditations'
+import { menuRoutes } from './routes/menu'
 import { requireAuth } from './middleware/auth'
 
 export type Env = {
@@ -73,6 +74,7 @@ app.use('/api/canvas/*', requireAuth)
 app.use('/api/editorial/*', requireAuth)
 app.use('/api/edizione0/*', requireAuth)
 app.use('/api/edizione1/*', requireAuth)
+app.use('/api/menu/*', requireAuth)
 
 // Routes
 app.route('/api/events', eventsRoutes)
@@ -85,5 +87,6 @@ app.route('/api/canvas', canvasRoutes)
 app.route('/api/editorial', editorialRoutes)
 app.route('/api/edizione0', edizione0Routes)
 app.route('/api/edizione1', edizione1Routes)
+app.route('/api/menu', menuRoutes)
 
 export default app

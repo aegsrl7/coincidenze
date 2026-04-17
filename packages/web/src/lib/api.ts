@@ -111,4 +111,11 @@ export const api = {
   listAccreditations: () => request<any[]>('/accrediti'),
   checkInAccreditation: (code: string) => request<any>(`/accrediti/${encodeURIComponent(code)}/check-in`, { method: 'POST' }),
   deleteAccreditation: (id: string) => request<void>(`/accrediti/${id}`, { method: 'DELETE' }),
+
+  // Menu
+  getMenu: () => request<any[]>('/menu'),
+  createMenuItem: (data: any) => request<any>('/menu', { method: 'POST', body: JSON.stringify(data) }),
+  updateMenuItem: (id: string, data: any) => request<any>(`/menu/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteMenuItem: (id: string) => request<void>(`/menu/${id}`, { method: 'DELETE' }),
+  reorderMenu: (order: string[]) => request<any>('/menu/reorder', { method: 'PUT', body: JSON.stringify({ order }) }),
 }

@@ -11,6 +11,7 @@ import {
   X,
   FileText,
   Ticket,
+  Utensils,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -21,6 +22,7 @@ const navItems = [
   { to: '/admin/programma', icon: Calendar, label: 'Programma' },
   { to: '/admin/artisti', icon: User, label: 'Artisti' },
   { to: '/admin/accrediti', icon: Ticket, label: 'Accrediti' },
+  { to: '/admin/menu', icon: Utensils, label: 'Menù' },
   { to: '/admin/team', icon: Users, label: 'Team' },
   { to: '/admin/media', icon: Music, label: 'Media' },
   { to: '/admin/piano-editoriale', icon: FileText, label: 'Piano Editoriale' },

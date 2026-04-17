@@ -14,6 +14,8 @@ import { Edizione1Page } from '@/features/edizione1/Edizione1Page'
 import { AccreditiFormPage } from '@/features/accrediti/AccreditiFormPage'
 import { BigliettoPage } from '@/features/accrediti/BigliettoPage'
 import { AdminAccreditiPage } from '@/features/accrediti/AdminAccreditiPage'
+import { ArtistDetailPage } from '@/features/artists/ArtistDetailPage'
+import { AdminMenuPage } from '@/features/menu/AdminMenuPage'
 import { useAuthStore } from '@/stores/authStore'
 
 export default function App() {
@@ -32,6 +34,7 @@ export default function App() {
         <Route path="/edizione-1" element={<Edizione1Page />} />
         <Route path="/accrediti" element={<AccreditiFormPage />} />
         <Route path="/biglietto/:code" element={<BigliettoPage />} />
+        <Route path="/artisti/:id" element={<ArtistDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
 
         {/* Redirect legacy → /admin */}
@@ -53,6 +56,7 @@ export default function App() {
             <Route path="/admin/media" element={<MediaPage />} />
             <Route path="/admin/piano-editoriale" element={<PianoEditorialePage />} />
             <Route path="/admin/accrediti" element={<AdminAccreditiPage />} />
+            <Route path="/admin/menu" element={<AdminMenuPage />} />
           </Route>
         </Route>
 
