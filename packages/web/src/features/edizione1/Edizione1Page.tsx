@@ -46,7 +46,9 @@ function categoryColor(cat: EventCategory): string {
 }
 
 function categoryLabel(cat: EventCategory): string {
-  return CATEGORY_LABELS[cat] || cat
+  if (CATEGORY_LABELS[cat]) return CATEGORY_LABELS[cat]
+  const raw = String(cat || '')
+  return raw.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 export function Edizione1Page() {

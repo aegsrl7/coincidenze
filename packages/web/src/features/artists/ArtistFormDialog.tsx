@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,10 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useArtistsStore } from '@/stores/artistsStore'
 import { CATEGORY_LABELS, type EventCategory, type Artist } from '@/types'
 
+function prettifyCategory(slug: string): string {
+  return slug.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
 interface Props {
   open: boolean
   onClose: () => void
@@ -19,7 +23,23 @@ interface Props {
 }
 
 export function ArtistFormDialog({ open, onClose, editItem }: Props) {
-  const { createArtist, updateArtist, deleteArtist } = useArtistsStore()
+  const { artists, createArtist, updateArtist, deleteArtist } = useArtistsStore()
+
+  // Unione tra le categorie hardcoded e quelle già presenti nel DB.
+  const categorySuggestions = useMemo(() => {
+    const map = new Map<string, string>()
+    // Categorie predefinite (slug → label)
+    for (const [slug, label] of Object.entries(CATEGORY_LABELS)) {
+      map.set(slug, label)
+    }
+    // Categorie già usate da artisti esistenti (compresi valori custom)
+    for (const a of artists) {
+      if (a.category && !map.has(a.category)) {
+        map.set(a.category, prettifyCategory(a.category))
+      }
+    }
+    return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]))
+  }, [artists])
   const [form, setForm] = useState({
     name: '',
     bio: '',
@@ -112,16 +132,21 @@ export function ArtistFormDialog({ open, onClose, editItem }: Props) {
 
             <div>
               <label className="text-xs font-medium text-ink-muted">Categoria</label>
-              <select
-                className="mt-1 w-full rounded-md border border-navy/20 bg-crema px-3 py-2 text-sm"
+              <Input
+                list="artist-category-suggestions"
+                className="mt-1"
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value as EventCategory })}
-              >
-                <option value="">-- Nessuna --</option>
-                {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
+                placeholder="Scegli o scrivi una categoria (es. fotografia, scultura, nuova...)"
+              />
+              <datalist id="artist-category-suggestions">
+                {categorySuggestions.map(([slug, label]) => (
+                  <option key={slug} value={slug}>{label}</option>
                 ))}
-              </select>
+              </datalist>
+              <p className="text-[11px] text-ink-muted mt-1">
+                Puoi usare una delle suggerite o digitarne una nuova.
+              </p>
             </div>
 
             <ImageUpload

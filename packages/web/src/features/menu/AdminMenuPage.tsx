@@ -6,7 +6,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { api } from '@/lib/api'
 import type { MenuItem } from '@/types'
 
-const CATEGORY_SUGGESTIONS = ['Antipasti', 'Primi', 'Secondi', 'Dolci', 'Vini', 'Bevande', 'Altro']
+const DEFAULT_CATEGORY_SUGGESTIONS = ['Antipasti', 'Primi', 'Secondi', 'Dolci', 'Vini', 'Bevande', 'Altro']
 
 function emptyDraft(): Omit<MenuItem, 'id' | 'created_at' | 'updated_at' | 'sort_order'> {
   return { category: '', name: '', description: '', price: '', notes: '' }
@@ -36,6 +36,15 @@ export function AdminMenuPage() {
   useEffect(() => {
     load()
   }, [])
+
+  // Unione tra suggestions di default e categorie già presenti
+  const categorySuggestions = useMemo(() => {
+    const set = new Set<string>(DEFAULT_CATEGORY_SUGGESTIONS)
+    for (const item of items) {
+      if (item.category) set.add(item.category)
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b))
+  }, [items])
 
   const grouped = useMemo(() => {
     const map = new Map<string, MenuItem[]>()
@@ -118,7 +127,7 @@ export function AdminMenuPage() {
               onChange={(e) => setDraft({ ...draft, category: e.target.value })}
             />
             <datalist id="menu-categories">
-              {CATEGORY_SUGGESTIONS.map((c) => (
+              {categorySuggestions.map((c) => (
                 <option key={c} value={c} />
               ))}
             </datalist>
