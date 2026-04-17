@@ -187,11 +187,14 @@ export function Edizione1Page() {
   return (
     <div className="max-w-[900px] mx-auto pb-16">
       {/* Hero */}
-      <div className="text-center py-12 sm:py-16 px-4">
-        <h1 className="font-display text-4xl sm:text-5xl font-bold text-navy">COINCIDENZE</h1>
-        <p className="text-lg text-viola italic mt-2">Edizione 1</p>
-        <p className="text-sm text-ink-muted mt-3">25 aprile 2026 &middot; Marsam Locanda, Bene Vagienna</p>
-        <p className="text-xs text-ink-muted mt-1 italic">raffinate casualit&agrave;, occhi attenti</p>
+      <div className="text-center py-10 sm:py-14 px-4">
+        <img
+          src="/logo-coincidenze.png"
+          alt="COINCIDENZE — raffinate casualità, occhi attenti"
+          className="w-full max-w-xs sm:max-w-md mx-auto"
+        />
+        <p className="text-lg text-viola italic mt-4">Edizione 1</p>
+        <p className="text-sm text-ink-muted mt-2">25 aprile 2026 &middot; Marsam Locanda, Bene Vagienna</p>
 
         <Link
           to="/accrediti"

@@ -65,11 +65,13 @@ export function AccreditiFormPage() {
         </Link>
 
         <header className="text-center mb-8">
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-navy">
-            Accrediti
-          </h1>
-          <p className="text-viola italic mt-1">Edizione 1</p>
-          <p className="text-sm text-ink-muted mt-3">
+          <img
+            src="/logo-coincidenze.png"
+            alt="COINCIDENZE — raffinate casualità, occhi attenti"
+            className="w-full max-w-[280px] mx-auto mb-4"
+          />
+          <p className="text-viola italic">Edizione 1 &middot; Accrediti</p>
+          <p className="text-sm text-ink-muted mt-2">
             25 aprile 2026 &middot; Marsam Locanda, Bene Vagienna
           </p>
           <p className="text-sm text-ink-light mt-4 leading-relaxed">
