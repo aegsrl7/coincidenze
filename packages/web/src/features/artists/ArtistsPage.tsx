@@ -115,7 +115,7 @@ export function ArtistsPage() {
                 onClick={() => { if (isAuthenticated) { setEditingItem(artist); setShowForm(true) } }}
               >
                 {/* Avatar / placeholder */}
-                <div className="relative h-[244px] bg-beige-dark flex items-center justify-center">
+                <div className="relative aspect-square sm:h-[244px] bg-beige-dark flex items-center justify-center">
                   {artist.image_url ? (
                     <img src={artist.image_url} alt={artist.name} className="h-full w-full object-cover" />
                   ) : (

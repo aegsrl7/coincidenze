@@ -23,20 +23,20 @@ export function Header({ onMenuClick }: HeaderProps) {
   const title = PAGE_TITLES[location.pathname] || 'COINCIDENZE'
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b border-navy/10 bg-crema/80 px-4 backdrop-blur-sm">
+    <header className="flex h-14 items-center gap-2 sm:gap-4 border-b border-navy/10 bg-crema/80 px-3 sm:px-4 backdrop-blur-sm shrink-0">
       <Button
         variant="ghost"
         size="icon"
         onClick={onMenuClick}
-        className="lg:hidden"
+        className="lg:hidden shrink-0"
       >
         <Menu className="h-5 w-5" />
       </Button>
 
-      <h2 className="font-display text-lg font-semibold text-navy">{title}</h2>
+      <h2 className="font-display text-base sm:text-lg font-semibold text-navy truncate min-w-0">{title}</h2>
 
-      <div className="ml-auto flex items-center gap-2">
-        <div className="relative hidden sm:block">
+      <div className="ml-auto flex items-center gap-2 shrink-0">
+        <div className="relative hidden md:block">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
           <Input
             placeholder="Cerca..."

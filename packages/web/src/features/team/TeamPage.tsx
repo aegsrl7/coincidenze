@@ -184,7 +184,7 @@ export function TeamPage() {
         {COLUMNS.map((col) => (
           <div
             key={col.id}
-            className={`min-w-[280px] rounded-lg border-2 border-dashed p-3 transition-colors min-h-[200px] ${
+            className={`rounded-lg border-2 border-dashed p-3 transition-colors min-h-[140px] md:min-h-[200px] ${
               dragOverCol === col.id
                 ? 'border-navy/40 bg-navy/5'
                 : 'border-transparent bg-beige-dark/30'

@@ -156,10 +156,10 @@ export function AdminAccreditiPage() {
               <tbody>
                 {filtered.map((a) => (
                   <tr key={a.id} className="border-t border-navy/5 hover:bg-navy/3">
-                    <td className="px-3 py-2 font-medium text-navy">
+                    <td className="px-3 py-2 font-medium text-navy whitespace-nowrap">
                       {a.name} {a.surname}
                     </td>
-                    <td className="px-3 py-2 text-ink-light">{a.email}</td>
+                    <td className="px-3 py-2 text-ink-light max-w-[180px] sm:max-w-none truncate">{a.email}</td>
                     <td className="px-3 py-2 text-ink-light hidden md:table-cell">{a.phone || '—'}</td>
                     <td className="px-3 py-2 text-ink-muted hidden sm:table-cell whitespace-nowrap">
                       {fmtDateTime(a.created_at)}
