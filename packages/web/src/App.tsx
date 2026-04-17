@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
+import { RequireAuth } from '@/components/RequireAuth'
+import { LoginPage } from '@/features/auth/LoginPage'
 import { CanvasPage } from '@/features/canvas/CanvasPage'
 import { ProgrammaPage } from '@/features/programma/ProgrammaPage'
 import { TeamPage } from '@/features/team/TeamPage'
@@ -21,17 +23,35 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Pubblico */}
+        <Route path="/" element={<Navigate to="/edizione-1" replace />} />
         <Route path="/edizione-0" element={<Edizione0Page />} />
         <Route path="/edizione-1" element={<Edizione1Page />} />
-        <Route element={<AppShell />}>
-          <Route path="/" element={<Navigate to="/canvas" replace />} />
-          <Route path="/canvas" element={<CanvasPage />} />
-          <Route path="/programma" element={<ProgrammaPage />} />
-          <Route path="/team" element={<TeamPage />} />
-          <Route path="/artisti" element={<ArtistsPage />} />
-          <Route path="/media" element={<MediaPage />} />
-          <Route path="/piano-editoriale" element={<PianoEditorialePage />} />
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* Redirect legacy → /admin */}
+        <Route path="/canvas" element={<Navigate to="/admin/canvas" replace />} />
+        <Route path="/programma" element={<Navigate to="/admin/programma" replace />} />
+        <Route path="/team" element={<Navigate to="/admin/team" replace />} />
+        <Route path="/artisti" element={<Navigate to="/admin/artisti" replace />} />
+        <Route path="/media" element={<Navigate to="/admin/media" replace />} />
+        <Route path="/piano-editoriale" element={<Navigate to="/admin/piano-editoriale" replace />} />
+
+        {/* Admin (protetto) */}
+        <Route element={<RequireAuth />}>
+          <Route element={<AppShell />}>
+            <Route path="/admin" element={<Navigate to="/admin/canvas" replace />} />
+            <Route path="/admin/canvas" element={<CanvasPage />} />
+            <Route path="/admin/programma" element={<ProgrammaPage />} />
+            <Route path="/admin/team" element={<TeamPage />} />
+            <Route path="/admin/artisti" element={<ArtistsPage />} />
+            <Route path="/admin/media" element={<MediaPage />} />
+            <Route path="/admin/piano-editoriale" element={<PianoEditorialePage />} />
+          </Route>
         </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/edizione-1" replace />} />
       </Routes>
     </BrowserRouter>
   )

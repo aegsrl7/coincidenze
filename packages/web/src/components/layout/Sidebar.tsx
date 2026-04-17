@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
   LayoutGrid,
@@ -7,22 +6,22 @@ import {
   User,
   Music,
   Archive,
-  LogIn,
   LogOut,
+  ExternalLink,
   X,
+  FileText,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/authStore'
-import { LoginDialog } from '@/features/auth/LoginDialog'
 
-const allNavItems = [
-  { to: '/canvas', icon: LayoutGrid, label: 'Canvas', authOnly: true },
-  { to: '/programma', icon: Calendar, label: 'Programma', authOnly: false },
-  { to: '/artisti', icon: User, label: 'Artisti', authOnly: false },
-  { to: '/team', icon: Users, label: 'Team', authOnly: true },
-  { to: '/media', icon: Music, label: 'Media', authOnly: true },
-  { to: '/piano-editoriale', icon: Calendar, label: 'Piano Editoriale', authOnly: true },
+const navItems = [
+  { to: '/admin/canvas', icon: LayoutGrid, label: 'Canvas' },
+  { to: '/admin/programma', icon: Calendar, label: 'Programma' },
+  { to: '/admin/artisti', icon: User, label: 'Artisti' },
+  { to: '/admin/team', icon: Users, label: 'Team' },
+  { to: '/admin/media', icon: Music, label: 'Media' },
+  { to: '/admin/piano-editoriale', icon: FileText, label: 'Piano Editoriale' },
 ]
 
 interface SidebarProps {
@@ -31,12 +30,10 @@ interface SidebarProps {
 }
 
 export function Sidebar({ open, onClose }: SidebarProps) {
-  const { isAuthenticated, logout } = useAuthStore()
-  const [showLogin, setShowLogin] = useState(false)
+  const logout = useAuthStore((s) => s.logout)
 
   return (
     <>
-      {/* Overlay mobile */}
       {open && (
         <div
           className="fixed inset-0 z-40 bg-ink/30 lg:hidden"
@@ -50,7 +47,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           open ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        {/* Logo */}
         <div className="flex items-center justify-between p-5 pb-4">
           <img
             src="/logo-coincidenze.png"
@@ -62,11 +58,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </button>
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 space-y-1 px-3">
-          {allNavItems
-            .filter((item) => !item.authOnly || isAuthenticated)
-            .map((item) => (
+          {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -84,59 +77,46 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               {item.label}
             </NavLink>
           ))}
-          <a
-            href="/edizione-1"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-ink-light hover:bg-beige-dark hover:text-navy transition-colors"
-          >
-            <Archive className="h-4 w-4" />
-            Edizione 1
-          </a>
-          <a
-            href="/edizione-0"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-ink-light hover:bg-beige-dark hover:text-navy transition-colors"
-          >
-            <Archive className="h-4 w-4" />
-            Edizione 0
-          </a>
+
+          <div className="pt-3 mt-3 border-t border-navy/10">
+            <p className="px-3 text-[11px] uppercase tracking-wider text-ink-muted mb-1.5">
+              Pubblico
+            </p>
+            <a
+              href="/edizione-1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-ink-light hover:bg-beige-dark hover:text-navy transition-colors"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Edizione 1
+            </a>
+            <a
+              href="/edizione-0"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-ink-light hover:bg-beige-dark hover:text-navy transition-colors"
+            >
+              <Archive className="h-4 w-4" />
+              Edizione 0
+            </a>
+          </div>
         </nav>
 
-        {/* Auth + Footer */}
         <div className="border-t border-navy/10 p-4 space-y-3">
-          {isAuthenticated ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start gap-2 text-ink-light hover:text-bordeaux"
-              onClick={() => logout()}
-            >
-              <LogOut className="h-4 w-4" />
-              Esci
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start gap-2 text-ink-light hover:text-navy"
-              onClick={() => setShowLogin(true)}
-            >
-              <LogIn className="h-4 w-4" />
-              Accedi
-            </Button>
-          )}
-          <p className="text-xs text-ink-muted">
-            Edizione 1 — 25 Aprile 2026
-          </p>
-          <p className="text-xs text-ink-muted">
-            Marsam Locanda, Bene Vagienna
-          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start gap-2 text-ink-light hover:text-bordeaux"
+            onClick={() => logout()}
+          >
+            <LogOut className="h-4 w-4" />
+            Esci
+          </Button>
+          <p className="text-xs text-ink-muted">Edizione 1 — 25 Aprile 2026</p>
+          <p className="text-xs text-ink-muted">Marsam Locanda, Bene Vagienna</p>
         </div>
       </aside>
-
-      {showLogin && <LoginDialog open={showLogin} onClose={() => setShowLogin(false)} />}
     </>
   )
 }

@@ -4,13 +4,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 const PAGE_TITLES: Record<string, string> = {
-  '/canvas': 'Canvas',
-  '/programma': 'Programma',
-  '/artisti': 'Artisti',
-  '/team': 'Team & Task',
-  '/media': 'Libreria Media',
-  '/piano-editoriale': 'Piano Editoriale',
-  '/edizione-0': 'Edizione 0 — 2025',
+  '/admin/canvas': 'Canvas',
+  '/admin/programma': 'Programma',
+  '/admin/artisti': 'Artisti',
+  '/admin/team': 'Team & Task',
+  '/admin/media': 'Libreria Media',
+  '/admin/piano-editoriale': 'Piano Editoriale',
 }
 
 interface HeaderProps {
