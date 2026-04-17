@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { RequireAuth } from '@/components/RequireAuth'
 import { LoginPage } from '@/features/auth/LoginPage'
-import { CanvasPage } from '@/features/canvas/CanvasPage'
 import { ProgrammaPage } from '@/features/programma/ProgrammaPage'
 import { TeamPage } from '@/features/team/TeamPage'
 import { MediaPage } from '@/features/media/MediaPage'
@@ -45,7 +44,7 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
 
         {/* Redirect legacy → /admin */}
-        <Route path="/canvas" element={<Navigate to="/admin/canvas" replace />} />
+        <Route path="/canvas" element={<Navigate to="/admin/programma" replace />} />
         <Route path="/programma" element={<Navigate to="/admin/programma" replace />} />
         <Route path="/team" element={<Navigate to="/admin/team" replace />} />
         <Route path="/artisti" element={<Navigate to="/admin/artisti" replace />} />
@@ -56,7 +55,7 @@ export default function App() {
         <Route element={<RequireAuth />}>
           <Route element={<AppShell />}>
             <Route path="/admin" element={<Navigate to="/admin/programma" replace />} />
-            <Route path="/admin/canvas" element={<CanvasPage />} />
+            <Route path="/admin/canvas" element={<Navigate to="/admin/programma" replace />} />
             <Route path="/admin/programma" element={<ProgrammaPage />} />
             <Route path="/admin/team" element={<TeamPage />} />
             <Route path="/admin/artisti" element={<ArtistsPage />} />

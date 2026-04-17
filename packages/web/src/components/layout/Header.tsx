@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 const PAGE_TITLES: Record<string, string> = {
-  '/admin/canvas': 'Canvas',
   '/admin/programma': 'Programma',
   '/admin/artisti': 'Artisti',
   '/admin/team': 'Team & Task',
