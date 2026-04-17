@@ -5,6 +5,7 @@ import {
   Clock, MapPin, Ticket, Calendar, Utensils, Info, ChevronRight, Users,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PublicFooter } from '@/components/PublicFooter'
 import { useEdizione1Store } from '@/stores/edizione1Store'
 import { useAuthStore } from '@/stores/authStore'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
@@ -420,6 +421,8 @@ export function Edizione1Page() {
         onCancel={() => setDeleteTarget(null)}
         loading={deleting}
       />
+
+      <PublicFooter />
     </div>
   )
 }
@@ -673,12 +676,42 @@ function EditableSection({
           </div>
         </div>
       ) : value ? (
-        <p className="text-sm text-ink-light leading-relaxed whitespace-pre-line">{value}</p>
+        <p className="text-sm text-ink-light leading-relaxed whitespace-pre-line">{linkify(value)}</p>
       ) : (
         <p className="text-sm text-ink-muted italic">{isAdmin ? placeholder : '—'}</p>
       )}
     </div>
   )
+}
+
+// Trasforma email, telefoni italiani, URL e handle @instagram in link cliccabili.
+// Applicato al testo delle sezioni Info (editabili da admin).
+function linkify(text: string): React.ReactNode[] {
+  const pattern = /(https?:\/\/[^\s<>)]+)|([\w.+-]+@[\w-]+(?:\.[\w-]+)+)|(\+39\s*3\d{2}[\s-]?\d{3}[\s-]?\d{3,4}|\b3\d{2}\s?\d{3}\s?\d{3,4}\b)|(@[a-zA-Z0-9_.]{1,30})/g
+  const out: React.ReactNode[] = []
+  let last = 0
+  let m: RegExpExecArray | null
+  let k = 0
+  const linkCls = 'text-viola underline underline-offset-2 decoration-viola/40 hover:decoration-viola'
+
+  while ((m = pattern.exec(text)) !== null) {
+    if (m.index > last) out.push(text.slice(last, m.index))
+    const [, url, email, phone, ig] = m
+    if (url) {
+      out.push(<a key={k++} href={url} target="_blank" rel="noopener noreferrer" className={linkCls}>{url}</a>)
+    } else if (email) {
+      out.push(<a key={k++} href={`mailto:${email}`} className={linkCls}>{email}</a>)
+    } else if (phone) {
+      const tel = phone.replace(/\s/g, '')
+      out.push(<a key={k++} href={`tel:${tel}`} className={linkCls}>{phone}</a>)
+    } else if (ig) {
+      const handle = ig.slice(1)
+      out.push(<a key={k++} href={`https://instagram.com/${handle}`} target="_blank" rel="noopener noreferrer" className={linkCls}>{ig}</a>)
+    }
+    last = m.index + m[0].length
+  }
+  if (last < text.length) out.push(text.slice(last))
+  return out
 }
 
 function EmptyState({ children }: { children: React.ReactNode }) {

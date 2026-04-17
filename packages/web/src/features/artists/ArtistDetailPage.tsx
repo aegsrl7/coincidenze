@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Clock, MapPin, ExternalLink, Loader2, AlertCircle, Music, Instagram, Facebook } from 'lucide-react'
 import ReactPlayer from 'react-player'
+import { PublicFooter } from '@/components/PublicFooter'
 import { api } from '@/lib/api'
 import {
   CATEGORY_COLORS,
@@ -197,6 +198,7 @@ export function ArtistDetailPage() {
           </section>
         )}
       </div>
+      <PublicFooter />
     </div>
   )
 }

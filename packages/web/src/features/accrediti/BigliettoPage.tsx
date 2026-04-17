@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Loader2, CheckCircle2, AlertCircle, ArrowLeft, Calendar, MapPin, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PublicFooter } from '@/components/PublicFooter'
 import { useAuthStore } from '@/stores/authStore'
 import { api } from '@/lib/api'
 
@@ -209,6 +210,7 @@ export function BigliettoPage() {
           Se l'hai ricevuta per email, tienila a portata di mano il giorno dell'evento.
         </p>
       </div>
+      <PublicFooter />
     </div>
   )
 }

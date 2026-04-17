@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Loader2, CheckCircle2, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PublicFooter } from '@/components/PublicFooter'
 import { api } from '@/lib/api'
 
 export function AccreditiFormPage() {
@@ -199,6 +200,7 @@ export function AccreditiFormPage() {
           </p>
         </form>
       </div>
+      <PublicFooter />
     </div>
   )
 }
