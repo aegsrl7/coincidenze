@@ -44,18 +44,18 @@ export function buildTicketEmail(opts: {
   ticketUrl: string
   qrUrl: string
 }): { subject: string; html: string; text: string } {
-  const subject = 'Il tuo accredito — COINCIDENZE · 25 aprile'
+  const subject = 'Il tuo accredito · COINCIDENZE · 25 aprile'
   const text = [
     `Ciao ${opts.name},`,
     '',
-    'grazie per esserti accreditato a COINCIDENZE — Edizione 1.',
+    'grazie per esserti accreditato a COINCIDENZE · Edizione 1.',
     '',
     'Sabato 25 aprile 2026, Marsam Locanda, Bene Vagienna.',
     '',
     'Conserva questo link: è il tuo biglietto con QR da mostrare all\'ingresso.',
     opts.ticketUrl,
     '',
-    '— COINCIDENZE',
+    'COINCIDENZE',
   ].join('\n')
 
   const html = `<!DOCTYPE html>
