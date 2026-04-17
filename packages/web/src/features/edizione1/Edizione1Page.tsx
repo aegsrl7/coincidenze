@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { Link, useNavigationType, useSearchParams } from 'react-router-dom'
 import {
   Clock, MapPin, Pencil, X, Check, Loader2, ChevronRight, Users,
-  Ticket, Calendar, Utensils, Info, ChevronDown,
+  Ticket, Calendar, Utensils, Info, ChevronDown, Instagram, Phone,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PublicFooter } from '@/components/PublicFooter'
@@ -358,20 +358,6 @@ function ArtistiTab({ artists }: { artists: Artist[] }) {
 }
 
 function MenuTab({ items, isAdmin }: { items: MenuItem[]; isAdmin: boolean }) {
-  if (items.length === 0) {
-    return (
-      <EmptyState>
-        Il menu sarà presto disponibile.
-        {isAdmin && (
-          <>
-            <br />
-            <Link to="/admin/menu" className="text-viola underline text-xs">Aggiungi voci →</Link>
-          </>
-        )}
-      </EmptyState>
-    )
-  }
-
   const grouped = items.reduce<Record<string, MenuItem[]>>((acc, item) => {
     const key = item.category || 'Altro'
     if (!acc[key]) acc[key] = []
@@ -380,7 +366,21 @@ function MenuTab({ items, isAdmin }: { items: MenuItem[]; isAdmin: boolean }) {
   }, {})
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      <ReservationNotice />
+
+      {items.length === 0 ? (
+        <EmptyState>
+          Il menu sarà presto disponibile.
+          {isAdmin && (
+            <>
+              <br />
+              <Link to="/admin/menu" className="text-viola underline text-xs">Aggiungi voci →</Link>
+            </>
+          )}
+        </EmptyState>
+      ) : (
+        <div className="space-y-5">
       {Object.entries(grouped).map(([cat, list]) => (
         <section key={cat}>
           <h3 className="font-display text-lg font-semibold text-navy mb-2">{cat}</h3>
@@ -406,6 +406,53 @@ function MenuTab({ items, isAdmin }: { items: MenuItem[]; isAdmin: boolean }) {
           Gestisci menu →
         </Link>
       )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ReservationNotice() {
+  return (
+    <div className="bg-navy/5 border border-navy/10 rounded-xl p-4 sm:p-5">
+      <div className="flex items-start gap-3">
+        <div className="h-9 w-9 rounded-full bg-navy/10 flex items-center justify-center shrink-0">
+          <Utensils className="h-4 w-4 text-navy" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-navy">Prenota il tavolo</p>
+          <p className="text-xs text-ink-light mt-0.5 leading-relaxed">
+            Scrivi un messaggio diretto su Instagram o chiama Marsam per riservare un posto a pranzo.
+          </p>
+          <div className="flex flex-wrap gap-2 mt-3">
+            <a
+              href="https://www.instagram.com/coincidenze.arte/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 bg-white/70 hover:bg-white border border-navy/10 text-navy text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
+            >
+              <Instagram className="h-3.5 w-3.5" />
+              @coincidenze.arte
+            </a>
+            <a
+              href="https://www.instagram.com/marsamlocanda/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 bg-white/70 hover:bg-white border border-navy/10 text-navy text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
+            >
+              <Instagram className="h-3.5 w-3.5" />
+              @marsamlocanda
+            </a>
+            <a
+              href="tel:+393334873667"
+              className="inline-flex items-center gap-1.5 bg-white/70 hover:bg-white border border-navy/10 text-navy text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
+            >
+              <Phone className="h-3.5 w-3.5" />
+              333 487 3667
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
