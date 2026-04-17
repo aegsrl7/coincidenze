@@ -17,6 +17,7 @@ import { BigliettoPage } from '@/features/accrediti/BigliettoPage'
 import { AdminAccreditiPage } from '@/features/accrediti/AdminAccreditiPage'
 import { ArtistDetailPage } from '@/features/artists/ArtistDetailPage'
 import { AdminMenuPage } from '@/features/menu/AdminMenuPage'
+import { PrivacyPage } from '@/features/legal/PrivacyPage'
 import { useAuthStore } from '@/stores/authStore'
 
 export default function App() {
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/accrediti" element={<AccreditiFormPage />} />
         <Route path="/biglietto/:code" element={<BigliettoPage />} />
         <Route path="/artisti/:id" element={<ArtistDetailPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/login" element={<LoginPage />} />
 
         {/* Redirect legacy → /admin */}
