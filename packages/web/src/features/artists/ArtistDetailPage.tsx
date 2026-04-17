@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Clock, MapPin, ExternalLink, Loader2, AlertCircle, Music } from 'lucide-react'
 import { api } from '@/lib/api'
 import {
@@ -13,6 +13,20 @@ import {
 
 export function ArtistDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+
+  const goBack = () => {
+    // Se la history contiene la pagina di arrivo, usa il back vero (trigger scroll restore)
+    // altrimenti fallback su link diretto alla tab artisti
+    const ref = document.referrer
+    const sameOrigin = ref && ref.startsWith(window.location.origin)
+    if (sameOrigin && window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate('/edizione-1?tab=artisti', { replace: true })
+    }
+  }
+
   const [artist, setArtist] = useState<Artist | null>(null)
   const [events, setEvents] = useState<Event[]>([])
   const [media, setMedia] = useState<MediaItem[]>([])
@@ -46,10 +60,10 @@ export function ArtistDetailPage() {
         <div className="max-w-sm text-center">
           <AlertCircle className="h-10 w-10 text-bordeaux/70 mx-auto mb-3" />
           <p className="text-navy font-medium">{error || 'Artista non trovato'}</p>
-          <Link to="/edizione-1" className="inline-flex items-center gap-1.5 text-sm text-viola hover:underline mt-6">
+          <button onClick={goBack} className="inline-flex items-center gap-1.5 text-sm text-viola hover:underline mt-6">
             <ArrowLeft className="h-4 w-4" />
             Torna all'evento
-          </Link>
+          </button>
         </div>
       </div>
     )
@@ -60,13 +74,13 @@ export function ArtistDetailPage() {
   return (
     <div className="min-h-screen bg-beige">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 pb-16">
-        <Link
-          to="/edizione-1"
+        <button
+          onClick={goBack}
           className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-navy transition-colors mb-4"
         >
           <ArrowLeft className="h-4 w-4" />
           Tutti gli artisti
-        </Link>
+        </button>
 
         {/* Hero artist */}
         <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start mb-6">

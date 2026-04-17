@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigationType, useSearchParams } from 'react-router-dom'
 import {
   Plus, Trash2, Pencil, X, Check, Image as ImageIcon, Loader2, GripVertical,
   Clock, MapPin, Ticket, Calendar, Utensils, Info, ChevronRight, Users,
@@ -58,7 +58,18 @@ export function Edizione1Page() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const checkAuth = useAuthStore((s) => s.checkAuth)
 
-  const [activeTab, setActiveTab] = useState<TabId>('programma')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const navType = useNavigationType()
+
+  const tabFromUrl = searchParams.get('tab')
+  const activeTab: TabId = (TABS.find((t) => t.id === tabFromUrl)?.id as TabId) || 'programma'
+  const setActiveTab = useCallback(
+    (t: TabId) => {
+      setSearchParams({ tab: t }, { replace: true })
+    },
+    [setSearchParams]
+  )
+
   const [events, setEvents] = useState<Event[]>([])
   const [artists, setArtists] = useState<Artist[]>([])
   const [menu, setMenu] = useState<MenuItem[]>([])
@@ -81,6 +92,41 @@ export function Edizione1Page() {
     api.getArtists().then(setArtists)
     api.getMenu().then((m) => setMenu(m as MenuItem[]))
   }, [checkAuth, fetchGallery, fetchContent])
+
+  // Restore scroll on back-nav, reset on tab click / fresh navigation
+  useEffect(() => {
+    const key = `edizione1:scroll:${activeTab}`
+    if (navType === 'POP') {
+      const saved = Number(sessionStorage.getItem(key) || 0)
+      if (saved > 0) {
+        // Retry while content loads (events/artists fetch async)
+        const attempts = [60, 180, 360, 600, 1000]
+        attempts.forEach((ms) =>
+          window.setTimeout(() => {
+            if (Math.abs(window.scrollY - saved) > 4) window.scrollTo(0, saved)
+          }, ms)
+        )
+      }
+    } else {
+      window.scrollTo(0, 0)
+    }
+  }, [activeTab, navType])
+
+  useEffect(() => {
+    const key = `edizione1:scroll:${activeTab}`
+    let t: number | undefined
+    const save = () => {
+      if (t) window.clearTimeout(t)
+      t = window.setTimeout(() => {
+        sessionStorage.setItem(key, String(window.scrollY))
+      }, 80)
+    }
+    window.addEventListener('scroll', save, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', save)
+      sessionStorage.setItem(key, String(window.scrollY))
+    }
+  }, [activeTab])
 
   const scheduledEvents = events.filter((e) => !isAllDay(e)).sort((a, b) => a.start_time.localeCompare(b.start_time))
   const allDayEvents = events.filter(isAllDay)
