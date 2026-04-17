@@ -121,7 +121,7 @@ export function EdizioneV2Page() {
 
           <Link
             to="/accrediti"
-            className="inline-flex items-center gap-2 mt-10 bg-crema text-navy px-6 py-3 rounded-full text-sm font-medium hover:bg-white transition-colors shadow-lg"
+            className="inline-flex items-center gap-2 mt-10 bg-crema text-navy px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-white transition-colors shadow-lg"
           >
             <Ticket className="h-4 w-4" />
             Accreditati gratuitamente
