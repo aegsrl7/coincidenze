@@ -586,15 +586,24 @@ function InfoTab({
           placeholder={`Aggiungi ${section.label.toLowerCase()}...`}
         />
       ))}
-      <div className="aspect-video rounded-lg overflow-hidden border border-navy/10 bg-navy/5">
+      <a
+        href="https://www.google.com/maps/search/?api=1&query=Marsam+Locanda+Frazione+Roncaglia+12+Bene+Vagienna"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block aspect-video rounded-lg overflow-hidden border border-navy/10 bg-navy/5 group"
+        title="Apri in Google Maps"
+      >
         <iframe
-          src="https://www.google.com/maps?q=Marsam+Locanda+Bene+Vagienna&output=embed"
-          className="w-full h-full"
+          src="https://www.google.com/maps?q=Marsam+Locanda+Frazione+Roncaglia+12+Bene+Vagienna+CN&output=embed"
+          className="w-full h-full pointer-events-none group-hover:pointer-events-auto"
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
-          title="Marsam Locanda, Bene Vagienna"
+          title="Marsam Locanda — Frazione Roncaglia 12, Bene Vagienna"
         />
-      </div>
+      </a>
+      <p className="text-xs text-ink-muted text-center mt-1">
+        Tocca la mappa per aprire le indicazioni
+      </p>
     </div>
   )
 }
