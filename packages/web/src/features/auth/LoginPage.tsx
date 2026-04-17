@@ -14,7 +14,7 @@ export function LoginPage() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const from = new URLSearchParams(location.search).get('from') || '/admin/canvas'
+  const from = new URLSearchParams(location.search).get('from') || '/admin/programma'
 
   if (!loading && isAuthenticated) {
     return <Navigate to={from} replace />

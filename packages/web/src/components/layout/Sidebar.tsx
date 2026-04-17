@@ -1,6 +1,5 @@
 import { NavLink } from 'react-router-dom'
 import {
-  LayoutGrid,
   Calendar,
   Users,
   User,
@@ -19,7 +18,6 @@ import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/authStore'
 
 const navItems = [
-  { to: '/admin/canvas', icon: LayoutGrid, label: 'Canvas' },
   { to: '/admin/programma', icon: Calendar, label: 'Programma' },
   { to: '/admin/artisti', icon: User, label: 'Artisti' },
   { to: '/admin/accrediti', icon: Ticket, label: 'Accrediti' },

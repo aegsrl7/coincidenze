@@ -55,7 +55,7 @@ export default function App() {
         {/* Admin (protetto) */}
         <Route element={<RequireAuth />}>
           <Route element={<AppShell />}>
-            <Route path="/admin" element={<Navigate to="/admin/canvas" replace />} />
+            <Route path="/admin" element={<Navigate to="/admin/programma" replace />} />
             <Route path="/admin/canvas" element={<CanvasPage />} />
             <Route path="/admin/programma" element={<ProgrammaPage />} />
             <Route path="/admin/team" element={<TeamPage />} />
