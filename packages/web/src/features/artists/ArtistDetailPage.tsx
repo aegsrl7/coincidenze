@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Clock, MapPin, ExternalLink, Loader2, AlertCircle, Music } from 'lucide-react'
+import { ArrowLeft, Clock, MapPin, ExternalLink, Loader2, AlertCircle, Music, Instagram, Facebook } from 'lucide-react'
+import ReactPlayer from 'react-player'
 import { api } from '@/lib/api'
 import {
   CATEGORY_COLORS,
@@ -10,6 +11,19 @@ import {
   type MediaItem,
   type EventCategory,
 } from '@/types'
+
+function detectSocial(url: string): { label: string; Icon: typeof Instagram } | null {
+  if (!url) return null
+  try {
+    const u = new URL(url)
+    const host = u.hostname.toLowerCase()
+    if (host.includes('instagram.com')) return { label: 'Instagram', Icon: Instagram }
+    if (host.includes('facebook.com') || host.includes('fb.com')) return { label: 'Facebook', Icon: Facebook }
+    return null
+  } catch {
+    return null
+  }
+}
 
 export function ArtistDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -107,17 +121,22 @@ export function ArtistDetailPage() {
               {CATEGORY_LABELS[artist.category as EventCategory] || artist.category}
             </div>
             <h1 className="font-display text-3xl sm:text-4xl font-bold text-navy">{artist.name}</h1>
-            {artist.website && (
-              <a
-                href={artist.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-viola hover:underline mt-2"
-              >
-                Sito web
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            )}
+            {artist.website && (() => {
+              const social = detectSocial(artist.website)
+              const label = social?.label || 'Sito web'
+              const Icon = social?.Icon || ExternalLink
+              return (
+                <a
+                  href={artist.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-viola hover:underline mt-2"
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </a>
+              )
+            })()}
           </div>
         </div>
 
@@ -195,9 +214,18 @@ function MediaCard({ item }: { item: MediaItem }) {
   }
   if (item.type === 'video') {
     return (
-      <div className="rounded-lg overflow-hidden bg-navy/5">
-        <video src={item.url} controls playsInline className="w-full aspect-video" preload="metadata" />
-        {item.title && <p className="text-xs text-ink-muted px-3 py-2">{item.title}</p>}
+      <div className="rounded-lg overflow-hidden bg-black">
+        <div className="relative w-full aspect-video">
+          <ReactPlayer
+            url={item.url}
+            controls
+            width="100%"
+            height="100%"
+            style={{ position: 'absolute', top: 0, left: 0 }}
+            config={{ youtube: { playerVars: { modestbranding: 1, rel: 0 } } }}
+          />
+        </div>
+        {item.title && <p className="text-xs text-ink-muted px-3 py-2 bg-white/60">{item.title}</p>}
       </div>
     )
   }
