@@ -3,6 +3,36 @@ import type { Env } from '../index'
 
 export const menuRoutes = new Hono<Env>()
 
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/['']/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 60)
+}
+
+async function ensureMenuCategory(db: D1Database, label: string): Promise<void> {
+  const trimmed = label.trim()
+  if (!trimmed) return
+  const slug = slugify(trimmed)
+  if (!slug) return
+  const existing = await db
+    .prepare('SELECT id FROM categories WHERE type = ? AND slug = ?')
+    .bind('menu', slug)
+    .first()
+  if (existing) return
+  const next = await db
+    .prepare("SELECT COALESCE(MAX(sort_order), -10) + 10 AS next FROM categories WHERE type = 'menu'")
+    .first<{ next: number }>()
+  await db
+    .prepare('INSERT INTO categories (id, type, slug, label, color, sort_order) VALUES (?, ?, ?, ?, ?, ?)')
+    .bind(crypto.randomUUID(), 'menu', slug, trimmed, '', next?.next ?? 0)
+    .run()
+}
+
 // GET / — pubblico
 menuRoutes.get('/', async (c) => {
   const { results } = await c.env.DB
@@ -15,17 +45,19 @@ menuRoutes.post('/', async (c) => {
   const db = c.env.DB
   const body = await c.req.json()
   const id = crypto.randomUUID()
+  const category = body.category || ''
   await db.prepare(
     'INSERT INTO menu_items (id, category, name, description, price, notes, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)'
   ).bind(
     id,
-    body.category || '',
+    category,
     body.name || '',
     body.description || '',
     body.price || '',
     body.notes || '',
     body.sort_order ?? 0
   ).run()
+  await ensureMenuCategory(db, category)
   return c.json({ id, ...body }, 201)
 })
 
@@ -33,11 +65,12 @@ menuRoutes.put('/:id', async (c) => {
   const db = c.env.DB
   const id = c.req.param('id')
   const body = await c.req.json()
+  const category = body.category || ''
   await db.prepare(
     `UPDATE menu_items SET category = ?, name = ?, description = ?, price = ?, notes = ?, sort_order = ?,
      updated_at = datetime('now') WHERE id = ?`
   ).bind(
-    body.category || '',
+    category,
     body.name || '',
     body.description || '',
     body.price || '',
@@ -45,6 +78,7 @@ menuRoutes.put('/:id', async (c) => {
     body.sort_order ?? 0,
     id
   ).run()
+  await ensureMenuCategory(db, category)
   return c.json({ id, ...body })
 })
 
