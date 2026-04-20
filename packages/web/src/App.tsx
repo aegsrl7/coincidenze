@@ -10,6 +10,7 @@ import { ArtistsPage } from '@/features/artists/ArtistsPage'
 import { PianoEditorialePage } from '@/features/editorial/PianoEditorialePage'
 import { Edizione0Page } from '@/features/edizione0/Edizione0Page'
 import { Edizione1Page } from '@/features/edizione1/Edizione1Page'
+import { ProgrammaInstagramPage } from '@/features/edizione1/ProgrammaInstagramPage'
 import { AccreditiFormPage } from '@/features/accrediti/AccreditiFormPage'
 import { BigliettoPage } from '@/features/accrediti/BigliettoPage'
 import { AdminAccreditiPage } from '@/features/accrediti/AdminAccreditiPage'
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/edizione-1" replace />} />
         <Route path="/edizione-0" element={<Edizione0Page />} />
         <Route path="/edizione-1" element={<Edizione1Page />} />
+        <Route path="/programma-instagram" element={<ProgrammaInstagramPage />} />
         <Route path="/edizione-1-v2" element={<Navigate to="/edizione-1" replace />} />
         <Route path="/accrediti" element={<AccreditiFormPage />} />
         <Route path="/biglietto/:code" element={<BigliettoPage />} />
