@@ -33,7 +33,7 @@ export function BigliettoPage() {
 
   useEffect(() => {
     if (!code) return
-    const API_BASE = import.meta.env.DEV ? '/api' : 'https://coincidenze-api.lamaz7.workers.dev/api'
+    const API_BASE = import.meta.env.DEV ? '/api' : 'https://api.coincidenze.org/api'
     fetch(`${API_BASE}/accrediti/by-code/${encodeURIComponent(code)}`)
       .then(async (res) => {
         if (!res.ok) throw new Error(res.status === 404 ? 'Biglietto non trovato' : 'Errore nel caricamento')

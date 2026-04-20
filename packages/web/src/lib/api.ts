@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.DEV ? '/api' : 'https://coincidenze-api.lamaz7.workers.dev/api'
+const API_BASE = import.meta.env.DEV ? '/api' : 'https://api.coincidenze.org/api'
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
