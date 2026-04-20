@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, CheckCircle2, Clock, Download, Trash2, ExternalLink, Loader2, RefreshCw } from 'lucide-react'
+import { Search, CheckCircle2, Clock, Download, Trash2, ExternalLink, Loader2, RefreshCw, Mail, Camera } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
@@ -149,6 +149,7 @@ export function AdminAccreditiPage() {
                   <th className="text-left px-3 py-2 font-medium">Email</th>
                   <th className="text-left px-3 py-2 font-medium hidden md:table-cell">Telefono</th>
                   <th className="text-left px-3 py-2 font-medium hidden sm:table-cell">Iscrizione</th>
+                  <th className="text-left px-3 py-2 font-medium hidden md:table-cell">Consensi</th>
                   <th className="text-left px-3 py-2 font-medium">Stato</th>
                   <th className="px-3 py-2"></th>
                 </tr>
@@ -163,6 +164,22 @@ export function AdminAccreditiPage() {
                     <td className="px-3 py-2 text-ink-light hidden md:table-cell">{a.phone || '—'}</td>
                     <td className="px-3 py-2 text-ink-muted hidden sm:table-cell whitespace-nowrap">
                       {fmtDateTime(a.created_at)}
+                    </td>
+                    <td className="px-3 py-2 hidden md:table-cell">
+                      <div className="inline-flex items-center gap-1.5">
+                        <span
+                          title={a.consent_newsletter ? 'Vuole ricevere la newsletter' : 'Niente newsletter'}
+                          className={`inline-flex items-center justify-center h-6 w-6 rounded-full ${a.consent_newsletter ? 'bg-viola/15 text-viola' : 'bg-navy/5 text-ink-muted/50'}`}
+                        >
+                          <Mail className="h-3.5 w-3.5" />
+                        </span>
+                        <span
+                          title={a.consent_photo ? 'Acconsente ad apparire in foto/video' : 'Non vuole apparire in foto/video'}
+                          className={`inline-flex items-center justify-center h-6 w-6 rounded-full ${a.consent_photo ? 'bg-viola/15 text-viola' : 'bg-navy/5 text-ink-muted/50'}`}
+                        >
+                          <Camera className="h-3.5 w-3.5" />
+                        </span>
+                      </div>
                     </td>
                     <td className="px-3 py-2">
                       {a.checked_in_at ? (
