@@ -146,7 +146,14 @@ export function CheckInPage() {
         scannerRef.current = scanner
         await scanner.start(
           { facingMode: 'environment' },
-          { fps: 8, qrbox: { width: 260, height: 260 } },
+          {
+            fps: 8,
+            qrbox: (vw: number, vh: number) => {
+              const size = Math.floor(Math.min(vw, vh) * 0.7)
+              return { width: size, height: size }
+            },
+            aspectRatio: 1,
+          },
           (decodedText: string) => handleScan(decodedText),
           () => {}
         )
