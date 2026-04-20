@@ -14,6 +14,7 @@ import { ProgrammaInstagramPage } from '@/features/edizione1/ProgrammaInstagramP
 import { AccreditiFormPage } from '@/features/accrediti/AccreditiFormPage'
 import { BigliettoPage } from '@/features/accrediti/BigliettoPage'
 import { AdminAccreditiPage } from '@/features/accrediti/AdminAccreditiPage'
+import { CheckInPage } from '@/features/accrediti/CheckInPage'
 import { ArtistDetailPage } from '@/features/artists/ArtistDetailPage'
 import { AdminMenuPage } from '@/features/menu/AdminMenuPage'
 import { AdminCategoriesPage } from '@/features/categories/AdminCategoriesPage'
@@ -64,6 +65,7 @@ export default function App() {
             <Route path="/admin/media" element={<MediaPage />} />
             <Route path="/admin/piano-editoriale" element={<PianoEditorialePage />} />
             <Route path="/admin/accrediti" element={<AdminAccreditiPage />} />
+            <Route path="/admin/check-in" element={<CheckInPage />} />
             <Route path="/admin/menu" element={<AdminMenuPage />} />
             <Route path="/admin/categorie" element={<AdminCategoriesPage />} />
           </Route>
