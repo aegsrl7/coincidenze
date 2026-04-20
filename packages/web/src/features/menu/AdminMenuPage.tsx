@@ -22,6 +22,7 @@ export function AdminMenuPage() {
   const [deleteTarget, setDeleteTarget] = useState<MenuItem | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [dragId, setDragId] = useState<string | null>(null)
+  const [dragCategory, setDragCategory] = useState<string | null>(null)
 
   const load = async () => {
     setLoading(true)
@@ -112,6 +113,41 @@ export function AdminMenuPage() {
     await api.reorderMenu(items.map((i) => i.id))
   }
 
+  const handleCategoryDragStart = (cat: string) => setDragCategory(cat)
+  const handleCategoryDragOver = (e: React.DragEvent, targetCat: string) => {
+    if (!dragCategory) return
+    e.preventDefault()
+    if (dragCategory === targetCat) return
+
+    const order = grouped.map(([c]) => c)
+    const from = order.indexOf(dragCategory)
+    const to = order.indexOf(targetCat)
+    if (from < 0 || to < 0) return
+
+    // Calcola posizione di inserimento in base alla metà verticale della sezione
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const dropBelow = e.clientY > rect.top + rect.height / 2
+    let insertAt = dropBelow ? to + 1 : to
+    if (insertAt > from) insertAt -= 1
+    if (insertAt === from) return
+
+    const nextOrder = [...order]
+    nextOrder.splice(from, 1)
+    nextOrder.splice(insertAt, 0, dragCategory)
+
+    const groupMap = new Map(grouped)
+    const nextItems: MenuItem[] = []
+    for (const c of nextOrder) {
+      nextItems.push(...(groupMap.get(c) || []))
+    }
+    setItems(nextItems)
+  }
+  const handleCategoryDragEnd = async () => {
+    if (!dragCategory) return
+    setDragCategory(null)
+    await api.reorderMenu(items.map((i) => i.id))
+  }
+
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
       <h1 className="font-display text-2xl font-semibold text-navy mb-4">Menù</h1>
@@ -171,8 +207,21 @@ export function AdminMenuPage() {
       ) : (
         <div className="space-y-6">
           {grouped.map(([cat, group]) => (
-            <section key={cat}>
-              <h2 className="font-display text-lg font-semibold text-navy mb-2">{cat}</h2>
+            <section
+              key={cat}
+              onDragOver={(e) => handleCategoryDragOver(e, cat)}
+              className={dragCategory === cat ? 'opacity-50' : ''}
+            >
+              <h2
+                draggable={editingId === null}
+                onDragStart={() => handleCategoryDragStart(cat)}
+                onDragEnd={handleCategoryDragEnd}
+                className="font-display text-lg font-semibold text-navy mb-2 flex items-center gap-2 cursor-grab select-none"
+                title="Trascina per riordinare la categoria"
+              >
+                <GripVertical className="h-4 w-4 text-ink-muted shrink-0" />
+                {cat}
+              </h2>
               <div className="space-y-1">
                 {group.map((item) => {
                   const isEditing = editingId === item.id

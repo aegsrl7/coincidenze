@@ -6,7 +6,7 @@ export const menuRoutes = new Hono<Env>()
 // GET / — pubblico
 menuRoutes.get('/', async (c) => {
   const { results } = await c.env.DB
-    .prepare('SELECT * FROM menu_items ORDER BY category, sort_order, name')
+    .prepare('SELECT * FROM menu_items ORDER BY sort_order, name')
     .all()
   return c.json(results)
 })
