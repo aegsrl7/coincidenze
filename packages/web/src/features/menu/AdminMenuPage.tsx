@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, Pencil, Trash2, X, Check, Loader2, GripVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,6 +23,23 @@ export function AdminMenuPage() {
   const [deleting, setDeleting] = useState(false)
   const [dragId, setDragId] = useState<string | null>(null)
   const [dragCategory, setDragCategory] = useState<string | null>(null)
+
+  const itemsRef = useRef<MenuItem[]>(items)
+  itemsRef.current = items
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const scheduleReorderSave = () => {
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => {
+      saveTimer.current = null
+      api.reorderMenu(itemsRef.current.map((i) => i.id))
+    }, 250)
+  }
+  useEffect(() => () => {
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current)
+      api.reorderMenu(itemsRef.current.map((i) => i.id))
+    }
+  }, [])
 
   const load = async () => {
     setLoading(true)
@@ -106,11 +123,11 @@ export function AdminMenuPage() {
     const [moved] = next.splice(from, 1)
     next.splice(to, 0, moved)
     setItems(next)
+    scheduleReorderSave()
   }
-  const handleDragEnd = async () => {
+  const handleDragEnd = () => {
     if (!dragId) return
     setDragId(null)
-    await api.reorderMenu(items.map((i) => i.id))
   }
 
   const handleCategoryDragStart = (cat: string) => setDragCategory(cat)
@@ -141,11 +158,11 @@ export function AdminMenuPage() {
       nextItems.push(...(groupMap.get(c) || []))
     }
     setItems(nextItems)
+    scheduleReorderSave()
   }
-  const handleCategoryDragEnd = async () => {
+  const handleCategoryDragEnd = () => {
     if (!dragCategory) return
     setDragCategory(null)
-    await api.reorderMenu(items.map((i) => i.id))
   }
 
   return (
