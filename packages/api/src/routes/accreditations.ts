@@ -3,7 +3,9 @@ import { getCookie } from 'hono/cookie'
 import type { Context } from 'hono'
 import type { Env } from '../index'
 import { verifyToken } from './auth'
-import { sendEmail, buildTicketEmail } from '../lib/email'
+import { sendEmail, buildTicketEmail, buildAdminNotificationEmail } from '../lib/email'
+
+const ADMIN_NOTIFICATION_TO = 'coincidenze.arte@gmail.com'
 
 export const accreditationsRoutes = new Hono<Env>()
 
@@ -83,12 +85,22 @@ accreditationsRoutes.post('/', async (c) => {
     )
     .run()
 
-  // Invia email di conferma (non bloccante: se fallisce logghiamo ma restituiamo 201)
+  // Invia email di conferma + notifica admin in parallelo
   const base = c.env.PUBLIC_BASE_URL?.replace(/\/$/, '') || 'https://coincidenze.org'
   const ticketUrl = `${base}/biglietto/${ticketCode}`
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=440x440&margin=10&data=${encodeURIComponent(ticketUrl)}`
-  const { subject, html, text } = buildTicketEmail({ name: `${name} ${surname}`, ticketUrl, qrUrl })
-  const emailRes = await sendEmail(c.env, { to: email, subject, html, text })
+  const ticketEmail = buildTicketEmail({ name: `${name} ${surname}`, ticketUrl, qrUrl })
+
+  const totalRow = await db
+    .prepare('SELECT COUNT(*) as c FROM accreditations')
+    .first<{ c: number }>()
+  const totalCount = totalRow?.c ?? 0
+  const adminEmail = buildAdminNotificationEmail({ name, surname, email, phone, cap, totalCount })
+
+  const [emailRes, adminRes] = await Promise.all([
+    sendEmail(c.env, { to: email, subject: ticketEmail.subject, html: ticketEmail.html, text: ticketEmail.text }),
+    sendEmail(c.env, { to: ADMIN_NOTIFICATION_TO, subject: adminEmail.subject, html: adminEmail.html, text: adminEmail.text }),
+  ])
 
   if (emailRes.ok) {
     await db
@@ -97,6 +109,10 @@ accreditationsRoutes.post('/', async (c) => {
       .run()
   } else {
     console.error('Email fallita per accredito', id, emailRes.error)
+  }
+
+  if (!adminRes.ok) {
+    console.error('Notifica admin fallita per accredito', id, adminRes.error)
   }
 
   return c.json({ ticket_code: ticketCode, email_sent: emailRes.ok }, 201)

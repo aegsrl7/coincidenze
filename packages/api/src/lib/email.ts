@@ -117,6 +117,64 @@ export function buildTicketEmail(opts: {
   return { subject, html, text }
 }
 
+export function buildAdminNotificationEmail(opts: {
+  name: string
+  surname: string
+  email: string
+  phone: string
+  cap: string
+  totalCount: number
+}): { subject: string; html: string; text: string } {
+  const fullName = `${opts.name} ${opts.surname}`.trim()
+  const subject = `Nuovo accredito · ${fullName}`
+  const text = [
+    `Nuovo accredito ricevuto.`,
+    ``,
+    `Nome: ${fullName}`,
+    `Email: ${opts.email}`,
+    opts.phone ? `Telefono: ${opts.phone}` : '',
+    opts.cap ? `CAP: ${opts.cap}` : '',
+    ``,
+    `Totale iscritti: ${opts.totalCount}`,
+    ``,
+    `Lista completa: https://coincidenze.org/admin/accrediti`,
+  ].filter(Boolean).join('\n')
+
+  const html = `<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#F5F0E8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;color:#1a1a1a;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#F5F0E8;padding:24px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:480px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid rgba(44,62,107,0.1);">
+        <tr><td style="background:#2C3E6B;color:#ffffff;padding:16px 20px;">
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.75;">COINCIDENZE · Admin</div>
+          <div style="font-family:Georgia,'Playfair Display',serif;font-size:18px;font-weight:600;margin-top:2px;">Nuovo accredito</div>
+        </td></tr>
+        <tr><td style="padding:20px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size:14px;color:#333;">
+            <tr><td style="padding:6px 0;color:#888;width:90px;">Nome</td><td style="padding:6px 0;font-weight:500;color:#2C3E6B;">${escapeHtml(fullName)}</td></tr>
+            <tr><td style="padding:6px 0;color:#888;">Email</td><td style="padding:6px 0;"><a href="mailto:${escapeHtml(opts.email)}" style="color:#2C3E6B;text-decoration:none;">${escapeHtml(opts.email)}</a></td></tr>
+            ${opts.phone ? `<tr><td style="padding:6px 0;color:#888;">Telefono</td><td style="padding:6px 0;">${escapeHtml(opts.phone)}</td></tr>` : ''}
+            ${opts.cap ? `<tr><td style="padding:6px 0;color:#888;">CAP</td><td style="padding:6px 0;">${escapeHtml(opts.cap)}</td></tr>` : ''}
+          </table>
+        </td></tr>
+        <tr><td style="padding:14px 20px;background:#F5F0E8;border-top:1px solid #eee;font-size:13px;color:#555;text-align:center;">
+          Totale iscritti: <strong style="color:#2C3E6B;">${opts.totalCount}</strong>
+        </td></tr>
+        <tr><td style="padding:16px 20px;text-align:center;">
+          <a href="https://coincidenze.org/admin/accrediti" style="display:inline-block;background:#2C3E6B;color:#ffffff;text-decoration:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:500;">
+            Apri lista accrediti
+          </a>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+
+  return { subject, html, text }
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
