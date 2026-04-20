@@ -65,10 +65,15 @@ export function CheckInPage() {
       const detail = res.already_checked_in
         ? 'Già fatto check-in in precedenza'
         : 'Check-in registrato ora'
-      setScans((prev) => [
-        { id: `${code}-${now}`, code, name, detail, status: res.already_checked_in ? 'already' : 'success', at: now },
-        ...prev,
-      ].slice(0, 30))
+      const entry: ScanEntry = {
+        id: `${code}-${now}`,
+        code,
+        name,
+        detail,
+        status: res.already_checked_in ? 'already' : 'success',
+        at: now,
+      }
+      setScans((prev) => [entry, ...prev].slice(0, 30))
       // Beep
       try {
         const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
@@ -84,10 +89,15 @@ export function CheckInPage() {
         // ignore
       }
     } catch {
-      setScans((prev) => [
-        { id: `${code}-${now}`, code, name: 'Biglietto non trovato', detail: code, status: 'error', at: now },
-        ...prev,
-      ].slice(0, 30))
+      const entry: ScanEntry = {
+        id: `${code}-${now}`,
+        code,
+        name: 'Biglietto non trovato',
+        detail: code,
+        status: 'error',
+        at: now,
+      }
+      setScans((prev) => [entry, ...prev].slice(0, 30))
     }
   }
 
