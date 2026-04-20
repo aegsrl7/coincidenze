@@ -350,12 +350,23 @@ function ArtistiTab({ artists }: { artists: Artist[] }) {
 }
 
 function MenuTab({ items, isAdmin }: { items: MenuItem[]; isAdmin: boolean }) {
-  const grouped = items.reduce<Record<string, MenuItem[]>>((acc, item) => {
-    const key = item.category || 'Altro'
-    if (!acc[key]) acc[key] = []
-    acc[key].push(item)
-    return acc
-  }, {})
+  const { list: menuCats } = useCategoryMaps('menu')
+  const grouped = (() => {
+    const buckets: Record<string, MenuItem[]> = {}
+    for (const c of menuCats) buckets[c.label] = []
+    const orphans: MenuItem[] = []
+    for (const item of items) {
+      const k = item.category || ''
+      if (k && buckets[k]) buckets[k].push(item)
+      else orphans.push(item)
+    }
+    const ordered: [string, MenuItem[]][] = []
+    for (const c of menuCats) {
+      if (buckets[c.label].length > 0) ordered.push([c.label, buckets[c.label]])
+    }
+    if (orphans.length > 0) ordered.push(['Altro', orphans])
+    return ordered
+  })()
 
   return (
     <div className="space-y-6">
@@ -373,7 +384,7 @@ function MenuTab({ items, isAdmin }: { items: MenuItem[]; isAdmin: boolean }) {
         </EmptyState>
       ) : (
         <div className="space-y-5">
-      {Object.entries(grouped).map(([cat, list]) => (
+      {grouped.map(([cat, list]) => (
         <section key={cat}>
           <h3 className="font-display text-lg font-semibold text-navy mb-2">{cat}</h3>
           <div className="space-y-1.5">

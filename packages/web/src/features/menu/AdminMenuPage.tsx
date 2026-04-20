@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Plus, Pencil, Trash2, X, Check, Loader2, GripVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,7 +23,6 @@ export function AdminMenuPage() {
   const [deleteTarget, setDeleteTarget] = useState<MenuItem | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [dragId, setDragId] = useState<string | null>(null)
-  const [dragCategory, setDragCategory] = useState<string | null>(null)
 
   const itemsRef = useRef<MenuItem[]>(items)
   itemsRef.current = items
@@ -65,15 +65,33 @@ export function AdminMenuPage() {
     return Array.from(set).sort((a, b) => a.localeCompare(b))
   }, [items, menuCats])
 
+  // Bucket items per categoria; ordine = ordine definito in /admin/categorie.
+  // Categorie senza voci: in fondo, in grigio. Voci con label non riconosciuta:
+  // raggruppate in "Senza categoria" alla fine.
   const grouped = useMemo(() => {
-    const map = new Map<string, MenuItem[]>()
+    const buckets = new Map<string, MenuItem[]>()
+    for (const c of menuCats) buckets.set(c.label, [])
+    const orphans: MenuItem[] = []
     for (const item of items) {
-      const k = item.category || 'Senza categoria'
-      if (!map.has(k)) map.set(k, [])
-      map.get(k)!.push(item)
+      const k = item.category || ''
+      if (k && buckets.has(k)) {
+        buckets.get(k)!.push(item)
+      } else {
+        orphans.push(item)
+      }
     }
-    return Array.from(map.entries())
-  }, [items])
+    type Group = { label: string; items: MenuItem[]; empty: boolean }
+    const withItems: Group[] = []
+    const empty: Group[] = []
+    for (const c of menuCats) {
+      const list = buckets.get(c.label) || []
+      if (list.length > 0) withItems.push({ label: c.label, items: list, empty: false })
+      else empty.push({ label: c.label, items: list, empty: true })
+    }
+    const out: Group[] = [...withItems, ...empty]
+    if (orphans.length > 0) out.push({ label: 'Senza categoria', items: orphans, empty: false })
+    return out
+  }, [items, menuCats])
 
   const handleAdd = async () => {
     if (!draft.name.trim()) return
@@ -130,55 +148,15 @@ export function AdminMenuPage() {
     setDragId(null)
   }
 
-  const handleCategoryDragStart = (e: React.DragEvent, cat: string) => {
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', cat)
-    setDragCategory(cat)
-  }
-  const handleCategoryDragOver = (e: React.DragEvent) => {
-    if (!dragCategory) return
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-  }
-  const handleCategoryDrop = (e: React.DragEvent, targetCat: string) => {
-    if (!dragCategory) {
-      setDragCategory(null)
-      return
-    }
-    e.preventDefault()
-    e.stopPropagation()
-    const source = dragCategory
-    setDragCategory(null)
-    if (source === targetCat) return
-
-    const order = grouped.map(([c]) => c)
-    const from = order.indexOf(source)
-    const to = order.indexOf(targetCat)
-    if (from < 0 || to < 0) return
-
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    const dropBelow = e.clientY > rect.top + rect.height / 2
-    let insertAt = dropBelow ? to + 1 : to
-    if (insertAt > from) insertAt -= 1
-    if (insertAt === from) return
-
-    const nextOrder = [...order]
-    nextOrder.splice(from, 1)
-    nextOrder.splice(insertAt, 0, source)
-
-    const groupMap = new Map(grouped)
-    const nextItems: MenuItem[] = []
-    for (const c of nextOrder) {
-      nextItems.push(...(groupMap.get(c) || []))
-    }
-    setItems(nextItems)
-    api.reorderMenu(nextItems.map((i) => i.id))
-  }
-  const handleCategoryDragEnd = () => setDragCategory(null)
 
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
-      <h1 className="font-display text-2xl font-semibold text-navy mb-4">Menù</h1>
+      <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+        <h1 className="font-display text-2xl font-semibold text-navy">Menù</h1>
+        <Link to="/admin/categorie" className="text-xs text-ink-muted hover:text-navy underline">
+          Riordina o rinomina le categorie →
+        </Link>
+      </div>
 
       {/* Form aggiunta */}
       <div className="bg-white/70 rounded-lg border border-navy/10 p-4 mb-6">
@@ -234,23 +212,15 @@ export function AdminMenuPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {grouped.map(([cat, group]) => (
-            <section
-              key={cat}
-              onDragOver={handleCategoryDragOver}
-              onDrop={(e) => handleCategoryDrop(e, cat)}
-              className={`transition-opacity ${dragCategory === cat ? 'opacity-40' : ''} ${dragCategory && dragCategory !== cat ? 'outline-2 outline-dashed outline-transparent hover:outline-viola/40 rounded' : ''}`}
-            >
-              <h2
-                draggable={editingId === null}
-                onDragStart={(e) => handleCategoryDragStart(e, cat)}
-                onDragEnd={handleCategoryDragEnd}
-                className="font-display text-lg font-semibold text-navy mb-2 flex items-center gap-2 cursor-grab select-none"
-                title="Trascina per riordinare la categoria"
-              >
-                <GripVertical className="h-4 w-4 text-ink-muted shrink-0" />
+          {grouped.map(({ label: cat, items: group, empty }) => (
+            <section key={cat} className={empty ? 'opacity-50' : ''}>
+              <h2 className={`font-display text-lg font-semibold mb-2 ${empty ? 'text-ink-muted italic' : 'text-navy'}`}>
                 {cat}
+                {empty && <span className="ml-2 text-xs font-normal not-italic text-ink-muted">(vuota)</span>}
               </h2>
+              {empty ? (
+                <p className="text-xs text-ink-muted italic px-1">Nessuna voce. Usa il form sopra per aggiungerne, oppure rinomina/elimina la categoria da <Link to="/admin/categorie" className="underline">/admin/categorie</Link>.</p>
+              ) : (
               <div className="space-y-1">
                 {group.map((item) => {
                   const isEditing = editingId === item.id
@@ -334,6 +304,7 @@ export function AdminMenuPage() {
                   )
                 })}
               </div>
+              )}
             </section>
           ))}
         </div>
