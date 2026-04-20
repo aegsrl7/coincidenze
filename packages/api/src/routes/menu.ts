@@ -61,6 +61,20 @@ menuRoutes.post('/', async (c) => {
   return c.json({ id, ...body }, 201)
 })
 
+// IMPORTANTE: la route specifica /reorder DEVE precedere /:id, altrimenti
+// Hono matcha /:id prima e l'update finisce su un id="reorder" inesistente.
+menuRoutes.put('/reorder', async (c) => {
+  const db = c.env.DB
+  const { order } = await c.req.json() as { order: string[] }
+  if (!Array.isArray(order)) return c.json({ error: 'order must be an array' }, 400)
+
+  const stmts = order.map((id, idx) =>
+    db.prepare('UPDATE menu_items SET sort_order = ?, updated_at = datetime(\'now\') WHERE id = ?').bind(idx, id)
+  )
+  await db.batch(stmts)
+  return c.json({ ok: true })
+})
+
 menuRoutes.put('/:id', async (c) => {
   const db = c.env.DB
   const id = c.req.param('id')
@@ -85,17 +99,5 @@ menuRoutes.put('/:id', async (c) => {
 menuRoutes.delete('/:id', async (c) => {
   const id = c.req.param('id')
   await c.env.DB.prepare('DELETE FROM menu_items WHERE id = ?').bind(id).run()
-  return c.json({ ok: true })
-})
-
-menuRoutes.put('/reorder', async (c) => {
-  const db = c.env.DB
-  const { order } = await c.req.json() as { order: string[] }
-  if (!Array.isArray(order)) return c.json({ error: 'order must be an array' }, 400)
-
-  const stmts = order.map((id, idx) =>
-    db.prepare('UPDATE menu_items SET sort_order = ?, updated_at = datetime(\'now\') WHERE id = ?').bind(idx, id)
-  )
-  await db.batch(stmts)
   return c.json({ ok: true })
 })

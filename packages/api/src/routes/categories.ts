@@ -59,6 +59,20 @@ categoriesRoutes.post('/', async (c) => {
   return c.json(row, 201)
 })
 
+// IMPORTANTE: la route specifica /reorder DEVE precedere /:id, altrimenti
+// Hono matcha /:id prima e l'update finisce su un id="reorder" inesistente.
+categoriesRoutes.put('/reorder', async (c) => {
+  const body = await c.req.json() as { order?: string[] }
+  const order = body.order
+  if (!Array.isArray(order)) return c.json({ error: 'order deve essere un array di id' }, 400)
+
+  const stmts = order.map((id, idx) =>
+    c.env.DB.prepare("UPDATE categories SET sort_order = ?, updated_at = datetime('now') WHERE id = ?").bind(idx * 10, id)
+  )
+  await c.env.DB.batch(stmts)
+  return c.json({ ok: true })
+})
+
 categoriesRoutes.put('/:id', async (c) => {
   const id = c.req.param('id')
   const body = await c.req.json() as Record<string, unknown>
@@ -88,18 +102,5 @@ categoriesRoutes.put('/:id', async (c) => {
 categoriesRoutes.delete('/:id', async (c) => {
   const id = c.req.param('id')
   await c.env.DB.prepare('DELETE FROM categories WHERE id = ?').bind(id).run()
-  return c.json({ ok: true })
-})
-
-// PUT /reorder — bulk reorder for a given type. body: { type, order: [id1, id2, ...] }
-categoriesRoutes.put('/reorder', async (c) => {
-  const body = await c.req.json() as { order?: string[] }
-  const order = body.order
-  if (!Array.isArray(order)) return c.json({ error: 'order deve essere un array di id' }, 400)
-
-  const stmts = order.map((id, idx) =>
-    c.env.DB.prepare("UPDATE categories SET sort_order = ?, updated_at = datetime('now') WHERE id = ?").bind(idx * 10, id)
-  )
-  await c.env.DB.batch(stmts)
   return c.json({ ok: true })
 })
