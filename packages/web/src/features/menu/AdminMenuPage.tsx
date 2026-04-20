@@ -130,18 +130,32 @@ export function AdminMenuPage() {
     setDragId(null)
   }
 
-  const handleCategoryDragStart = (cat: string) => setDragCategory(cat)
-  const handleCategoryDragOver = (e: React.DragEvent, targetCat: string) => {
+  const handleCategoryDragStart = (e: React.DragEvent, cat: string) => {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', cat)
+    setDragCategory(cat)
+  }
+  const handleCategoryDragOver = (e: React.DragEvent) => {
     if (!dragCategory) return
     e.preventDefault()
-    if (dragCategory === targetCat) return
+    e.dataTransfer.dropEffect = 'move'
+  }
+  const handleCategoryDrop = (e: React.DragEvent, targetCat: string) => {
+    if (!dragCategory) {
+      setDragCategory(null)
+      return
+    }
+    e.preventDefault()
+    e.stopPropagation()
+    const source = dragCategory
+    setDragCategory(null)
+    if (source === targetCat) return
 
     const order = grouped.map(([c]) => c)
-    const from = order.indexOf(dragCategory)
+    const from = order.indexOf(source)
     const to = order.indexOf(targetCat)
     if (from < 0 || to < 0) return
 
-    // Calcola posizione di inserimento in base alla metà verticale della sezione
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
     const dropBelow = e.clientY > rect.top + rect.height / 2
     let insertAt = dropBelow ? to + 1 : to
@@ -150,7 +164,7 @@ export function AdminMenuPage() {
 
     const nextOrder = [...order]
     nextOrder.splice(from, 1)
-    nextOrder.splice(insertAt, 0, dragCategory)
+    nextOrder.splice(insertAt, 0, source)
 
     const groupMap = new Map(grouped)
     const nextItems: MenuItem[] = []
@@ -158,12 +172,9 @@ export function AdminMenuPage() {
       nextItems.push(...(groupMap.get(c) || []))
     }
     setItems(nextItems)
-    scheduleReorderSave()
+    api.reorderMenu(nextItems.map((i) => i.id))
   }
-  const handleCategoryDragEnd = () => {
-    if (!dragCategory) return
-    setDragCategory(null)
-  }
+  const handleCategoryDragEnd = () => setDragCategory(null)
 
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
@@ -226,12 +237,13 @@ export function AdminMenuPage() {
           {grouped.map(([cat, group]) => (
             <section
               key={cat}
-              onDragOver={(e) => handleCategoryDragOver(e, cat)}
-              className={dragCategory === cat ? 'opacity-50' : ''}
+              onDragOver={handleCategoryDragOver}
+              onDrop={(e) => handleCategoryDrop(e, cat)}
+              className={`transition-opacity ${dragCategory === cat ? 'opacity-40' : ''} ${dragCategory && dragCategory !== cat ? 'outline-2 outline-dashed outline-transparent hover:outline-viola/40 rounded' : ''}`}
             >
               <h2
                 draggable={editingId === null}
-                onDragStart={() => handleCategoryDragStart(cat)}
+                onDragStart={(e) => handleCategoryDragStart(e, cat)}
                 onDragEnd={handleCategoryDragEnd}
                 className="font-display text-lg font-semibold text-navy mb-2 flex items-center gap-2 cursor-grab select-none"
                 title="Trascina per riordinare la categoria"
