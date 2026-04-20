@@ -58,7 +58,7 @@ export function ProgrammaInstagramPage() {
 function EventBlock({ event, allDay }: { event: Event; allDay?: boolean }) {
   const { colors } = useCategoryMaps('artist')
   return (
-    <div className="bg-beige/40 rounded-lg border border-navy/10 p-3 flex gap-3 items-start h-[292px]">
+    <div className="bg-beige/40 rounded-lg border border-navy/10 p-3 flex gap-3 items-start h-[150px]">
       <div className="shrink-0 w-16 text-right">
         <span className="inline-flex items-center gap-1 text-xs font-semibold text-navy">
           <Clock className="h-3 w-3 text-ink-muted" />
