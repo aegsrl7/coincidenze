@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, CheckCircle2, Clock, Download, Trash2, ExternalLink, Loader2, RefreshCw, Mail, Camera } from 'lucide-react'
+import { Search, CheckCircle2, Clock, Download, Trash2, ExternalLink, Loader2, RefreshCw, Mail, Camera, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
@@ -80,6 +80,11 @@ export function AdminAccreditiPage() {
 
   const handleCheckIn = async (code: string) => {
     await api.checkInAccreditation(code)
+    await load()
+  }
+
+  const handleUncheckIn = async (code: string) => {
+    await api.uncheckInAccreditation(code)
     await load()
   }
 
@@ -196,7 +201,7 @@ export function AdminAccreditiPage() {
                     </td>
                     <td className="px-3 py-2 text-right">
                       <div className="inline-flex items-center gap-1">
-                        {!a.checked_in_at && (
+                        {!a.checked_in_at ? (
                           <Button
                             size="sm"
                             variant="ghost"
@@ -206,6 +211,17 @@ export function AdminAccreditiPage() {
                           >
                             <CheckCircle2 className="h-3.5 w-3.5" />
                             <span className="hidden sm:inline ml-1">Check-in</span>
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs text-ink-muted hover:text-bordeaux"
+                            onClick={() => handleUncheckIn(a.ticket_code)}
+                            title="Annulla check-in"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline ml-1">Annulla</span>
                           </Button>
                         )}
                         <Link

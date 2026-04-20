@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Loader2, CheckCircle2, AlertCircle, ArrowLeft, Calendar, MapPin, Clock } from 'lucide-react'
+import { Loader2, CheckCircle2, AlertCircle, ArrowLeft, Calendar, MapPin, Clock, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PublicFooter } from '@/components/PublicFooter'
 import { useAuthStore } from '@/stores/authStore'
@@ -50,6 +50,18 @@ export function BigliettoPage() {
     try {
       const res = await api.checkInAccreditation(code)
       setCheckInFlash(res.already_checked_in ? 'already' : 'now')
+      if (res.accreditation) setTicket(res.accreditation)
+    } finally {
+      setCheckingIn(false)
+    }
+  }
+
+  const handleUncheckIn = async () => {
+    if (!code) return
+    setCheckingIn(true)
+    try {
+      const res = await api.uncheckInAccreditation(code)
+      setCheckInFlash('none')
       if (res.accreditation) setTicket(res.accreditation)
     } finally {
       setCheckingIn(false)
@@ -192,9 +204,21 @@ export function BigliettoPage() {
                   Segna come presente
                 </Button>
               ) : (
-                <p className="text-center text-sm text-green-800">
-                  Già in check-in{checkInFlash === 'now' && ' (appena ora)'}
-                </p>
+                <div className="space-y-2">
+                  <p className="text-center text-sm text-green-800">
+                    Già in check-in{checkInFlash === 'now' && ' (appena ora)'}
+                  </p>
+                  <Button
+                    onClick={handleUncheckIn}
+                    disabled={checkingIn}
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-ink-muted hover:text-bordeaux"
+                  >
+                    {checkingIn ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                    Annulla check-in
+                  </Button>
+                </div>
               )}
               {checkInFlash === 'already' && !isCheckedIn && (
                 <p className="text-center text-xs text-amber-700">

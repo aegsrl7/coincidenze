@@ -173,6 +173,33 @@ accreditationsRoutes.post('/:code/check-in', async (c) => {
   return c.json({ accreditation: full, already_checked_in: alreadyCheckedIn })
 })
 
+// POST /:code/uncheck-in — admin: annulla il check-in
+accreditationsRoutes.post('/:code/uncheck-in', async (c) => {
+  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+
+  const code = c.req.param('code')
+  const row = await c.env.DB
+    .prepare('SELECT id, checked_in_at FROM accreditations WHERE ticket_code = ?')
+    .bind(code)
+    .first<{ id: string; checked_in_at: string | null }>()
+
+  if (!row) return c.json({ error: 'Biglietto non trovato' }, 404)
+
+  if (row.checked_in_at !== null) {
+    await c.env.DB
+      .prepare("UPDATE accreditations SET checked_in_at = NULL, updated_at = datetime('now') WHERE id = ?")
+      .bind(row.id)
+      .run()
+  }
+
+  const full = await c.env.DB
+    .prepare('SELECT * FROM accreditations WHERE id = ?')
+    .bind(row.id)
+    .first()
+
+  return c.json({ accreditation: full })
+})
+
 // DELETE /:id — admin
 accreditationsRoutes.delete('/:id', async (c) => {
   if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)

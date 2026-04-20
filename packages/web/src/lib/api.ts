@@ -110,6 +110,7 @@ export const api = {
   getAccreditationByCode: (code: string) => request<any>(`/accrediti/by-code/${encodeURIComponent(code)}`),
   listAccreditations: () => request<any[]>('/accrediti'),
   checkInAccreditation: (code: string) => request<any>(`/accrediti/${encodeURIComponent(code)}/check-in`, { method: 'POST' }),
+  uncheckInAccreditation: (code: string) => request<any>(`/accrediti/${encodeURIComponent(code)}/uncheck-in`, { method: 'POST' }),
   deleteAccreditation: (id: string) => request<void>(`/accrediti/${id}`, { method: 'DELETE' }),
 
   // Menu
