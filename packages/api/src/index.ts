@@ -49,6 +49,24 @@ app.use('/api/*', cors({
   credentials: true,
 }))
 
+// Riscrive al volo i vecchi URL workers.dev nelle response JSON (gli image_url
+// salvati in DB prima del switch a custom domain puntavano lì e ora sono 404).
+// Zero overhead per response binarie/non-JSON.
+const LEGACY_HOST = 'https://coincidenze-api.lamaz7.workers.dev/'
+const NEW_HOST = 'https://api.coincidenze.org/'
+app.use('/api/*', async (c, next) => {
+  await next()
+  const ct = c.res.headers.get('content-type') || ''
+  if (!ct.includes('application/json')) return
+  const body = await c.res.clone().text()
+  if (!body.includes(LEGACY_HOST)) return
+  const fixed = body.split(LEGACY_HOST).join(NEW_HOST)
+  c.res = new Response(fixed, {
+    status: c.res.status,
+    headers: c.res.headers,
+  })
+})
+
 // Health check
 app.get('/api/health', (c) => c.json({ status: 'ok', service: 'coincidenze-api' }))
 
