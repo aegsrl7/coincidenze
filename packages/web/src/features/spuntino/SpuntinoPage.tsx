@@ -134,10 +134,8 @@ export function SpuntinoPage() {
         </div>
 
         {capacity && (
-          <p className={`text-center text-sm mb-4 ${soldOut ? 'text-bordeaux font-medium' : 'text-ink-muted'}`}>
-            {soldOut
-              ? 'Tutti i posti sono esauriti.'
-              : `Disponibili ${remaining}/${capacity.total} posti.`}
+          <p className={`text-center text-sm mb-4 ${soldOut ? 'text-bordeaux font-medium' : 'text-ink-muted italic'}`}>
+            {soldOut ? 'Tutti i posti sono esauriti.' : 'Posti limitati.'}
           </p>
         )}
 
