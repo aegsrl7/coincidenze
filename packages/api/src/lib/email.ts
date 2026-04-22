@@ -188,17 +188,15 @@ export function buildSpuntinoEmail(opts: {
   name: string
   seats: number
 }): { subject: string; html: string; text: string } {
-  const subject = `Spuntino delle 18 \u00b7 prenotazione confermata`
-  const totalDue = opts.seats * 25
+  const subject = `Spuntino delle 18 · prenotazione confermata`
   const text = [
     `Ciao ${opts.name},`,
     ``,
-    `la tua prenotazione per "Lo spuntino delle 18" \u00e8 confermata.`,
+    `la tua prenotazione per "Lo spuntino delle 18" è confermata.`,
     ``,
     `Posti: ${opts.seats}`,
-    `Da pagare in loco: ${totalDue}\u20ac (25\u20ac a persona)`,
     `Quando: sabato 25 aprile 2026, ore 18:00`,
-    `Dove: Marsam Locanda, Bene Vagienna \u2014 sotto il portico`,
+    `Dove: Marsam Locanda, Bene Vagienna — sotto il portico`,
     ``,
     `Il men\u00f9:`,
     ...SPUNTINO_DISHES.map((d) => `\u2022 ${d}`),
@@ -227,7 +225,6 @@ export function buildSpuntinoEmail(opts: {
           <p style="margin:0 0 8px;font-size:14px;color:#444;">la tua prenotazione \u00e8 confermata.</p>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:14px;font-size:14px;">
             <tr><td style="padding:4px 0;color:#888;width:130px;">Posti</td><td style="padding:4px 0;font-weight:500;color:#2C3E6B;">${opts.seats}</td></tr>
-            <tr><td style="padding:4px 0;color:#888;">Da pagare in loco</td><td style="padding:4px 0;font-weight:500;color:#2C3E6B;">${totalDue}\u20ac <span style="color:#888;font-weight:400;">(25\u20ac a persona)</span></td></tr>
             <tr><td style="padding:4px 0;color:#888;">Quando</td><td style="padding:4px 0;">sabato 25 aprile, ore 18:00</td></tr>
             <tr><td style="padding:4px 0;color:#888;">Dove</td><td style="padding:4px 0;">Marsam Locanda, sotto il portico</td></tr>
           </table>
