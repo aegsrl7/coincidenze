@@ -259,11 +259,9 @@ export function buildSpuntinoAdminNotificationEmail(opts: {
   seats: number
   notes: string
   totalBookedSeats: number
-  capacity: number
 }): { subject: string; html: string; text: string } {
   const fullName = `${opts.name} ${opts.surname}`.trim()
-  const subject = `Spuntino \u00b7 ${opts.seats} ${opts.seats === 1 ? 'posto' : 'posti'} per ${fullName}`
-  const remaining = Math.max(0, opts.capacity - opts.totalBookedSeats)
+  const subject = `Spuntino · ${opts.seats} ${opts.seats === 1 ? 'posto' : 'posti'} per ${fullName} (totale ${opts.totalBookedSeats})`
   const text = [
     `Nuova prenotazione spuntino delle 18.`,
     ``,
@@ -273,8 +271,7 @@ export function buildSpuntinoAdminNotificationEmail(opts: {
     `Posti: ${opts.seats}`,
     opts.notes ? `Note: ${opts.notes}` : '',
     ``,
-    `Posti totali prenotati: ${opts.totalBookedSeats}/${opts.capacity}`,
-    `Rimangono: ${remaining}`,
+    `Posti totali prenotati finora: ${opts.totalBookedSeats}`,
     ``,
     `Lista: https://coincidenze.org/admin/spuntino`,
   ].filter(Boolean).join('\n')
@@ -299,7 +296,7 @@ export function buildSpuntinoAdminNotificationEmail(opts: {
           </table>
         </td></tr>
         <tr><td style="padding:14px 20px;background:#F5F0E8;border-top:1px solid #eee;font-size:13px;color:#555;text-align:center;">
-          Posti prenotati: <strong style="color:#2C3E6B;">${opts.totalBookedSeats}/${opts.capacity}</strong> \u00b7 Rimangono: <strong style="color:${remaining === 0 ? '#8B2252' : '#2C3E6B'};">${remaining}</strong>
+          Posti prenotati finora: <strong style="color:#2C3E6B;">${opts.totalBookedSeats}</strong>
         </td></tr>
         <tr><td style="padding:16px 20px;text-align:center;">
           <a href="https://coincidenze.org/admin/spuntino" style="display:inline-block;background:#2C3E6B;color:#ffffff;text-decoration:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:500;">

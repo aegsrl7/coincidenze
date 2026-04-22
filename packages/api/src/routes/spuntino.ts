@@ -7,11 +7,11 @@ import { sendEmail, buildSpuntinoEmail, buildSpuntinoAdminNotificationEmail } fr
 
 export const spuntinoRoutes = new Hono<Env>()
 
-const TOTAL_CAPACITY = 30
 const ADMIN_NOTIFICATION_TO = 'coincidenze.arte@gmail.com'
+const STATUS_KEY = 'spuntino_status' // valore atteso: 'open' | 'closed'
 
-// Bootstrap lazy: la prima richiesta per isolate verifica/crea la tabella.
-// Idempotente, evita una migrazione manuale separata.
+// Bootstrap lazy: la prima richiesta per isolate verifica/crea le tabelle.
+// Idempotente, evita migrazioni manuali separate.
 let schemaReady = false
 async function ensureSchema(db: D1Database): Promise<void> {
   if (schemaReady) return
@@ -32,6 +32,7 @@ async function ensureSchema(db: D1Database): Promise<void> {
        )`
     )
     .run()
+  // edizione1_content esiste già — la usiamo per persistere lo stato apri/chiudi
   schemaReady = true
 }
 
@@ -57,17 +58,44 @@ function sanitize(s: unknown): string {
   return s.trim().slice(0, 500)
 }
 
-async function sumSeats(c: Context<Env>): Promise<number> {
-  const row = await c.env.DB
+async function sumSeats(db: D1Database): Promise<number> {
+  const row = await db
     .prepare('SELECT COALESCE(SUM(seats), 0) AS total FROM spuntino_bookings')
     .first<{ total: number }>()
   return row?.total ?? 0
 }
 
-// GET /capacity — pubblico: posti totali e residui
-spuntinoRoutes.get('/capacity', async (c) => {
-  const taken = await sumSeats(c)
-  return c.json({ total: TOTAL_CAPACITY, taken, remaining: Math.max(0, TOTAL_CAPACITY - taken) })
+async function isOpen(db: D1Database): Promise<boolean> {
+  const row = await db
+    .prepare('SELECT content FROM edizione1_content WHERE section = ?')
+    .bind(STATUS_KEY)
+    .first<{ content: string }>()
+  // default = aperto se mai impostato
+  return (row?.content ?? 'open') !== 'closed'
+}
+
+// IMPORTANTE: route specifiche prima di /:id, vedi memoria.
+
+// GET /status — pubblico: stato apri/chiudi e contatore prenotazioni
+spuntinoRoutes.get('/status', async (c) => {
+  const [open, taken] = await Promise.all([isOpen(c.env.DB), sumSeats(c.env.DB)])
+  return c.json({ open, taken })
+})
+
+// PUT /status — admin: cambia stato
+spuntinoRoutes.put('/status', async (c) => {
+  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+  const body = (await c.req.json().catch(() => ({}))) as { open?: unknown }
+  const value = body.open ? 'open' : 'closed'
+  await c.env.DB
+    .prepare(
+      `INSERT INTO edizione1_content (id, section, content, updated_at)
+       VALUES (?, ?, ?, datetime('now'))
+       ON CONFLICT(section) DO UPDATE SET content = ?, updated_at = datetime('now')`
+    )
+    .bind(crypto.randomUUID(), STATUS_KEY, value, value)
+    .run()
+  return c.json({ open: value === 'open' })
 })
 
 // POST / — pubblico: crea prenotazione
@@ -78,23 +106,21 @@ spuntinoRoutes.post('/', async (c) => {
     return c.json({ ok: true }, 201) // honeypot
   }
 
+  if (!(await isOpen(c.env.DB))) {
+    return c.json({ error: 'Le prenotazioni sono chiuse.' }, 423)
+  }
+
   const name = sanitize(body.name)
   const surname = sanitize(body.surname)
   const email = sanitize(body.email).toLowerCase()
   const phone = sanitize(body.phone)
   const notes = sanitize(body.notes)
-  const seats = Math.max(1, Math.min(8, Number.parseInt(String(body.seats ?? '1'), 10) || 1))
+  const seats = Math.max(1, Math.min(20, Number.parseInt(String(body.seats ?? '1'), 10) || 1))
 
   if (!name || !surname) return c.json({ error: 'Nome e cognome obbligatori' }, 400)
   if (!isValidEmail(email)) return c.json({ error: 'Email non valida' }, 400)
   if (!phone) return c.json({ error: 'Telefono obbligatorio' }, 400)
   if (!body.consent_privacy) return c.json({ error: 'Consenso privacy obbligatorio' }, 400)
-
-  const taken = await sumSeats(c)
-  const remaining = TOTAL_CAPACITY - taken
-  if (seats > remaining) {
-    return c.json({ error: `Posti insufficienti. Disponibili: ${remaining}` }, 409)
-  }
 
   const id = crypto.randomUUID()
   await c.env.DB
@@ -105,18 +131,12 @@ spuntinoRoutes.post('/', async (c) => {
     .bind(id, name, surname, email, phone, seats, notes, 1)
     .run()
 
-  // Email parallele al partecipante e all'admin
+  // Conta dopo l'insert per la mail admin (no race conditions sul counter pubblico)
+  const totalBookedSeats = await sumSeats(c.env.DB)
+
   const participantEmail = buildSpuntinoEmail({ name: `${name} ${surname}`, seats })
-  const newTotal = taken + seats
   const adminEmail = buildSpuntinoAdminNotificationEmail({
-    name,
-    surname,
-    email,
-    phone,
-    seats,
-    notes,
-    totalBookedSeats: newTotal,
-    capacity: TOTAL_CAPACITY,
+    name, surname, email, phone, seats, notes, totalBookedSeats,
   })
 
   const [emailRes, adminRes] = await Promise.all([
@@ -136,7 +156,7 @@ spuntinoRoutes.post('/', async (c) => {
     console.error('Notifica admin spuntino fallita per', id, adminRes.error)
   }
 
-  return c.json({ id, seats, remaining: TOTAL_CAPACITY - newTotal, email_sent: emailRes.ok }, 201)
+  return c.json({ id, seats, total_booked: totalBookedSeats, email_sent: emailRes.ok }, 201)
 })
 
 // GET / — admin: lista completa

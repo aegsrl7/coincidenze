@@ -113,8 +113,9 @@ export const api = {
   uncheckInAccreditation: (code: string) => request<any>(`/accrediti/${encodeURIComponent(code)}/uncheck-in`, { method: 'POST' }),
 
   // Spuntino delle 18
-  getSpuntinoCapacity: () => request<{ total: number; taken: number; remaining: number }>('/spuntino/capacity'),
-  createSpuntinoBooking: (data: any) => request<{ id: string; seats: number; remaining: number; email_sent: boolean }>('/spuntino', { method: 'POST', body: JSON.stringify(data) }),
+  getSpuntinoStatus: () => request<{ open: boolean; taken: number }>('/spuntino/status'),
+  setSpuntinoStatus: (open: boolean) => request<{ open: boolean }>('/spuntino/status', { method: 'PUT', body: JSON.stringify({ open }) }),
+  createSpuntinoBooking: (data: any) => request<{ id: string; seats: number; total_booked: number; email_sent: boolean }>('/spuntino', { method: 'POST', body: JSON.stringify(data) }),
   listSpuntinoBookings: () => request<any[]>('/spuntino'),
   deleteSpuntinoBooking: (id: string) => request<void>(`/spuntino/${id}`, { method: 'DELETE' }),
   deleteAccreditation: (id: string) => request<void>(`/accrediti/${id}`, { method: 'DELETE' }),

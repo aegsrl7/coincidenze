@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Loader2, RefreshCw, Trash2, Search, Download } from 'lucide-react'
+import { Loader2, RefreshCw, Trash2, Search, Download, Lock, Unlock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
@@ -32,19 +32,31 @@ export function AdminSpuntinoPage() {
   const [query, setQuery] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<SpuntinoBooking | null>(null)
   const [deleting, setDeleting] = useState(false)
-  const [capacity, setCapacity] = useState<{ total: number; taken: number; remaining: number } | null>(null)
+  const [open, setOpen] = useState<boolean | null>(null)
+  const [togglingStatus, setTogglingStatus] = useState(false)
 
   const load = async () => {
     setLoading(true)
     try {
-      const [data, cap] = await Promise.all([
+      const [data, status] = await Promise.all([
         api.listSpuntinoBookings(),
-        api.getSpuntinoCapacity(),
+        api.getSpuntinoStatus(),
       ])
       setItems(data as SpuntinoBooking[])
-      setCapacity(cap)
+      setOpen(status.open)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const toggleOpen = async () => {
+    if (open === null) return
+    setTogglingStatus(true)
+    try {
+      const res = await api.setSpuntinoStatus(!open)
+      setOpen(res.open)
+    } finally {
+      setTogglingStatus(false)
     }
   }
 
@@ -78,8 +90,6 @@ export function AdminSpuntinoPage() {
       await api.deleteSpuntinoBooking(deleteTarget.id)
       setItems((prev) => prev.filter((b) => b.id !== deleteTarget.id))
       setDeleteTarget(null)
-      // Aggiorna capacit\u00e0 dopo cancellazione
-      api.getSpuntinoCapacity().then(setCapacity).catch(() => {})
     } finally {
       setDeleting(false)
     }
@@ -95,17 +105,34 @@ export function AdminSpuntinoPage() {
           <span className="text-navy/30">·</span>
           <span className="font-medium text-viola">{totalSeats}</span>
           <span>posti</span>
-          {capacity && (
+          {open !== null && (
             <>
               <span className="text-navy/30">·</span>
-              <span className={capacity.remaining === 0 ? 'text-bordeaux font-medium' : ''}>
-                {capacity.remaining}/{capacity.total} liberi
+              <span className={open ? 'text-green-700' : 'text-bordeaux font-medium'}>
+                {open ? 'aperto' : 'chiuso'}
               </span>
             </>
           )}
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant={open ? 'outline' : 'default'}
+            size="sm"
+            onClick={toggleOpen}
+            disabled={togglingStatus || open === null}
+            title={open ? 'Chiudi le prenotazioni' : 'Riapri le prenotazioni'}
+            className={!open ? 'bg-bordeaux hover:bg-bordeaux/90' : ''}
+          >
+            {togglingStatus ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : open ? (
+              <Lock className="h-4 w-4" />
+            ) : (
+              <Unlock className="h-4 w-4" />
+            )}
+            {open ? 'Chiudi' : 'Riapri'}
+          </Button>
           <Button variant="outline" size="sm" onClick={load} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Ricarica
