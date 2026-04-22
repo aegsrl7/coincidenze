@@ -256,6 +256,20 @@ export interface AccreditationInput {
   company?: string
 }
 
+export interface SpuntinoBooking {
+  id: string
+  name: string
+  surname: string
+  email: string
+  phone: string
+  seats: number
+  notes: string
+  consent_privacy: 0 | 1
+  email_sent_at: string | null
+  created_at: string
+  updated_at: string
+}
+
 // Menu
 export interface MenuItem {
   id: string

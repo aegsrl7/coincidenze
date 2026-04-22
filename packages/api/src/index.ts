@@ -14,6 +14,7 @@ import { editorialRoutes } from './routes/editorial'
 import { edizione0Routes } from './routes/edizione0'
 import { edizione1Routes } from './routes/edizione1'
 import { accreditationsRoutes } from './routes/accreditations'
+import { spuntinoRoutes } from './routes/spuntino'
 import { menuRoutes } from './routes/menu'
 import { categoriesRoutes } from './routes/categories'
 import { requireAuth } from './middleware/auth'
@@ -81,6 +82,9 @@ app.route('/api', uploadRoutes)
 
 // Accrediti (auth gestito per-route: POST pubblico, GET by-code pubblico, resto admin)
 app.route('/api/accrediti', accreditationsRoutes)
+
+// Spuntino delle 18 (auth per-route: POST e GET /capacity pubblici, resto admin)
+app.route('/api/spuntino', spuntinoRoutes)
 
 // Protected routes (requireAuth only blocks POST/PUT/DELETE)
 app.use('/api/events/*', requireAuth)

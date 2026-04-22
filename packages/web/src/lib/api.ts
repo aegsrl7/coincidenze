@@ -111,6 +111,12 @@ export const api = {
   listAccreditations: () => request<any[]>('/accrediti'),
   checkInAccreditation: (code: string) => request<any>(`/accrediti/${encodeURIComponent(code)}/check-in`, { method: 'POST' }),
   uncheckInAccreditation: (code: string) => request<any>(`/accrediti/${encodeURIComponent(code)}/uncheck-in`, { method: 'POST' }),
+
+  // Spuntino delle 18
+  getSpuntinoCapacity: () => request<{ total: number; taken: number; remaining: number }>('/spuntino/capacity'),
+  createSpuntinoBooking: (data: any) => request<{ id: string; seats: number; remaining: number; email_sent: boolean }>('/spuntino', { method: 'POST', body: JSON.stringify(data) }),
+  listSpuntinoBookings: () => request<any[]>('/spuntino'),
+  deleteSpuntinoBooking: (id: string) => request<void>(`/spuntino/${id}`, { method: 'DELETE' }),
   deleteAccreditation: (id: string) => request<void>(`/accrediti/${id}`, { method: 'DELETE' }),
 
   // Menu

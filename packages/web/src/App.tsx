@@ -15,6 +15,8 @@ import { AccreditiFormPage } from '@/features/accrediti/AccreditiFormPage'
 import { BigliettoPage } from '@/features/accrediti/BigliettoPage'
 import { AdminAccreditiPage } from '@/features/accrediti/AdminAccreditiPage'
 import { CheckInPage } from '@/features/accrediti/CheckInPage'
+import { SpuntinoPage } from '@/features/spuntino/SpuntinoPage'
+import { AdminSpuntinoPage } from '@/features/spuntino/AdminSpuntinoPage'
 import { ArtistDetailPage } from '@/features/artists/ArtistDetailPage'
 import { AdminMenuPage } from '@/features/menu/AdminMenuPage'
 import { AdminCategoriesPage } from '@/features/categories/AdminCategoriesPage'
@@ -41,6 +43,7 @@ export default function App() {
         <Route path="/programma-instagram" element={<ProgrammaInstagramPage />} />
         <Route path="/edizione-1-v2" element={<Navigate to="/edizione-1" replace />} />
         <Route path="/accrediti" element={<AccreditiFormPage />} />
+        <Route path="/spuntino" element={<SpuntinoPage />} />
         <Route path="/biglietto/:code" element={<BigliettoPage />} />
         <Route path="/artisti/:id" element={<ArtistDetailPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
@@ -66,6 +69,7 @@ export default function App() {
             <Route path="/admin/piano-editoriale" element={<PianoEditorialePage />} />
             <Route path="/admin/accrediti" element={<AdminAccreditiPage />} />
             <Route path="/admin/check-in" element={<CheckInPage />} />
+            <Route path="/admin/spuntino" element={<AdminSpuntinoPage />} />
             <Route path="/admin/menu" element={<AdminMenuPage />} />
             <Route path="/admin/categorie" element={<AdminCategoriesPage />} />
           </Route>
