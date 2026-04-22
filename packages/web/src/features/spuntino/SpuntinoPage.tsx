@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Loader2, ArrowLeft, CheckCircle2, Clock, MapPin, Wine } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -31,12 +31,6 @@ export function SpuntinoPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState<{ seats: number; remaining: number; emailSent: boolean } | null>(null)
 
-  const [capacity, setCapacity] = useState<{ total: number; taken: number; remaining: number } | null>(null)
-
-  useEffect(() => {
-    api.getSpuntinoCapacity().then(setCapacity).catch(() => {})
-  }, [])
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
@@ -61,9 +55,7 @@ export function SpuntinoPage() {
   }
 
   const totalDue = seats * PRICE_PER_SEAT
-  const remaining = capacity?.remaining ?? null
-  const soldOut = remaining !== null && remaining <= 0
-  const maxSelectable = remaining === null ? 8 : Math.min(8, remaining)
+  const maxSelectable = 8
 
   if (success) {
     return (
@@ -133,22 +125,7 @@ export function SpuntinoPage() {
           </ul>
         </div>
 
-        {capacity && (
-          <p className={`text-center text-sm mb-4 ${soldOut ? 'text-bordeaux font-medium' : 'text-ink-muted italic'}`}>
-            {soldOut ? 'Tutti i posti sono esauriti.' : 'Posti limitati.'}
-          </p>
-        )}
-
-        {soldOut ? (
-          <div className="bg-bordeaux/5 border border-bordeaux/20 rounded-xl p-6 text-center">
-            <p className="text-sm text-bordeaux">
-              Le prenotazioni sono chiuse. Scrivici a{' '}
-              <a href="mailto:coincidenze.arte@gmail.com" className="underline">coincidenze.arte@gmail.com</a>{' '}
-              per la lista d'attesa.
-            </p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="bg-white/70 rounded-2xl border border-navy/10 p-6 shadow-sm space-y-4">
+        <form onSubmit={handleSubmit} className="bg-white/70 rounded-2xl border border-navy/10 p-6 shadow-sm space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Nome" required>
                 <Input value={name} onChange={(e) => setName(e.target.value)} required />
@@ -217,7 +194,6 @@ export function SpuntinoPage() {
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Prenota'}
             </Button>
           </form>
-        )}
       </div>
       <PublicFooter />
     </div>
