@@ -10,8 +10,8 @@ const DISHES = [
   'Gambero e lardo',
   'Cozza gratinata',
   'Parmigiana in carrozza affumicata',
-  'Mezzo rigatone all\u2019amatriciana',
-  'Plin d\u2019ombrina ripassati alla brace, limone salato e capperi',
+  'Mezzo rigatone all’amatriciana',
+  'Plin d’ombrina ripassati alla brace, limone salato e capperi',
   'Arrosticini e maionese piccante al prezzemolo',
 ]
 
@@ -76,11 +76,11 @@ export function SpuntinoPage() {
               Hai prenotato <strong className="text-navy">{success.seats}</strong>{' '}
               {success.seats === 1 ? 'posto' : 'posti'} per Lo spuntino delle 18.
             </p>
-            <p className="text-sm text-ink-muted mt-1">Pagamento in loco: {success.seats * PRICE_PER_SEAT}\u20ac.</p>
+            <p className="text-sm text-ink-muted mt-1">Pagamento in loco: {success.seats * PRICE_PER_SEAT}€.</p>
             {success.emailSent ? (
               <p className="text-xs text-ink-muted mt-4">Ti abbiamo inviato un'email con il riepilogo.</p>
             ) : (
-              <p className="text-xs text-amber-700 mt-4">L'invio email \u00e8 fallito, ma la prenotazione \u00e8 registrata.</p>
+              <p className="text-xs text-amber-700 mt-4">L'invio email è fallito, ma la prenotazione è registrata.</p>
             )}
             <Link
               to="/edizione-1"
@@ -108,7 +108,7 @@ export function SpuntinoPage() {
         </Link>
 
         <header className="text-center mb-8">
-          <p className="text-[11px] tracking-[0.3em] uppercase text-viola mb-2">COINCIDENZE \u00b7 Edizione 1</p>
+          <p className="text-[11px] tracking-[0.3em] uppercase text-viola mb-2">COINCIDENZE · Edizione 1</p>
           <h1 className="font-display text-3xl sm:text-4xl font-semibold text-navy leading-tight">Lo spuntino delle 18</h1>
           <p className="text-sm text-ink-light italic mt-2">
             Sei piatti in sequenza, dove il calore diventa linguaggio e ogni boccone si prende il suo tempo.
@@ -119,14 +119,14 @@ export function SpuntinoPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mb-5">
             <Info icon={Clock} label="Sabato 25 aprile" value="ore 18:00" />
             <Info icon={MapPin} label="Marsam Locanda" value="sotto il portico" />
-            <Info icon={Wine} label="Posti limitati" value={`${PRICE_PER_SEAT}\u20ac a persona`} />
+            <Info icon={Wine} label="Posti limitati" value={`${PRICE_PER_SEAT}€ a persona`} />
           </div>
 
-          <p className="text-[11px] uppercase tracking-wider text-viola mb-2">Il men\u00f9</p>
+          <p className="text-[11px] uppercase tracking-wider text-viola mb-2">Il menù</p>
           <ul className="space-y-1 text-sm text-ink">
             {DISHES.map((d) => (
               <li key={d} className="flex gap-2">
-                <span className="text-viola">\u2022</span>
+                <span className="text-viola">•</span>
                 <span>{d}</span>
               </li>
             ))}
@@ -173,10 +173,10 @@ export function SpuntinoPage() {
                 className="w-full h-9 px-3 rounded-md border border-navy/15 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-viola/30"
               >
                 {Array.from({ length: maxSelectable }, (_, i) => i + 1).map((n) => (
-                  <option key={n} value={n}>{n} {n === 1 ? 'posto' : 'posti'} \u2014 {n * PRICE_PER_SEAT}\u20ac</option>
+                  <option key={n} value={n}>{n} {n === 1 ? 'posto' : 'posti'} — {n * PRICE_PER_SEAT}€</option>
                 ))}
               </select>
-              <p className="text-xs text-ink-muted mt-1">Pagamento in loco. Totale: <strong className="text-navy">{totalDue}\u20ac</strong></p>
+              <p className="text-xs text-ink-muted mt-1">Pagamento in loco. Totale: <strong className="text-navy">{totalDue}€</strong></p>
             </Field>
 
             <Field label="Allergie o note (opzionale)">
@@ -185,7 +185,7 @@ export function SpuntinoPage() {
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
                 className="w-full px-3 py-2 rounded-md border border-navy/15 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-viola/30 resize-none"
-                placeholder="Es. allergia ai crostacei, vegetariano\u2026"
+                placeholder="Es. allergia ai crostacei, vegetariano…"
               />
             </Field>
 

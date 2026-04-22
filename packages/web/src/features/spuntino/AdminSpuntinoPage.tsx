@@ -92,12 +92,12 @@ export function AdminSpuntinoPage() {
         <div className="flex items-center gap-2 text-sm text-ink-light">
           <span className="font-medium text-navy">{items.length}</span>
           <span>prenotazioni</span>
-          <span className="text-navy/30">\u00b7</span>
+          <span className="text-navy/30">·</span>
           <span className="font-medium text-viola">{totalSeats}</span>
           <span>posti</span>
           {capacity && (
             <>
-              <span className="text-navy/30">\u00b7</span>
+              <span className="text-navy/30">·</span>
               <span className={capacity.remaining === 0 ? 'text-bordeaux font-medium' : ''}>
                 {capacity.remaining}/{capacity.total} liberi
               </span>
@@ -120,7 +120,7 @@ export function AdminSpuntinoPage() {
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" />
         <Input
-          placeholder="Cerca per nome, email, telefono\u2026"
+          placeholder="Cerca per nome, email, telefono…"
           className="pl-9"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
