@@ -168,6 +168,45 @@ spuntinoRoutes.get('/', async (c) => {
   return c.json(results)
 })
 
+// PUT /:id — admin: aggiorna prenotazione esistente
+spuntinoRoutes.put('/:id', async (c) => {
+  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+  const id = c.req.param('id')
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>
+
+  const existing = await c.env.DB
+    .prepare('SELECT id FROM spuntino_bookings WHERE id = ?')
+    .bind(id)
+    .first()
+  if (!existing) return c.json({ error: 'Prenotazione non trovata' }, 404)
+
+  const name = sanitize(body.name)
+  const surname = sanitize(body.surname)
+  const email = sanitize(body.email).toLowerCase()
+  const phone = sanitize(body.phone)
+  const notes = sanitize(body.notes)
+  const seats = Math.max(1, Math.min(20, Number.parseInt(String(body.seats ?? '1'), 10) || 1))
+
+  if (!name || !surname) return c.json({ error: 'Nome e cognome obbligatori' }, 400)
+  if (!isValidEmail(email)) return c.json({ error: 'Email non valida' }, 400)
+
+  await c.env.DB
+    .prepare(
+      `UPDATE spuntino_bookings
+       SET name = ?, surname = ?, email = ?, phone = ?, seats = ?, notes = ?,
+           updated_at = datetime('now')
+       WHERE id = ?`
+    )
+    .bind(name, surname, email, phone, seats, notes, id)
+    .run()
+
+  const row = await c.env.DB
+    .prepare('SELECT * FROM spuntino_bookings WHERE id = ?')
+    .bind(id)
+    .first()
+  return c.json(row)
+})
+
 // DELETE /:id — admin
 spuntinoRoutes.delete('/:id', async (c) => {
   if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Loader2, RefreshCw, Trash2, Search, Download, Lock, Unlock } from 'lucide-react'
+import { Loader2, RefreshCw, Trash2, Search, Download, Lock, Unlock, Pencil, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
@@ -34,6 +34,10 @@ export function AdminSpuntinoPage() {
   const [deleting, setDeleting] = useState(false)
   const [open, setOpen] = useState<boolean | null>(null)
   const [togglingStatus, setTogglingStatus] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editDraft, setEditDraft] = useState<SpuntinoBooking | null>(null)
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [editError, setEditError] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -81,6 +85,40 @@ export function AdminSpuntinoPage() {
     a.download = `spuntino-coincidenze-${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  const startEdit = (b: SpuntinoBooking) => {
+    setEditingId(b.id)
+    setEditDraft({ ...b })
+    setEditError('')
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditDraft(null)
+    setEditError('')
+  }
+
+  const saveEdit = async () => {
+    if (!editDraft) return
+    setSavingEdit(true)
+    setEditError('')
+    try {
+      const updated = await api.updateSpuntinoBooking(editDraft.id, {
+        name: editDraft.name,
+        surname: editDraft.surname,
+        email: editDraft.email,
+        phone: editDraft.phone,
+        seats: editDraft.seats,
+        notes: editDraft.notes,
+      }) as SpuntinoBooking
+      setItems((prev) => prev.map((b) => (b.id === updated.id ? updated : b)))
+      cancelEdit()
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : 'Errore salvataggio')
+    } finally {
+      setSavingEdit(false)
+    }
   }
 
   const handleDelete = async () => {
@@ -178,7 +216,67 @@ export function AdminSpuntinoPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((b) => (
+                {filtered.map((b) => {
+                  const isEditing = editingId === b.id && editDraft
+                  if (isEditing && editDraft) {
+                    return (
+                      <tr key={b.id} className="border-t border-navy/5 bg-viola/5">
+                        <td className="px-3 py-2" colSpan={7}>
+                          <div className="grid grid-cols-1 sm:grid-cols-6 gap-2">
+                            <Input
+                              placeholder="Nome"
+                              value={editDraft.name}
+                              onChange={(e) => setEditDraft({ ...editDraft, name: e.target.value })}
+                            />
+                            <Input
+                              placeholder="Cognome"
+                              value={editDraft.surname}
+                              onChange={(e) => setEditDraft({ ...editDraft, surname: e.target.value })}
+                            />
+                            <Input
+                              type="email"
+                              placeholder="Email"
+                              value={editDraft.email}
+                              onChange={(e) => setEditDraft({ ...editDraft, email: e.target.value })}
+                              className="sm:col-span-2"
+                            />
+                            <Input
+                              type="tel"
+                              placeholder="Telefono"
+                              value={editDraft.phone}
+                              onChange={(e) => setEditDraft({ ...editDraft, phone: e.target.value })}
+                            />
+                            <Input
+                              type="number"
+                              min={1}
+                              max={20}
+                              placeholder="Posti"
+                              value={editDraft.seats}
+                              onChange={(e) => setEditDraft({ ...editDraft, seats: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+                            />
+                          </div>
+                          <Input
+                            className="mt-2"
+                            placeholder="Note (allergie, ecc.)"
+                            value={editDraft.notes}
+                            onChange={(e) => setEditDraft({ ...editDraft, notes: e.target.value })}
+                          />
+                          {editError && <p className="text-xs text-bordeaux mt-2">{editError}</p>}
+                          <div className="flex items-center justify-end gap-2 mt-3">
+                            <Button size="sm" variant="outline" onClick={cancelEdit} disabled={savingEdit}>
+                              <X className="h-3.5 w-3.5" />
+                              Annulla
+                            </Button>
+                            <Button size="sm" onClick={saveEdit} disabled={savingEdit || !editDraft.name.trim() || !editDraft.surname.trim() || !editDraft.email.trim()}>
+                              {savingEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                              Salva
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  }
+                  return (
                   <tr key={b.id} className="border-t border-navy/5 hover:bg-navy/3">
                     <td className="px-3 py-2 font-medium text-navy whitespace-nowrap">{b.name} {b.surname}</td>
                     <td className="px-3 py-2 text-ink-light max-w-[180px] sm:max-w-none truncate">{b.email}</td>
@@ -193,16 +291,26 @@ export function AdminSpuntinoPage() {
                     </td>
                     <td className="px-3 py-2 text-ink-muted hidden sm:table-cell whitespace-nowrap">{fmtDateTime(b.created_at)}</td>
                     <td className="px-3 py-2 text-right">
-                      <button
-                        onClick={() => setDeleteTarget(b)}
-                        className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-bordeaux/10 text-ink-muted hover:text-bordeaux"
-                        title="Elimina prenotazione"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      <div className="inline-flex items-center gap-1">
+                        <button
+                          onClick={() => startEdit(b)}
+                          className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-navy/5 text-ink-muted hover:text-navy"
+                          title="Modifica prenotazione"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget(b)}
+                          className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-bordeaux/10 text-ink-muted hover:text-bordeaux"
+                          title="Elimina prenotazione"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>
