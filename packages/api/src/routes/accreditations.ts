@@ -143,10 +143,10 @@ accreditationsRoutes.get('/', async (c) => {
   return c.json(results)
 })
 
-// POST /:code/check-in — admin: segna l'accredito come presente
+// POST /:code/check-in — pubblico: self check-in dal proprio biglietto.
+// L'evento è gratuito e l'anti-frode non è una priorità: chi ha il codice
+// può segnarsi presente da solo. La uncheck-in invece resta admin.
 accreditationsRoutes.post('/:code/check-in', async (c) => {
-  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
-
   const code = c.req.param('code')
   const row = await c.env.DB
     .prepare('SELECT id, checked_in_at FROM accreditations WHERE ticket_code = ?')

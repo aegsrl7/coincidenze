@@ -52,7 +52,7 @@ export function buildTicketEmail(opts: {
     '',
     'Sabato 25 aprile 2026, Marsam Locanda, Bene Vagienna.',
     '',
-    'Conserva questo link: è il tuo biglietto con QR da mostrare all\'ingresso.',
+    'All\'arrivo apri questo link e tappa "Sono arrivato" per il check-in:',
     opts.ticketUrl,
     '',
     'COINCIDENZE',
@@ -82,14 +82,15 @@ export function buildTicketEmail(opts: {
               <div style="display:inline-block;background:#F5F0E8;border-radius:12px;padding:16px;">
                 <img src="${opts.qrUrl}" alt="QR" width="220" height="220" style="display:block;" />
               </div>
-              <p style="font-size:12px;color:#888;margin:12px 0 0;">Mostra questo QR all'ingresso.</p>
+              <p style="font-size:12px;color:#888;margin:12px 0 0;">Il QR è il tuo biglietto, tienilo con te.</p>
             </td>
           </tr>
           <tr>
             <td style="padding:12px 28px;text-align:center;">
-              <a href="${opts.ticketUrl}" style="display:inline-block;background:#2C3E6B;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:500;">
-                Apri il biglietto online
+              <a href="${opts.ticketUrl}" style="display:inline-block;background:#6B3FA0;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-size:15px;font-weight:600;">
+                Apri il biglietto e fai check-in
               </a>
+              <p style="font-size:11px;color:#888;margin:8px 0 0;">All'arrivo, riapri questo link e tappa "Sono arrivato".</p>
             </td>
           </tr>
           <tr>

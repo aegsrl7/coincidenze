@@ -158,9 +158,34 @@ export function BigliettoPage() {
             </div>
           </div>
 
-          <p className="text-center text-xs text-ink-muted px-6 mb-6">
-            Mostra questo QR all'ingresso.
+          <p className="text-center text-xs text-ink-muted px-6 mb-2">
+            All'arrivo, conferma il check-in qui sotto.
           </p>
+
+          {/* Self check-in pubblico */}
+          <div className="px-6 pb-6">
+            {!isCheckedIn ? (
+              <Button
+                onClick={handleCheckIn}
+                disabled={checkingIn}
+                className="w-full bg-viola hover:bg-viola/90 text-white text-base py-6"
+              >
+                {checkingIn ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="h-5 w-5" />
+                )}
+                Sono arrivato
+              </Button>
+            ) : (
+              <div className="bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3 text-center">
+                <CheckCircle2 className="h-5 w-5 text-green-700 mx-auto mb-1" />
+                <p className="text-sm font-medium text-green-800">
+                  Check-in confermato{checkInFlash === 'now' && ' — benvenutə!'}
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Info evento */}
           <div className="border-t border-navy/10 px-6 py-5 space-y-2 text-sm">
@@ -184,54 +209,29 @@ export function BigliettoPage() {
             </p>
           </div>
 
-          {/* Azioni admin (solo autenticati) */}
-          {isAuthenticated && (
+          {/* Azioni admin (solo per staff loggato): annulla check-in */}
+          {isAuthenticated && isCheckedIn && (
             <div className="border-t border-navy/10 px-6 py-4 space-y-2 bg-navy/3">
               <p className="text-[10px] uppercase tracking-wider text-ink-muted text-center">
                 Gestione staff
               </p>
-              {!isCheckedIn ? (
-                <Button
-                  onClick={handleCheckIn}
-                  disabled={checkingIn}
-                  className="w-full"
-                >
-                  {checkingIn ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="h-4 w-4" />
-                  )}
-                  Segna come presente
-                </Button>
-              ) : (
-                <div className="space-y-2">
-                  <p className="text-center text-sm text-green-800">
-                    Già in check-in{checkInFlash === 'now' && ' (appena ora)'}
-                  </p>
-                  <Button
-                    onClick={handleUncheckIn}
-                    disabled={checkingIn}
-                    variant="outline"
-                    size="sm"
-                    className="w-full text-ink-muted hover:text-bordeaux"
-                  >
-                    {checkingIn ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
-                    Annulla check-in
-                  </Button>
-                </div>
-              )}
-              {checkInFlash === 'already' && !isCheckedIn && (
-                <p className="text-center text-xs text-amber-700">
-                  Era già stato fatto il check-in.
-                </p>
-              )}
+              <Button
+                onClick={handleUncheckIn}
+                disabled={checkingIn}
+                variant="outline"
+                size="sm"
+                className="w-full text-ink-muted hover:text-bordeaux"
+              >
+                {checkingIn ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                Annulla check-in
+              </Button>
             </div>
           )}
         </div>
 
         <p className="text-xs text-ink-muted text-center mt-6 leading-relaxed">
-          Salva questa pagina nei preferiti o fai uno screenshot del QR.
-          Se l'hai ricevuta per email, tienila a portata di mano il giorno dell'evento.
+          Salva questa pagina nei preferiti o tienila aperta sull'email.
+          All'arrivo a Marsam, riaprila e tappa <strong>Sono arrivato</strong>.
         </p>
       </div>
       <PublicFooter />
