@@ -144,7 +144,10 @@ export function ArtistDetailPage() {
         {artist.bio && (
           <section className="mb-8">
             <h2 className="text-xs font-semibold text-navy uppercase tracking-wider mb-2">Bio</h2>
-            <p className="text-sm text-ink-light leading-relaxed whitespace-pre-line">{artist.bio}</p>
+            <div
+              className="text-sm text-ink-light leading-relaxed [&_a]:text-viola [&_a]:underline [&_strong]:text-navy [&_strong]:font-semibold [&_em]:italic [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2"
+              dangerouslySetInnerHTML={{ __html: renderBioMarkdown(artist.bio) }}
+            />
           </section>
         )}
 
@@ -240,4 +243,37 @@ function MediaCard({ item }: { item: MediaItem }) {
       </div>
     </div>
   )
+}
+
+// Mini markdown → HTML per la bio. Escape prima, poi inline patterns.
+// Supporta: **grassetto**, *corsivo*, [link](url), liste con "- ", a capo.
+function renderBioMarkdown(src: string): string {
+  const escape = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
+  const safeUrl = (url: string) =>
+    /^(https?:|mailto:|tel:|\/)/i.test(url) ? escape(url) : '#'
+
+  // Lavoro per blocchi (paragrafi separati da riga vuota)
+  const blocks = src.replace(/\r\n/g, '\n').split(/\n{2,}/)
+  const html = blocks.map((block) => {
+    const lines = block.split('\n')
+    if (lines.every((l) => /^\s*-\s+/.test(l))) {
+      // Lista
+      const items = lines.map((l) => `<li>${inline(l.replace(/^\s*-\s+/, ''))}</li>`).join('')
+      return `<ul>${items}</ul>`
+    }
+    return `<p>${lines.map(inline).join('<br>')}</p>`
+  }).join('')
+
+  return html
+
+  function inline(line: string): string {
+    return escape(line)
+      .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|\W)\*([^*\n]+)\*/g, '$1<em>$2</em>')
+      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, text, url) =>
+        `<a href="${safeUrl(url)}" target="_blank" rel="noopener noreferrer">${text}</a>`
+      )
+  }
 }

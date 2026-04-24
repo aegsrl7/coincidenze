@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { Bold, Italic, Link2, List } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,112 @@ import { type EventCategory, type Artist } from '@/types'
 
 function prettifyCategory(slug: string): string {
   return slug.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+interface BioEditorProps {
+  value: string
+  onChange: (v: string) => void
+}
+
+function BioEditor({ value, onChange }: BioEditorProps) {
+  const ref = useRef<HTMLTextAreaElement | null>(null)
+
+  const wrap = (before: string, after: string = before, placeholder = '') => {
+    const el = ref.current
+    if (!el) return
+    const start = el.selectionStart
+    const end = el.selectionEnd
+    const selected = value.slice(start, end) || placeholder
+    const next = value.slice(0, start) + before + selected + after + value.slice(end)
+    onChange(next)
+    requestAnimationFrame(() => {
+      el.focus()
+      const cursor = start + before.length + selected.length
+      el.setSelectionRange(cursor, cursor)
+    })
+  }
+
+  const insertLink = () => {
+    const el = ref.current
+    if (!el) return
+    const url = window.prompt('URL del link:')
+    if (!url) return
+    const start = el.selectionStart
+    const end = el.selectionEnd
+    const selected = value.slice(start, end) || 'testo'
+    const md = `[${selected}](${url})`
+    const next = value.slice(0, start) + md + value.slice(end)
+    onChange(next)
+    requestAnimationFrame(() => el.focus())
+  }
+
+  const insertList = () => {
+    const el = ref.current
+    if (!el) return
+    const start = el.selectionStart
+    // trova inizio riga corrente
+    const before = value.slice(0, start)
+    const lineStart = before.lastIndexOf('\n') + 1
+    const next = value.slice(0, lineStart) + '- ' + value.slice(lineStart)
+    onChange(next)
+    requestAnimationFrame(() => {
+      el.focus()
+      const cursor = start + 2
+      el.setSelectionRange(cursor, cursor)
+    })
+  }
+
+  return (
+    <div className="border border-navy/15 rounded-md overflow-hidden bg-white">
+      <div className="flex items-center gap-0.5 border-b border-navy/10 bg-beige/40 px-1.5 py-1">
+        <ToolbarBtn onClick={() => wrap('**', '**', 'grassetto')} title="Grassetto (Cmd+B)">
+          <Bold className="h-3.5 w-3.5" />
+        </ToolbarBtn>
+        <ToolbarBtn onClick={() => wrap('*', '*', 'corsivo')} title="Corsivo (Cmd+I)">
+          <Italic className="h-3.5 w-3.5" />
+        </ToolbarBtn>
+        <ToolbarBtn onClick={insertLink} title="Inserisci link">
+          <Link2 className="h-3.5 w-3.5" />
+        </ToolbarBtn>
+        <ToolbarBtn onClick={insertList} title="Lista puntata">
+          <List className="h-3.5 w-3.5" />
+        </ToolbarBtn>
+        <span className="ml-auto text-[10px] text-ink-muted pr-2">
+          Markdown: **grassetto** *corsivo* [link](url)
+        </span>
+      </div>
+      <textarea
+        ref={ref}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+            e.preventDefault()
+            wrap('**', '**', 'grassetto')
+          } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'i') {
+            e.preventDefault()
+            wrap('*', '*', 'corsivo')
+          }
+        }}
+        rows={8}
+        placeholder="Bio dell'artista. Una o più righe, formattazione minima opzionale."
+        className="w-full px-3 py-2 text-sm text-ink resize-y focus:outline-none min-h-[180px] leading-relaxed"
+      />
+    </div>
+  )
+}
+
+function ToolbarBtn({ onClick, title, children }: { onClick: () => void; title: string; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className="inline-flex items-center justify-center h-7 w-7 rounded text-ink-muted hover:bg-navy/5 hover:text-navy"
+    >
+      {children}
+    </button>
+  )
 }
 
 interface Props {
@@ -123,10 +230,9 @@ export function ArtistFormDialog({ open, onClose, editItem }: Props) {
 
             <div>
               <label className="text-xs font-medium text-ink-muted">Bio</label>
-              <Input
+              <BioEditor
                 value={form.bio}
-                onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                placeholder="Breve descrizione"
+                onChange={(v) => setForm({ ...form, bio: v })}
               />
             </div>
 
