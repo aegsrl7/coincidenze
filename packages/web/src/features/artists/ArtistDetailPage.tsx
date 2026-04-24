@@ -245,8 +245,9 @@ function MediaCard({ item }: { item: MediaItem }) {
   )
 }
 
-// Mini markdown → HTML per la bio. Escape prima, poi inline patterns.
-// Supporta: **grassetto**, *corsivo*, [link](url), liste con "- ", a capo.
+// Mini markdown → HTML per la bio.
+// Supporta: **grassetto**, *corsivo*, [link](url), liste con "- ", paragrafi.
+// Bold/italic possono attraversare a capo singoli all'interno di un blocco.
 function renderBioMarkdown(src: string): string {
   const escape = (s: string) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -254,26 +255,24 @@ function renderBioMarkdown(src: string): string {
   const safeUrl = (url: string) =>
     /^(https?:|mailto:|tel:|\/)/i.test(url) ? escape(url) : '#'
 
-  // Lavoro per blocchi (paragrafi separati da riga vuota)
-  const blocks = src.replace(/\r\n/g, '\n').split(/\n{2,}/)
-  const html = blocks.map((block) => {
+  // 1) escape su tutto
+  // 2) inline patterns sull'intera stringa (bold/italic possono spanare \n singoli)
+  // 3) split in blocchi su \n vuote → <p> o <ul>
+  const escaped = escape(src.replace(/\r\n/g, '\n'))
+  const inlined = escaped
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, text, url) =>
+      `<a href="${safeUrl(url)}" target="_blank" rel="noopener noreferrer">${text}</a>`
+    )
+    .replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*\w])\*([^*\n]+?)\*(?!\w)/g, '$1<em>$2</em>')
+
+  const blocks = inlined.split(/\n{2,}/)
+  return blocks.map((block) => {
     const lines = block.split('\n')
-    if (lines.every((l) => /^\s*-\s+/.test(l))) {
-      // Lista
-      const items = lines.map((l) => `<li>${inline(l.replace(/^\s*-\s+/, ''))}</li>`).join('')
+    if (lines.length > 0 && lines.every((l) => /^\s*-\s+/.test(l))) {
+      const items = lines.map((l) => `<li>${l.replace(/^\s*-\s+/, '')}</li>`).join('')
       return `<ul>${items}</ul>`
     }
-    return `<p>${lines.map(inline).join('<br>')}</p>`
+    return `<p>${lines.join('<br>')}</p>`
   }).join('')
-
-  return html
-
-  function inline(line: string): string {
-    return escape(line)
-      .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
-      .replace(/(^|\W)\*([^*\n]+)\*/g, '$1<em>$2</em>')
-      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, text, url) =>
-        `<a href="${safeUrl(url)}" target="_blank" rel="noopener noreferrer">${text}</a>`
-      )
-  }
 }
