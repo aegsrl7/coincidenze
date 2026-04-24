@@ -76,8 +76,8 @@ export function AccreditiFormPage() {
             25 aprile 2026 &middot; Marsam Locanda, Bene Vagienna
           </p>
           <p className="text-sm text-ink-light mt-4 leading-relaxed">
-            L'ingresso è gratuito. Registrati per ricevere il biglietto con QR
-            da presentare all'entrata.
+            L'ingresso è gratuito. Registrati per ricevere il tuo biglietto:
+            all'arrivo lo riapri dal link nell'email e tappi <strong>Sono arrivato</strong>.
           </p>
         </header>
 
