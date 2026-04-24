@@ -145,7 +145,7 @@ export function ArtistDetailPage() {
           <section className="mb-8">
             <h2 className="text-xs font-semibold text-navy uppercase tracking-wider mb-2">Bio</h2>
             <div
-              className="text-sm text-ink-light leading-relaxed [&_a]:text-viola [&_a]:underline [&_strong]:text-navy [&_strong]:font-semibold [&_em]:italic [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2"
+              className="text-sm text-ink-light leading-relaxed [&_p+p]:mt-3 [&_p+ul]:mt-3 [&_ul+p]:mt-3 [&_a]:text-viola [&_a]:underline [&_strong]:text-navy [&_strong]:font-semibold [&_em]:italic [&_ul]:list-disc [&_ul]:pl-5"
               dangerouslySetInnerHTML={{ __html: renderBioMarkdown(artist.bio) }}
             />
           </section>
