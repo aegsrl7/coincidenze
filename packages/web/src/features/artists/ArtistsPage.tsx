@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { User, Plus, Search, Globe, Filter, type LucideProps } from 'lucide-react'
+import { User, Plus, Search, Globe, Filter, QrCode, type LucideProps } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -54,6 +54,57 @@ export function ArtistsPage() {
   })
 
   const usedCategories = [...new Set(artists.map((a) => a.category).filter(Boolean))]
+
+  const downloadArtistQR = async (artist: Artist) => {
+    const target = `${window.location.origin}/artisti/${artist.id}`
+    try {
+      // qrcode-generator caricato via CDN (no npm install richiesto)
+      const mod: any = await import(/* @vite-ignore */ 'https://esm.sh/qrcode-generator@1.4.4')
+      const qrcode = mod.default || mod
+      const qr = qrcode(0, 'H') // type=auto, error correction High
+      qr.addData(target)
+      qr.make()
+      const moduleCount = qr.getModuleCount()
+      const SIZE = 512
+      const MARGIN_MODULES = 4
+      const cell = Math.floor(SIZE / (moduleCount + MARGIN_MODULES * 2))
+      const offset = Math.floor((SIZE - cell * moduleCount) / 2)
+      const canvas = document.createElement('canvas')
+      canvas.width = SIZE
+      canvas.height = SIZE
+      const ctx = canvas.getContext('2d')!
+      // Sfondo trasparente: niente fillRect iniziale
+      ctx.fillStyle = '#2C3E6B' // navy COINCIDENZE
+      for (let r = 0; r < moduleCount; r++) {
+        for (let c = 0; c < moduleCount; c++) {
+          if (qr.isDark(r, c)) {
+            ctx.fillRect(offset + c * cell, offset + r * cell, cell, cell)
+          }
+        }
+      }
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), 'image/png')
+      )
+      if (!blob) throw new Error('Canvas toBlob fallita')
+      const slug = artist.name
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+      const objectUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = objectUrl
+      a.download = `qr-${slug || artist.id}.png`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(objectUrl)
+    } catch (err) {
+      console.error('QR download failed', err)
+      alert("Download del QR fallito. Riprova fra qualche secondo.")
+    }
+  }
 
   return (
     <div className="p-4 sm:p-6">
@@ -120,6 +171,15 @@ export function ArtistsPage() {
                     <img src={artist.image_url} alt={artist.name} className="h-full w-full object-cover" />
                   ) : (
                     <User className="h-10 w-10 text-navy/20" />
+                  )}
+                  {isAuthenticated && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); downloadArtistQR(artist) }}
+                      className="absolute top-2 right-2 inline-flex items-center justify-center h-8 w-8 rounded-full bg-white/90 hover:bg-white text-navy shadow"
+                      title="Scarica QR 512×512 (sfondo trasparente)"
+                    >
+                      <QrCode className="h-4 w-4" />
+                    </button>
                   )}
                 </div>
 
