@@ -110,7 +110,7 @@ function CurrentEdition({ edition, isAuthenticated }: { edition: Edition; isAuth
     fetchContent(edition.slug)
     fetchGallery(edition.slug)
     api.getEvents(edition.slug).then(setEvents)
-    api.getArtists().then(setArtists)
+    api.getArtists(edition.slug).then(setArtists)
   }, [edition.slug, fetchContent, fetchGallery])
 
   useScrollMemory(`edizione:${edition.slug}:scroll:${activeTab}`, navType, activeTab)
@@ -285,7 +285,7 @@ function PastEdition({ edition, isAuthenticated }: { edition: Edition; isAuthent
     fetchContent(edition.slug)
     fetchGallery(edition.slug)
     api.getEvents(edition.slug).then(setEvents)
-    api.getArtists().then(setArtists)
+    api.getArtists(edition.slug).then(setArtists)
   }, [edition.slug, fetchContent, fetchGallery])
 
   useScrollMemory(`edizione:${edition.slug}:scroll:${activeTab}`, navType, activeTab)
@@ -293,14 +293,8 @@ function PastEdition({ edition, isAuthenticated }: { edition: Edition; isAuthent
   const scheduledEvents = events.filter((e) => !isAllDay(e)).sort((a, b) => a.start_time.localeCompare(b.start_time))
   const allDayEvents = events.filter(isAllDay)
 
-  const artistsForEdition = (() => {
-    const ids = new Set<string>()
-    for (const e of events) {
-      for (const aid of (e.artist_ids || [])) if (aid) ids.add(aid)
-    }
-    if (ids.size === 0) return artists
-    return artists.filter((a) => ids.has(a.id))
-  })()
+  // Artists è già filtrato per edizione lato API
+  const artistsForEdition = artists
 
   return (
     <div className="min-h-screen bg-beige">

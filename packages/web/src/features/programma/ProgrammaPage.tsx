@@ -28,12 +28,12 @@ export function ProgrammaPage() {
 
   useEffect(() => {
     fetchEditions()
-    fetchArtists()
-  }, [fetchEditions, fetchArtists])
+  }, [fetchEditions])
 
   useEffect(() => {
     fetchEvents(adminSlug)
-  }, [fetchEvents, adminSlug])
+    fetchArtists(adminSlug)
+  }, [fetchEvents, fetchArtists, adminSlug])
 
   const filteredEvents = activeFilter
     ? events.filter((e) => e.category === activeFilter)

@@ -69,10 +69,10 @@ export const api = {
   updateEvent: (id: string, data: any) => request<any>(`/events/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteEvent: (id: string) => request<void>(`/events/${id}`, { method: 'DELETE' }),
 
-  // Artists (globali)
-  getArtists: () => request<any[]>('/artists'),
+  // Artists (scoped per edizione)
+  getArtists: (editionSlug?: string | null) => request<any[]>(withEdition('/artists', editionSlug)),
   getArtist: (id: string) => request<any>(`/artists/${id}`),
-  createArtist: (data: any) => request<any>('/artists', { method: 'POST', body: JSON.stringify(data) }),
+  createArtist: (data: any, editionSlug?: string | null) => request<any>(withEdition('/artists', editionSlug), { method: 'POST', body: JSON.stringify(data) }),
   updateArtist: (id: string, data: any) => request<any>(`/artists/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteArtist: (id: string) => request<void>(`/artists/${id}`, { method: 'DELETE' }),
 

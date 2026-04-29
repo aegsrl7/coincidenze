@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS editions (
 
 CREATE TABLE IF NOT EXISTS artists (
   id TEXT PRIMARY KEY,
+  edition_id TEXT REFERENCES editions(id),
   name TEXT NOT NULL,
   bio TEXT DEFAULT '',
   category TEXT NOT NULL,
@@ -262,6 +263,7 @@ CREATE INDEX IF NOT EXISTS idx_events_date ON events(date);
 CREATE INDEX IF NOT EXISTS idx_events_category ON events(category);
 CREATE INDEX IF NOT EXISTS idx_events_artist ON events(artist_id);
 CREATE INDEX IF NOT EXISTS idx_events_edition ON events(edition_id);
+CREATE INDEX IF NOT EXISTS idx_artists_edition ON artists(edition_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
 CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON tasks(assignee_id);
 CREATE INDEX IF NOT EXISTS idx_media_artist ON media_items(artist_id);

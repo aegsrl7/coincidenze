@@ -21,6 +21,7 @@ const PAGE_TITLES: Record<string, string> = {
 // Le altre (Artisti, Menù, Categorie, Team, Media, Edizioni) sono globali.
 const SCOPED_PATHS = new Set([
   '/admin/programma',
+  '/admin/artisti',
   '/admin/accrediti',
   '/admin/check-in',
   '/admin/spuntino',

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { useArtistsStore } from '@/stores/artistsStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useCategoryMaps } from '@/stores/categoriesStore'
+import { useEditionsStore, useAdminEditionSlug } from '@/stores/editionsStore'
 import { type Artist } from '@/types'
 import { ArtistFormDialog } from './ArtistFormDialog'
 
@@ -43,9 +44,15 @@ export function ArtistsPage() {
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
 
+  const adminSlug = useAdminEditionSlug()
+  const editions = useEditionsStore((s) => s.editions)
+  const fetchEditions = useEditionsStore((s) => s.fetch)
+  const activeEdition = editions.find((e) => e.slug === adminSlug)
+
+  useEffect(() => { fetchEditions() }, [fetchEditions])
   useEffect(() => {
-    fetchArtists()
-  }, [fetchArtists])
+    fetchArtists(adminSlug)
+  }, [fetchArtists, adminSlug])
 
   const filtered = artists.filter((a) => {
     const matchesSearch = !search || a.name.toLowerCase().includes(search.toLowerCase())
@@ -125,6 +132,9 @@ export function ArtistsPage() {
 
   return (
     <div className="p-4 sm:p-6">
+      {activeEdition && (
+        <p className="text-xs uppercase tracking-wider text-viola mb-3">{activeEdition.name}</p>
+      )}
       {/* Filtri */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
         {isAuthenticated && (
