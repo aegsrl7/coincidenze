@@ -3,6 +3,8 @@ import { Instagram, Mail, MapPin, Calendar, Phone, ExternalLink } from 'lucide-r
 import { useEditionsStore } from '@/stores/editionsStore'
 import { useEditionDataStore } from '@/stores/editionStore'
 
+const EMPTY_CONTENT: Record<string, string> = {}
+
 const INFO_KEYS = [
   { key: 'info_address', label: 'Dove siamo' },
   { key: 'info_how_to_get_there', label: 'Come arrivare' },
@@ -17,7 +19,7 @@ export function PublicFooter() {
   const current = useEditionsStore((s) => s.current)
   const editions = useEditionsStore((s) => s.editions)
   const fetchContent = useEditionDataStore((s) => s.fetchContent)
-  const content = useEditionDataStore((s) => (current ? s.contents[current.slug] : null) || {})
+  const content = useEditionDataStore((s) => (current ? s.contents[current.slug] : null) || EMPTY_CONTENT)
 
   useEffect(() => { fetchEditions() }, [fetchEditions])
   useEffect(() => {

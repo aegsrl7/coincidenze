@@ -16,6 +16,11 @@ import type { Event, Artist, Edition, GalleryImage } from '@/types'
 
 type TabId = 'programma' | 'artisti' | 'galleria'
 
+// Refs stabili per evitare loop di re-render quando il selettore zustand
+// restituisce un nuovo `[]`/`{}` ad ogni render (Object.is fallisce).
+const EMPTY_GALLERY: GalleryImage[] = []
+const EMPTY_CONTENT: Record<string, string> = {}
+
 function isAllDay(event: Event): boolean {
   if (!event.start_time || !event.end_time) return false
   const start = parseInt(event.start_time.split(':')[0], 10)
@@ -83,8 +88,8 @@ function CurrentEdition({ edition, isAuthenticated }: { edition: Edition; isAuth
   const fetchContent = useEditionDataStore((s) => s.fetchContent)
   const updateContent = useEditionDataStore((s) => s.updateContent)
   const fetchGallery = useEditionDataStore((s) => s.fetchGallery)
-  const gallery = useEditionDataStore((s) => s.galleries[edition.slug] || [])
-  const content = useEditionDataStore((s) => s.contents[edition.slug] || {})
+  const gallery = useEditionDataStore((s) => s.galleries[edition.slug] || EMPTY_GALLERY)
+  const content = useEditionDataStore((s) => s.contents[edition.slug] || EMPTY_CONTENT)
 
   const [searchParams, setSearchParams] = useSearchParams()
   const navType = useNavigationType()
@@ -263,7 +268,7 @@ function PastEdition({ edition, isAuthenticated }: { edition: Edition; isAuthent
   const fetchContent = useEditionDataStore((s) => s.fetchContent)
   const fetchGallery = useEditionDataStore((s) => s.fetchGallery)
   const updateContent = useEditionDataStore((s) => s.updateContent)
-  const content = useEditionDataStore((s) => s.contents[edition.slug] || {})
+  const content = useEditionDataStore((s) => s.contents[edition.slug] || EMPTY_CONTENT)
 
   const editions = useEditionsStore((s) => s.editions)
   const upcoming = editions.find((e) => e.is_current === 1 && !isPast(e.event_date)) || null
@@ -514,7 +519,7 @@ function ArtistiTab({ artists }: { artists: Artist[] }) {
 }
 
 function GalleriaTab({ edition, isAuthenticated }: { edition: Edition; isAuthenticated: boolean }) {
-  const gallery = useEditionDataStore((s) => s.galleries[edition.slug] || [])
+  const gallery = useEditionDataStore((s) => s.galleries[edition.slug] || EMPTY_GALLERY)
   const setGalleryLocal = useEditionDataStore((s) => s.setGalleryLocal)
   const addImage = useEditionDataStore((s) => s.addImage)
   const deleteImage = useEditionDataStore((s) => s.deleteImage)
