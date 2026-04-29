@@ -22,6 +22,8 @@ const PAGE_TITLES: Record<string, string> = {
 const SCOPED_PATHS = new Set([
   '/admin/programma',
   '/admin/artisti',
+  '/admin/menu',
+  '/admin/media',
   '/admin/accrediti',
   '/admin/check-in',
   '/admin/spuntino',

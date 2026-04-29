@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS tasks (
 
 CREATE TABLE IF NOT EXISTS media_items (
   id TEXT PRIMARY KEY,
+  edition_id TEXT REFERENCES editions(id),
   title TEXT NOT NULL,
   type TEXT NOT NULL CHECK(type IN ('audio', 'video', 'image')),
   url TEXT NOT NULL,
@@ -233,6 +234,7 @@ CREATE TABLE IF NOT EXISTS spuntino_bookings (
 
 CREATE TABLE IF NOT EXISTS menu_items (
   id TEXT PRIMARY KEY,
+  edition_id TEXT REFERENCES editions(id),
   category TEXT NOT NULL,
   name TEXT NOT NULL,
   description TEXT DEFAULT '',
@@ -277,6 +279,8 @@ CREATE INDEX IF NOT EXISTS idx_accreditations_created ON accreditations(created_
 CREATE INDEX IF NOT EXISTS idx_accreditations_edition ON accreditations(edition_id);
 CREATE INDEX IF NOT EXISTS idx_spuntino_edition ON spuntino_bookings(edition_id);
 CREATE INDEX IF NOT EXISTS idx_menu_items_category ON menu_items(category);
+CREATE INDEX IF NOT EXISTS idx_menu_items_edition ON menu_items(edition_id);
+CREATE INDEX IF NOT EXISTS idx_media_items_edition ON media_items(edition_id);
 CREATE INDEX IF NOT EXISTS idx_categories_type_sort ON categories(type, sort_order);
 CREATE INDEX IF NOT EXISTS idx_editions_gallery_edition ON editions_gallery(edition_id, sort_order);
 CREATE INDEX IF NOT EXISTS idx_editions_content_edition ON editions_content(edition_id);

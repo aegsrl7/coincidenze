@@ -6,7 +6,8 @@ interface MediaState {
   items: MediaItem[]
   loading: boolean
   error: string | null
-  fetchMedia: () => Promise<void>
+  editionSlug: string | null
+  fetchMedia: (editionSlug?: string | null) => Promise<void>
   createMedia: (data: Partial<MediaItem>) => Promise<MediaItem>
   updateMedia: (id: string, data: Partial<MediaItem>) => Promise<void>
   deleteMedia: (id: string) => Promise<void>
@@ -16,11 +17,12 @@ export const useMediaStore = create<MediaState>((set, get) => ({
   items: [],
   loading: false,
   error: null,
+  editionSlug: null,
 
-  fetchMedia: async () => {
-    set({ loading: true, error: null })
+  fetchMedia: async (editionSlug) => {
+    set({ loading: true, error: null, editionSlug: editionSlug ?? get().editionSlug })
     try {
-      const items = await api.getMedia()
+      const items = await api.getMedia(editionSlug ?? get().editionSlug ?? undefined)
       set({ items, loading: false })
     } catch (e: any) {
       set({ error: e.message, loading: false })
@@ -28,7 +30,7 @@ export const useMediaStore = create<MediaState>((set, get) => ({
   },
 
   createMedia: async (data) => {
-    const item = await api.createMedia(data)
+    const item = await api.createMedia(data, get().editionSlug)
     set({ items: [...get().items, item] })
     return item
   },

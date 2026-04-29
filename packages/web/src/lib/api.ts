@@ -82,9 +82,9 @@ export const api = {
   updateExhibitor: (id: string, data: any) => request<any>(`/exhibitors/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteExhibitor: (id: string) => request<void>(`/exhibitors/${id}`, { method: 'DELETE' }),
 
-  // Media
-  getMedia: () => request<any[]>('/media'),
-  createMedia: (data: any) => request<any>('/media', { method: 'POST', body: JSON.stringify(data) }),
+  // Media (scoped per edizione)
+  getMedia: (editionSlug?: string | null) => request<any[]>(withEdition('/media', editionSlug)),
+  createMedia: (data: any, editionSlug?: string | null) => request<any>(withEdition('/media', editionSlug), { method: 'POST', body: JSON.stringify(data) }),
   updateMedia: (id: string, data: any) => request<any>(`/media/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteMedia: (id: string) => request<void>(`/media/${id}`, { method: 'DELETE' }),
 
@@ -127,9 +127,9 @@ export const api = {
   updateSpuntinoBooking: (id: string, data: any) => request<any>(`/spuntino/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteSpuntinoBooking: (id: string) => request<void>(`/spuntino/${id}`, { method: 'DELETE' }),
 
-  // Menu (globale)
-  getMenu: () => request<any[]>('/menu'),
-  createMenuItem: (data: any) => request<any>('/menu', { method: 'POST', body: JSON.stringify(data) }),
+  // Menu (scoped per edizione)
+  getMenu: (editionSlug?: string | null) => request<any[]>(withEdition('/menu', editionSlug)),
+  createMenuItem: (data: any, editionSlug?: string | null) => request<any>(withEdition('/menu', editionSlug), { method: 'POST', body: JSON.stringify(data) }),
   updateMenuItem: (id: string, data: any) => request<any>(`/menu/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteMenuItem: (id: string) => request<void>(`/menu/${id}`, { method: 'DELETE' }),
   reorderMenu: (order: string[]) => request<any>('/menu/reorder', { method: 'PUT', body: JSON.stringify({ order }) }),

@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useCategoryMaps } from '@/stores/categoriesStore'
+import { useEditionsStore, useAdminEditionSlug } from '@/stores/editionsStore'
 import { api } from '@/lib/api'
 import type { MenuItem } from '@/types'
 
@@ -49,19 +50,26 @@ export function AdminMenuPage() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
+  const adminSlug = useAdminEditionSlug()
+  const editions = useEditionsStore((s) => s.editions)
+  const fetchEditions = useEditionsStore((s) => s.fetch)
+  const activeEdition = editions.find((e) => e.slug === adminSlug)
+
   const load = async () => {
     setLoading(true)
     try {
-      const data = (await api.getMenu()) as MenuItem[]
+      const data = (await api.getMenu(adminSlug)) as MenuItem[]
       setItems(data)
     } finally {
       setLoading(false)
     }
   }
 
+  useEffect(() => { fetchEditions() }, [fetchEditions])
   useEffect(() => {
     load()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminSlug])
 
   const categorySuggestions = useMemo(() => {
     const set = new Set<string>()
@@ -98,7 +106,7 @@ export function AdminMenuPage() {
     if (!draft.name.trim()) return
     setAdding(true)
     try {
-      await api.createMenuItem({ ...draft, sort_order: items.length })
+      await api.createMenuItem({ ...draft, sort_order: items.length }, adminSlug)
       setDraft(emptyDraft())
       await load()
     } finally {
@@ -162,7 +170,10 @@ export function AdminMenuPage() {
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
       <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
-        <h1 className="font-display text-2xl font-semibold text-navy">Menù</h1>
+        <div>
+          <h1 className="font-display text-2xl font-semibold text-navy">Menù</h1>
+          {activeEdition && <p className="text-xs uppercase tracking-wider text-viola">{activeEdition.name}</p>}
+        </div>
         <Link to="/admin/categorie" className="text-xs text-ink-muted hover:text-navy underline">
           Riordina o rinomina le categorie →
         </Link>

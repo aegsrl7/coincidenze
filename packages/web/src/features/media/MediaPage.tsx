@@ -9,6 +9,7 @@ import { useMediaStore } from '@/stores/mediaStore'
 import { useArtistsStore } from '@/stores/artistsStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useCategoryMaps } from '@/stores/categoriesStore'
+import { useEditionsStore, useAdminEditionSlug } from '@/stores/editionsStore'
 import { type MediaItem } from '@/types'
 import { MediaFormDialog } from './MediaFormDialog'
 
@@ -27,10 +28,16 @@ export function MediaPage() {
   const [playingUrl, setPlayingUrl] = useState<string | null>(null)
   const [playingTitle, setPlayingTitle] = useState('')
 
+  const adminSlug = useAdminEditionSlug()
+  const editions = useEditionsStore((s) => s.editions)
+  const fetchEditions = useEditionsStore((s) => s.fetch)
+  const activeEdition = editions.find((e) => e.slug === adminSlug)
+
+  useEffect(() => { fetchEditions() }, [fetchEditions])
   useEffect(() => {
-    fetchMedia()
-    fetchArtists()
-  }, [fetchMedia, fetchArtists])
+    fetchMedia(adminSlug)
+    fetchArtists(adminSlug)
+  }, [fetchMedia, fetchArtists, adminSlug])
 
   const filtered = items.filter((item) => {
     const matchesSearch = !search || item.title?.toLowerCase().includes(search.toLowerCase())
@@ -45,6 +52,9 @@ export function MediaPage() {
 
   return (
     <div className="p-4 sm:p-6">
+      {activeEdition && (
+        <p className="text-xs uppercase tracking-wider text-viola mb-3">{activeEdition.name}</p>
+      )}
       {/* Filtri */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
         {isAuthenticated && (

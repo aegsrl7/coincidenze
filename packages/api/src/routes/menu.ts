@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import type { Env } from '../index'
+import { resolveEdition } from '../lib/edition'
 
 export const menuRoutes = new Hono<Env>()
 
@@ -7,7 +8,7 @@ function slugify(s: string): string {
   return s
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .replace(/['']/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
@@ -33,11 +34,15 @@ async function ensureMenuCategory(db: D1Database, label: string): Promise<void> 
     .run()
 }
 
-// GET / — pubblico
+// GET / — pubblico (filtrato per edizione)
 menuRoutes.get('/', async (c) => {
-  const { results } = await c.env.DB
-    .prepare('SELECT * FROM menu_items ORDER BY sort_order, name')
-    .all()
+  const edition = await resolveEdition(c)
+  const { results } = edition
+    ? await c.env.DB
+        .prepare('SELECT * FROM menu_items WHERE edition_id = ? ORDER BY sort_order, name')
+        .bind(edition.id)
+        .all()
+    : await c.env.DB.prepare('SELECT * FROM menu_items ORDER BY sort_order, name').all()
   return c.json(results)
 })
 
@@ -46,10 +51,13 @@ menuRoutes.post('/', async (c) => {
   const body = await c.req.json()
   const id = crypto.randomUUID()
   const category = body.category || ''
+  const edition = await resolveEdition(c)
+  const editionId = body.edition_id || edition?.id || null
   await db.prepare(
-    'INSERT INTO menu_items (id, category, name, description, price, notes, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO menu_items (id, edition_id, category, name, description, price, notes, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
     id,
+    editionId,
     category,
     body.name || '',
     body.description || '',
@@ -58,7 +66,7 @@ menuRoutes.post('/', async (c) => {
     body.sort_order ?? 0
   ).run()
   await ensureMenuCategory(db, category)
-  return c.json({ id, ...body }, 201)
+  return c.json({ id, edition_id: editionId, ...body }, 201)
 })
 
 // IMPORTANTE: la route specifica /reorder DEVE precedere /:id, altrimenti
@@ -80,6 +88,12 @@ menuRoutes.put('/:id', async (c) => {
   const id = c.req.param('id')
   const body = await c.req.json()
   const category = body.category || ''
+  if (body.edition_id !== undefined) {
+    await db
+      .prepare("UPDATE menu_items SET edition_id = ?, updated_at = datetime('now') WHERE id = ?")
+      .bind(body.edition_id || null, id)
+      .run()
+  }
   await db.prepare(
     `UPDATE menu_items SET category = ?, name = ?, description = ?, price = ?, notes = ?, sort_order = ?,
      updated_at = datetime('now') WHERE id = ?`
