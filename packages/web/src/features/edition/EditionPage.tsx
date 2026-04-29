@@ -63,27 +63,41 @@ export function EditionPage({ slug }: { slug: string }) {
     return <Navigate to="/" replace />
   }
 
-  const past = isPast(edition.event_date)
-
-  return past
-    ? <PastEdition edition={edition} isAuthenticated={isAuthenticated} />
-    : <UpcomingEdition edition={edition} isAuthenticated={isAuthenticated} />
+  // L'edizione corrente (is_current=1) usa sempre l'hero ricco, anche se l'evento
+  // è già passato — la pagina pubblica resta quella "principale" finché l'admin
+  // non promuove un'edizione nuova come corrente.
+  // Le edizioni non correnti (passate) vanno in archive mode (compatto).
+  const isCurrent = edition.is_current === 1
+  return isCurrent
+    ? <CurrentEdition edition={edition} isAuthenticated={isAuthenticated} />
+    : <PastEdition edition={edition} isAuthenticated={isAuthenticated} />
 }
 
 // ─────────────────────────────────────────────────────────────────
-// UPCOMING — edizione futura/odierna, hero foto + tab Programma/Artisti
+// CURRENT — edizione corrente (is_current=1), hero foto pieno schermo.
+// Mostra CTA accrediti/spuntino se i flag sono aperti; altrimenti messaggio
+// "Edizione N conclusa" se l'evento è già passato.
 // ─────────────────────────────────────────────────────────────────
 
-function UpcomingEdition({ edition, isAuthenticated }: { edition: Edition; isAuthenticated: boolean }) {
+function CurrentEdition({ edition, isAuthenticated }: { edition: Edition; isAuthenticated: boolean }) {
   const fetchContent = useEditionDataStore((s) => s.fetchContent)
   const updateContent = useEditionDataStore((s) => s.updateContent)
+  const fetchGallery = useEditionDataStore((s) => s.fetchGallery)
+  const gallery = useEditionDataStore((s) => s.galleries[edition.slug] || [])
   const content = useEditionDataStore((s) => s.contents[edition.slug] || {})
 
   const [searchParams, setSearchParams] = useSearchParams()
   const navType = useNavigationType()
 
+  const past = isPast(edition.event_date)
+  const hasGallery = gallery.length > 0
+  const showGalleria = past || hasGallery
   const tabFromUrl = searchParams.get('tab')
-  const activeTab: TabId = tabFromUrl === 'artisti' ? 'artisti' : 'programma'
+  const activeTab: TabId = (
+    tabFromUrl === 'artisti' ? 'artisti'
+    : (tabFromUrl === 'galleria' && showGalleria) ? 'galleria'
+    : 'programma'
+  )
   const setActiveTab = useCallback(
     (t: TabId) => setSearchParams({ tab: t }, { replace: true }),
     [setSearchParams]
@@ -94,9 +108,10 @@ function UpcomingEdition({ edition, isAuthenticated }: { edition: Edition; isAut
 
   useEffect(() => {
     fetchContent(edition.slug)
+    fetchGallery(edition.slug)
     api.getEvents(edition.slug).then(setEvents)
     api.getArtists().then(setArtists)
-  }, [edition.slug, fetchContent])
+  }, [edition.slug, fetchContent, fetchGallery])
 
   useScrollMemory(`edizione:${edition.slug}:scroll:${activeTab}`, navType, activeTab)
 
@@ -128,7 +143,16 @@ function UpcomingEdition({ edition, isAuthenticated }: { edition: Edition; isAut
             <p className="text-white/65">{edition.hero_location}</p>
           </div>
 
-          {edition.accrediti_open === 1 ? (
+          {past ? (
+            <>
+              <div className="inline-block mt-10 bg-white/10 backdrop-blur-sm border border-white/25 text-white px-5 py-3 rounded-lg text-sm font-medium">
+                {edition.name} conclusa
+              </div>
+              <p className="text-xs text-white/65 mt-3 max-w-md mx-auto leading-relaxed">
+                Ci rivediamo per la prossima edizione — torna a trovarci fra qualche mese.
+              </p>
+            </>
+          ) : edition.accrediti_open === 1 ? (
             <>
               <Link
                 to="/accrediti"
@@ -145,7 +169,7 @@ function UpcomingEdition({ edition, isAuthenticated }: { edition: Edition; isAut
             </div>
           )}
 
-          {edition.spuntino_open === 1 && (
+          {!past && edition.spuntino_open === 1 && (
             <>
               <Link
                 to="/spuntino"
@@ -188,10 +212,22 @@ function UpcomingEdition({ edition, isAuthenticated }: { edition: Edition; isAut
 
       <Ornament />
 
-      <TabNav tabs={[
-        { id: 'programma', label: 'Programma' },
-        { id: 'artisti', label: 'Artisti' },
-      ]} active={activeTab} onChange={setActiveTab} />
+      <TabNav
+        tabs={
+          showGalleria
+            ? [
+                { id: 'programma', label: 'Programma' },
+                { id: 'artisti', label: 'Artisti' },
+                { id: 'galleria', label: 'Galleria' },
+              ]
+            : [
+                { id: 'programma', label: 'Programma' },
+                { id: 'artisti', label: 'Artisti' },
+              ]
+        }
+        active={activeTab}
+        onChange={setActiveTab}
+      />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
         {activeTab === 'programma' && (
@@ -206,6 +242,12 @@ function UpcomingEdition({ edition, isAuthenticated }: { edition: Edition; isAut
             <ArtistiTab artists={artists} />
           </>
         )}
+        {activeTab === 'galleria' && showGalleria && (
+          <>
+            <SectionHeader title="Galleria" subtitle="Foto e video dalla giornata." />
+            <GalleriaTab edition={edition} isAuthenticated={isAuthenticated} />
+          </>
+        )}
       </div>
 
       <PublicFooter />
@@ -214,7 +256,7 @@ function UpcomingEdition({ edition, isAuthenticated }: { edition: Edition; isAut
 }
 
 // ─────────────────────────────────────────────────────────────────
-// PAST — edizione conclusa, hero retrospettivo + tab + galleria
+// PAST — edizione non corrente, hero retrospettivo + tab + galleria
 // ─────────────────────────────────────────────────────────────────
 
 function PastEdition({ edition, isAuthenticated }: { edition: Edition; isAuthenticated: boolean }) {

@@ -8,4 +8,8 @@ dist/
 .playwright-mcp/
 *.tsbuildinfo
 token.md
+tokens.md
+TOKENS.md
+Tokens.md
 RESUME.MD
+RESUME_CLA.MD
