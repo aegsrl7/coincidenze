@@ -9,8 +9,8 @@ import { useEventsStore } from '@/stores/eventsStore'
 import { useArtistsStore } from '@/stores/artistsStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useCategoryMaps } from '@/stores/categoriesStore'
+import { useEditionsStore, useAdminEditionSlug } from '@/stores/editionsStore'
 import { type Event } from '@/types'
-import { EVENT_DATE } from '@/lib/constants'
 import { EventFormDialog } from './EventFormDialog'
 
 export function ProgrammaPage() {
@@ -18,14 +18,22 @@ export function ProgrammaPage() {
   const { artists, fetchArtists } = useArtistsStore()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const { labels, colors, list: artistCats } = useCategoryMaps('artist')
+  const adminSlug = useAdminEditionSlug()
+  const editions = useEditionsStore((s) => s.editions)
+  const fetchEditions = useEditionsStore((s) => s.fetch)
+  const activeEdition = editions.find((e) => e.slug === adminSlug)
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [editingEvent, setEditingEvent] = useState<Event | undefined>(undefined)
 
   useEffect(() => {
-    fetchEvents()
+    fetchEditions()
     fetchArtists()
-  }, [fetchEvents, fetchArtists])
+  }, [fetchEditions, fetchArtists])
+
+  useEffect(() => {
+    fetchEvents(adminSlug)
+  }, [fetchEvents, adminSlug])
 
   const filteredEvents = activeFilter
     ? events.filter((e) => e.category === activeFilter)
@@ -50,9 +58,16 @@ export function ProgrammaPage() {
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <p className="text-sm text-ink-muted">
-          {format(new Date(EVENT_DATE), "EEEE d MMMM yyyy", { locale: it })}
-        </p>
+        <div>
+          {activeEdition && (
+            <p className="text-xs uppercase tracking-wider text-viola">{activeEdition.name}</p>
+          )}
+          {activeEdition?.event_date && (
+            <p className="text-sm text-ink-muted">
+              {format(new Date(activeEdition.event_date), "EEEE d MMMM yyyy", { locale: it })}
+            </p>
+          )}
+        </div>
         {isAuthenticated && (
           <Button onClick={() => { setEditingEvent(undefined); setShowForm(true) }}>+ Nuovo Evento</Button>
         )}

@@ -4,7 +4,6 @@ import {
   Users,
   User,
   Music,
-  Archive,
   LogOut,
   ExternalLink,
   X,
@@ -14,10 +13,12 @@ import {
   Utensils,
   UtensilsCrossed,
   Tag,
+  Layers,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/authStore'
+import { useEditionsStore } from '@/stores/editionsStore'
 
 const navItems = [
   { to: '/admin/programma', icon: Calendar, label: 'Programma' },
@@ -30,6 +31,7 @@ const navItems = [
   { to: '/admin/team', icon: Users, label: 'Team' },
   { to: '/admin/media', icon: Music, label: 'Media' },
   { to: '/admin/piano-editoriale', icon: FileText, label: 'Piano Editoriale' },
+  { to: '/admin/edizioni', icon: Layers, label: 'Edizioni' },
 ]
 
 interface SidebarProps {
@@ -86,29 +88,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </NavLink>
           ))}
 
-          <div className="pt-3 mt-3 border-t border-navy/10">
-            <p className="px-3 text-[11px] uppercase tracking-wider text-ink-muted mb-1.5">
-              Pubblico
-            </p>
-            <a
-              href="/edizione-1"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-ink-light hover:bg-beige-dark hover:text-navy transition-colors"
-            >
-              <ExternalLink className="h-4 w-4" />
-              Edizione 1
-            </a>
-            <a
-              href="/edizione-0"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-ink-light hover:bg-beige-dark hover:text-navy transition-colors"
-            >
-              <Archive className="h-4 w-4" />
-              Edizione 0
-            </a>
-          </div>
+          <PublicEditionLinks />
         </nav>
 
         <div className="border-t border-navy/10 p-4 space-y-3">
@@ -121,10 +101,49 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <LogOut className="h-4 w-4" />
             Esci
           </Button>
-          <p className="text-xs text-ink-muted">Edizione 1 — 25 Aprile 2026</p>
-          <p className="text-xs text-ink-muted">Marsam Locanda, Bene Vagienna</p>
+          <FooterMeta />
         </div>
       </aside>
     </>
+  )
+}
+
+function FooterMeta() {
+  const current = useEditionsStore((s) => s.current)
+  if (!current) return null
+  return (
+    <>
+      <p className="text-xs text-ink-muted">{current.name} — {current.event_date}</p>
+      <p className="text-xs text-ink-muted">{current.hero_location}</p>
+    </>
+  )
+}
+
+function PublicEditionLinks() {
+  const editions = useEditionsStore((s) => s.editions)
+  const fetchEditions = useEditionsStore((s) => s.fetch)
+  if (editions.length === 0) {
+    fetchEditions()
+    return null
+  }
+  return (
+    <div className="pt-3 mt-3 border-t border-navy/10">
+      <p className="px-3 text-[11px] uppercase tracking-wider text-ink-muted mb-1.5">
+        Pubblico
+      </p>
+      {editions.map((ed) => (
+        <a
+          key={ed.id}
+          href={`/${ed.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-ink-light hover:bg-beige-dark hover:text-navy transition-colors"
+        >
+          <ExternalLink className="h-4 w-4" />
+          {ed.name}
+          {ed.is_current === 1 && <span className="text-[10px] text-viola ml-auto">●</span>}
+        </a>
+      ))}
+    </div>
   )
 }

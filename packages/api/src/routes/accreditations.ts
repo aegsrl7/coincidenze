@@ -4,6 +4,7 @@ import type { Context } from 'hono'
 import type { Env } from '../index'
 import { verifyToken } from './auth'
 import { sendEmail, buildTicketEmail, buildAdminNotificationEmail } from '../lib/email'
+import { resolveEdition, getCurrentEdition } from '../lib/edition'
 
 const ADMIN_NOTIFICATION_TO = 'coincidenze.arte@gmail.com'
 
@@ -26,14 +27,18 @@ function sanitize(s: unknown): string {
   return s.trim().slice(0, 500)
 }
 
-// POST / — pubblico: crea un accredito
+// POST / — pubblico: crea un accredito per l'edizione corrente
 accreditationsRoutes.post('/', async (c) => {
   const body = await c.req.json().catch(() => ({})) as Record<string, unknown>
 
-  // Honeypot: campo nascosto "company" — se compilato = bot, rispondi 200 senza salvare
+  // Honeypot
   if (typeof body.company === 'string' && body.company.trim().length > 0) {
     return c.json({ ticket_code: 'ok' }, 201)
   }
+
+  const edition = await getCurrentEdition(c.env.DB)
+  if (!edition) return c.json({ error: 'Nessuna edizione attiva' }, 503)
+  if (edition.accrediti_open !== 1) return c.json({ error: 'Gli accrediti sono chiusi' }, 423)
 
   const name = sanitize(body.name)
   const surname = sanitize(body.surname)
@@ -49,10 +54,10 @@ accreditationsRoutes.post('/', async (c) => {
 
   const db = c.env.DB
 
-  // Se l'email esiste già, restituisci il ticket esistente (idempotenza soft)
+  // Idempotenza per email *nella stessa edizione*
   const existing = await db
-    .prepare('SELECT ticket_code FROM accreditations WHERE email = ?')
-    .bind(email)
+    .prepare('SELECT ticket_code FROM accreditations WHERE email = ? AND edition_id = ?')
+    .bind(email, edition.id)
     .first<{ ticket_code: string }>()
 
   if (existing) {
@@ -65,12 +70,13 @@ accreditationsRoutes.post('/', async (c) => {
   await db
     .prepare(
       `INSERT INTO accreditations (
-        id, ticket_code, name, surname, email, phone, cap, birth_date,
+        id, edition_id, ticket_code, name, surname, email, phone, cap, birth_date,
         consent_privacy, consent_newsletter, consent_photo, notes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .bind(
       id,
+      edition.id,
       ticketCode,
       name,
       surname,
@@ -85,14 +91,14 @@ accreditationsRoutes.post('/', async (c) => {
     )
     .run()
 
-  // Invia email di conferma + notifica admin in parallelo
   const base = c.env.PUBLIC_BASE_URL?.replace(/\/$/, '') || 'https://coincidenze.org'
   const ticketUrl = `${base}/biglietto/${ticketCode}`
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=440x440&margin=10&data=${encodeURIComponent(ticketUrl)}`
   const ticketEmail = buildTicketEmail({ name: `${name} ${surname}`, ticketUrl, qrUrl })
 
   const totalRow = await db
-    .prepare('SELECT COUNT(*) as c FROM accreditations')
+    .prepare('SELECT COUNT(*) as c FROM accreditations WHERE edition_id = ?')
+    .bind(edition.id)
     .first<{ c: number }>()
   const totalCount = totalRow?.c ?? 0
   const adminEmail = buildAdminNotificationEmail({ name, surname, email, phone, cap, totalCount })
@@ -118,12 +124,12 @@ accreditationsRoutes.post('/', async (c) => {
   return c.json({ ticket_code: ticketCode, email_sent: emailRes.ok }, 201)
 })
 
-// GET /:code — pubblico: recupera un accredito tramite ticket_code (per la pagina biglietto)
+// GET /by-code/:code — pubblico
 accreditationsRoutes.get('/by-code/:code', async (c) => {
   const code = c.req.param('code')
   const row = await c.env.DB
     .prepare(
-      `SELECT id, ticket_code, name, surname, email, checked_in_at, created_at
+      `SELECT id, edition_id, ticket_code, name, surname, email, checked_in_at, created_at
        FROM accreditations WHERE ticket_code = ?`
     )
     .bind(code)
@@ -133,19 +139,21 @@ accreditationsRoutes.get('/by-code/:code', async (c) => {
   return c.json(row)
 })
 
-// GET / — admin: lista completa
+// GET / — admin: lista (filtrata per edizione, default = corrente o ?edition=slug)
 accreditationsRoutes.get('/', async (c) => {
   if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
-
-  const { results } = await c.env.DB
-    .prepare('SELECT * FROM accreditations ORDER BY created_at DESC')
-    .all()
+  const edition = await resolveEdition(c)
+  const editionId = edition?.id ?? null
+  const { results } = editionId
+    ? await c.env.DB
+        .prepare('SELECT * FROM accreditations WHERE edition_id = ? ORDER BY created_at DESC')
+        .bind(editionId)
+        .all()
+    : await c.env.DB.prepare('SELECT * FROM accreditations ORDER BY created_at DESC').all()
   return c.json(results)
 })
 
-// POST /:code/check-in — pubblico: self check-in dal proprio biglietto.
-// L'evento è gratuito e l'anti-frode non è una priorità: chi ha il codice
-// può segnarsi presente da solo. La uncheck-in invece resta admin.
+// POST /:code/check-in — pubblico
 accreditationsRoutes.post('/:code/check-in', async (c) => {
   const code = c.req.param('code')
   const row = await c.env.DB
@@ -173,7 +181,7 @@ accreditationsRoutes.post('/:code/check-in', async (c) => {
   return c.json({ accreditation: full, already_checked_in: alreadyCheckedIn })
 })
 
-// POST /:code/uncheck-in — admin: annulla il check-in
+// POST /:code/uncheck-in — admin
 accreditationsRoutes.post('/:code/uncheck-in', async (c) => {
   if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
 

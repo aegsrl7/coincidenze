@@ -1,7 +1,7 @@
-import { Menu, Search } from 'lucide-react'
+import { Menu } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { EditionSelector } from '@/components/EditionSelector'
 
 const PAGE_TITLES: Record<string, string> = {
   '/admin/programma': 'Programma',
@@ -10,9 +10,22 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/media': 'Libreria Media',
   '/admin/piano-editoriale': 'Piano Editoriale',
   '/admin/accrediti': 'Accrediti',
+  '/admin/check-in': 'Check-in',
+  '/admin/spuntino': 'Spuntino delle 18',
   '/admin/menu': 'Menù',
   '/admin/categorie': 'Categorie',
+  '/admin/edizioni': 'Edizioni',
 }
+
+// Pagine che operano su una specifica edizione → mostro il selettore.
+// Le altre (Artisti, Menù, Categorie, Team, Media, Edizioni) sono globali.
+const SCOPED_PATHS = new Set([
+  '/admin/programma',
+  '/admin/accrediti',
+  '/admin/check-in',
+  '/admin/spuntino',
+  '/admin/piano-editoriale',
+])
 
 interface HeaderProps {
   onMenuClick: () => void
@@ -21,6 +34,7 @@ interface HeaderProps {
 export function Header({ onMenuClick }: HeaderProps) {
   const location = useLocation()
   const title = PAGE_TITLES[location.pathname] || 'COINCIDENZE'
+  const showSelector = SCOPED_PATHS.has(location.pathname)
 
   return (
     <header className="flex h-14 items-center gap-2 sm:gap-4 border-b border-navy/10 bg-crema/80 px-3 sm:px-4 backdrop-blur-sm shrink-0">
@@ -36,13 +50,7 @@ export function Header({ onMenuClick }: HeaderProps) {
       <h2 className="font-display text-base sm:text-lg font-semibold text-navy truncate min-w-0">{title}</h2>
 
       <div className="ml-auto flex items-center gap-2 shrink-0">
-        <div className="relative hidden md:block">
-          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
-          <Input
-            placeholder="Cerca..."
-            className="w-56 pl-8"
-          />
-        </div>
+        {showSelector && <EditionSelector />}
       </div>
     </header>
   )

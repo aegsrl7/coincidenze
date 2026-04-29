@@ -31,6 +31,12 @@ async function uploadRequest(file: File): Promise<{ url: string; key: string }> 
   return res.json()
 }
 
+function withEdition(path: string, slug?: string | null): string {
+  if (!slug) return path
+  const sep = path.includes('?') ? '&' : '?'
+  return `${path}${sep}edition=${encodeURIComponent(slug)}`
+}
+
 export const api = {
   // Upload
   uploadFile: (file: File) => uploadRequest(file),
@@ -40,14 +46,30 @@ export const api = {
   logout: () => request<{ authenticated: boolean }>('/auth/logout', { method: 'POST' }),
   authMe: () => request<{ authenticated: boolean }>('/auth/me'),
 
-  // Events
-  getEvents: () => request<any[]>('/events'),
+  // Editions
+  getEditions: () => request<any[]>('/editions'),
+  getCurrentEdition: () => request<any>('/editions/current'),
+  getEdition: (slug: string) => request<any>(`/editions/${encodeURIComponent(slug)}`),
+  createEdition: (data: any) => request<any>('/editions', { method: 'POST', body: JSON.stringify(data) }),
+  updateEdition: (id: string, data: any) => request<any>(`/editions/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  setCurrentEdition: (id: string) => request<any>(`/editions/${encodeURIComponent(id)}/set-current`, { method: 'POST' }),
+  deleteEdition: (id: string) => request<void>(`/editions/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  getEditionGallery: (slug: string) => request<any[]>(`/editions/${encodeURIComponent(slug)}/gallery`),
+  addEditionGalleryImage: (slug: string, data: any) => request<any>(`/editions/${encodeURIComponent(slug)}/gallery`, { method: 'POST', body: JSON.stringify(data) }),
+  reorderEditionGallery: (slug: string, order: string[]) => request<any>(`/editions/${encodeURIComponent(slug)}/gallery/reorder`, { method: 'PUT', body: JSON.stringify({ order }) }),
+  deleteEditionGalleryImage: (slug: string, id: string) => request<void>(`/editions/${encodeURIComponent(slug)}/gallery/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  getEditionContent: (slug: string) => request<any[]>(`/editions/${encodeURIComponent(slug)}/content`),
+  updateEditionContent: (slug: string, section: string, content: string) =>
+    request<any>(`/editions/${encodeURIComponent(slug)}/content/${encodeURIComponent(section)}`, { method: 'PUT', body: JSON.stringify({ content }) }),
+
+  // Events (scoped per edizione tramite ?edition=slug; default = corrente)
+  getEvents: (editionSlug?: string | null) => request<any[]>(withEdition('/events', editionSlug)),
   getEvent: (id: string) => request<any>(`/events/${id}`),
-  createEvent: (data: any) => request<any>('/events', { method: 'POST', body: JSON.stringify(data) }),
+  createEvent: (data: any, editionSlug?: string | null) => request<any>(withEdition('/events', editionSlug), { method: 'POST', body: JSON.stringify(data) }),
   updateEvent: (id: string, data: any) => request<any>(`/events/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteEvent: (id: string) => request<void>(`/events/${id}`, { method: 'DELETE' }),
 
-  // Artists
+  // Artists (globali)
   getArtists: () => request<any[]>('/artists'),
   getArtist: (id: string) => request<any>(`/artists/${id}`),
   createArtist: (data: any) => request<any>('/artists', { method: 'POST', body: JSON.stringify(data) }),
@@ -83,52 +105,36 @@ export const api = {
   getCanvasEdges: () => request<any[]>('/canvas/edges'),
   saveCanvas: (data: { nodes: any[]; edges: any[] }) => request<any>('/canvas', { method: 'PUT', body: JSON.stringify(data) }),
 
-  // Editorial
-  getEditorialPosts: () => request<any[]>('/editorial'),
+  // Editorial (scoped per edizione)
+  getEditorialPosts: (editionSlug?: string | null) => request<any[]>(withEdition('/editorial', editionSlug)),
   createEditorialPost: (data: any) => request<any>('/editorial', { method: 'POST', body: JSON.stringify(data) }),
   updateEditorialPost: (id: string, data: any) => request<any>(`/editorial/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteEditorialPost: (id: string) => request<void>(`/editorial/${id}`, { method: 'DELETE' }),
 
-  // Edizione 0
-  getEdizione0Gallery: () => request<any[]>('/edizione0/gallery'),
-  addEdizione0Image: (data: any) => request<any>('/edizione0/gallery', { method: 'POST', body: JSON.stringify(data) }),
-  deleteEdizione0Image: (id: string) => request<void>(`/edizione0/gallery/${id}`, { method: 'DELETE' }),
-  reorderEdizione0Gallery: (order: string[]) => request<any>('/edizione0/gallery/reorder', { method: 'PUT', body: JSON.stringify({ order }) }),
-  getEdizione0Content: () => request<any[]>('/edizione0/content'),
-  updateEdizione0Content: (section: string, content: string) => request<any>(`/edizione0/content/${section}`, { method: 'PUT', body: JSON.stringify({ content }) }),
-
-  // Edizione 1
-  getEdizione1Gallery: () => request<any[]>('/edizione1/gallery'),
-  addEdizione1Image: (data: any) => request<any>('/edizione1/gallery', { method: 'POST', body: JSON.stringify(data) }),
-  deleteEdizione1Image: (id: string) => request<void>(`/edizione1/gallery/${id}`, { method: 'DELETE' }),
-  reorderEdizione1Gallery: (order: string[]) => request<any>('/edizione1/gallery/reorder', { method: 'PUT', body: JSON.stringify({ order }) }),
-  getEdizione1Content: () => request<any[]>('/edizione1/content'),
-  updateEdizione1Content: (section: string, content: string) => request<any>(`/edizione1/content/${section}`, { method: 'PUT', body: JSON.stringify({ content }) }),
-
-  // Accrediti
+  // Accrediti (scoped per edizione)
   createAccreditation: (data: any) => request<{ ticket_code: string; existing?: boolean }>('/accrediti', { method: 'POST', body: JSON.stringify(data) }),
   getAccreditationByCode: (code: string) => request<any>(`/accrediti/by-code/${encodeURIComponent(code)}`),
-  listAccreditations: () => request<any[]>('/accrediti'),
+  listAccreditations: (editionSlug?: string | null) => request<any[]>(withEdition('/accrediti', editionSlug)),
   checkInAccreditation: (code: string) => request<any>(`/accrediti/${encodeURIComponent(code)}/check-in`, { method: 'POST' }),
   uncheckInAccreditation: (code: string) => request<any>(`/accrediti/${encodeURIComponent(code)}/uncheck-in`, { method: 'POST' }),
+  deleteAccreditation: (id: string) => request<void>(`/accrediti/${id}`, { method: 'DELETE' }),
 
-  // Spuntino delle 18
+  // Spuntino delle 18 (scoped per edizione)
   getSpuntinoStatus: () => request<{ open: boolean; taken: number }>('/spuntino/status'),
   setSpuntinoStatus: (open: boolean) => request<{ open: boolean }>('/spuntino/status', { method: 'PUT', body: JSON.stringify({ open }) }),
   createSpuntinoBooking: (data: any) => request<{ id: string; seats: number; total_booked: number; email_sent: boolean }>('/spuntino', { method: 'POST', body: JSON.stringify(data) }),
-  listSpuntinoBookings: () => request<any[]>('/spuntino'),
+  listSpuntinoBookings: (editionSlug?: string | null) => request<any[]>(withEdition('/spuntino', editionSlug)),
   updateSpuntinoBooking: (id: string, data: any) => request<any>(`/spuntino/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteSpuntinoBooking: (id: string) => request<void>(`/spuntino/${id}`, { method: 'DELETE' }),
-  deleteAccreditation: (id: string) => request<void>(`/accrediti/${id}`, { method: 'DELETE' }),
 
-  // Menu
+  // Menu (globale)
   getMenu: () => request<any[]>('/menu'),
   createMenuItem: (data: any) => request<any>('/menu', { method: 'POST', body: JSON.stringify(data) }),
   updateMenuItem: (id: string, data: any) => request<any>(`/menu/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteMenuItem: (id: string) => request<void>(`/menu/${id}`, { method: 'DELETE' }),
   reorderMenu: (order: string[]) => request<any>('/menu/reorder', { method: 'PUT', body: JSON.stringify({ order }) }),
 
-  // Categories
+  // Categories (globali)
   getCategories: () => request<any[]>('/categories'),
   createCategory: (data: any) => request<any>('/categories', { method: 'POST', body: JSON.stringify(data) }),
   updateCategory: (id: string, data: any) => request<any>(`/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) }),

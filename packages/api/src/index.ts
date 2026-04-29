@@ -11,8 +11,7 @@ import { authRoutes } from './routes/auth'
 import { uploadRoutes } from './routes/upload'
 import { datiRoutes } from './routes/dati'
 import { editorialRoutes } from './routes/editorial'
-import { edizione0Routes } from './routes/edizione0'
-import { edizione1Routes } from './routes/edizione1'
+import { editionsRoutes } from './routes/editions'
 import { accreditationsRoutes } from './routes/accreditations'
 import { spuntinoRoutes } from './routes/spuntino'
 import { menuRoutes } from './routes/menu'
@@ -74,6 +73,9 @@ app.get('/api/health', (c) => c.json({ status: 'ok', service: 'coincidenze-api' 
 // Auth (no middleware)
 app.route('/api/auth', authRoutes)
 
+// Editions (auth gestito per-route: GET pubblico, mutazioni admin)
+app.route('/api/editions', editionsRoutes)
+
 // Pagina dati statica (no auth, no CORS — serve HTML)
 app.route('/dati', datiRoutes)
 
@@ -95,8 +97,6 @@ app.use('/api/team/*', requireAuth)
 app.use('/api/media/*', requireAuth)
 app.use('/api/canvas/*', requireAuth)
 app.use('/api/editorial/*', requireAuth)
-app.use('/api/edizione0/*', requireAuth)
-app.use('/api/edizione1/*', requireAuth)
 app.use('/api/menu/*', requireAuth)
 app.use('/api/categories/*', requireAuth)
 
@@ -109,8 +109,6 @@ app.route('/api/team', teamRoutes)
 app.route('/api/media', mediaRoutes)
 app.route('/api/canvas', canvasRoutes)
 app.route('/api/editorial', editorialRoutes)
-app.route('/api/edizione0', edizione0Routes)
-app.route('/api/edizione1', edizione1Routes)
 app.route('/api/menu', menuRoutes)
 app.route('/api/categories', categoriesRoutes)
 

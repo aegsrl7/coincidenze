@@ -4,42 +4,11 @@ import type { Context } from 'hono'
 import type { Env } from '../index'
 import { verifyToken } from './auth'
 import { sendEmail, buildSpuntinoEmail, buildSpuntinoAdminNotificationEmail } from '../lib/email'
+import { resolveEdition, getCurrentEdition } from '../lib/edition'
 
 export const spuntinoRoutes = new Hono<Env>()
 
 const ADMIN_NOTIFICATION_TO = 'coincidenze.arte@gmail.com'
-const STATUS_KEY = 'spuntino_status' // valore atteso: 'open' | 'closed'
-
-// Bootstrap lazy: la prima richiesta per isolate verifica/crea le tabelle.
-// Idempotente, evita migrazioni manuali separate.
-let schemaReady = false
-async function ensureSchema(db: D1Database): Promise<void> {
-  if (schemaReady) return
-  await db
-    .prepare(
-      `CREATE TABLE IF NOT EXISTS spuntino_bookings (
-         id TEXT PRIMARY KEY,
-         name TEXT NOT NULL,
-         surname TEXT NOT NULL,
-         email TEXT NOT NULL,
-         phone TEXT DEFAULT '',
-         seats INTEGER NOT NULL DEFAULT 1,
-         notes TEXT DEFAULT '',
-         consent_privacy INTEGER NOT NULL DEFAULT 0,
-         email_sent_at TEXT,
-         created_at TEXT DEFAULT (datetime('now')),
-         updated_at TEXT DEFAULT (datetime('now'))
-       )`
-    )
-    .run()
-  // edizione1_content esiste già — la usiamo per persistere lo stato apri/chiudi
-  schemaReady = true
-}
-
-spuntinoRoutes.use('*', async (c, next) => {
-  await ensureSchema(c.env.DB)
-  await next()
-})
 
 async function isAuthed(c: Context<Env>): Promise<boolean> {
   const token = getCookie(c, 'auth_token')
@@ -58,47 +27,38 @@ function sanitize(s: unknown): string {
   return s.trim().slice(0, 500)
 }
 
-async function sumSeats(db: D1Database): Promise<number> {
+async function sumSeats(db: D1Database, editionId: string): Promise<number> {
   const row = await db
-    .prepare('SELECT COALESCE(SUM(seats), 0) AS total FROM spuntino_bookings')
+    .prepare('SELECT COALESCE(SUM(seats), 0) AS total FROM spuntino_bookings WHERE edition_id = ?')
+    .bind(editionId)
     .first<{ total: number }>()
   return row?.total ?? 0
 }
 
-async function isOpen(db: D1Database): Promise<boolean> {
-  const row = await db
-    .prepare('SELECT content FROM edizione1_content WHERE section = ?')
-    .bind(STATUS_KEY)
-    .first<{ content: string }>()
-  // default = aperto se mai impostato
-  return (row?.content ?? 'open') !== 'closed'
-}
-
-// IMPORTANTE: route specifiche prima di /:id, vedi memoria.
-
-// GET /status — pubblico: stato apri/chiudi e contatore prenotazioni
+// GET /status — pubblico: stato apri/chiudi e contatore prenotazioni dell'edizione corrente
 spuntinoRoutes.get('/status', async (c) => {
-  const [open, taken] = await Promise.all([isOpen(c.env.DB), sumSeats(c.env.DB)])
-  return c.json({ open, taken })
+  const edition = await getCurrentEdition(c.env.DB)
+  if (!edition) return c.json({ open: false, taken: 0 })
+  const taken = await sumSeats(c.env.DB, edition.id)
+  return c.json({ open: edition.spuntino_open === 1, taken })
 })
 
-// PUT /status — admin: cambia stato
+// PUT /status — admin: cambia spuntino_open dell'edizione corrente
+// (workflow legacy; oggi consigliamo PATCH /editions/:id)
 spuntinoRoutes.put('/status', async (c) => {
   if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+  const edition = await getCurrentEdition(c.env.DB)
+  if (!edition) return c.json({ error: 'Nessuna edizione attiva' }, 503)
   const body = (await c.req.json().catch(() => ({}))) as { open?: unknown }
-  const value = body.open ? 'open' : 'closed'
+  const value = body.open ? 1 : 0
   await c.env.DB
-    .prepare(
-      `INSERT INTO edizione1_content (id, section, content, updated_at)
-       VALUES (?, ?, ?, datetime('now'))
-       ON CONFLICT(section) DO UPDATE SET content = ?, updated_at = datetime('now')`
-    )
-    .bind(crypto.randomUUID(), STATUS_KEY, value, value)
+    .prepare("UPDATE editions SET spuntino_open = ?, updated_at = datetime('now') WHERE id = ?")
+    .bind(value, edition.id)
     .run()
-  return c.json({ open: value === 'open' })
+  return c.json({ open: value === 1 })
 })
 
-// POST / — pubblico: crea prenotazione
+// POST / — pubblico: crea prenotazione per l'edizione corrente
 spuntinoRoutes.post('/', async (c) => {
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>
 
@@ -106,9 +66,9 @@ spuntinoRoutes.post('/', async (c) => {
     return c.json({ ok: true }, 201) // honeypot
   }
 
-  if (!(await isOpen(c.env.DB))) {
-    return c.json({ error: 'Le prenotazioni sono chiuse.' }, 423)
-  }
+  const edition = await getCurrentEdition(c.env.DB)
+  if (!edition) return c.json({ error: 'Nessuna edizione attiva' }, 503)
+  if (edition.spuntino_open !== 1) return c.json({ error: 'Le prenotazioni sono chiuse.' }, 423)
 
   const name = sanitize(body.name)
   const surname = sanitize(body.surname)
@@ -125,14 +85,13 @@ spuntinoRoutes.post('/', async (c) => {
   const id = crypto.randomUUID()
   await c.env.DB
     .prepare(
-      `INSERT INTO spuntino_bookings (id, name, surname, email, phone, seats, notes, consent_privacy)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO spuntino_bookings (id, edition_id, name, surname, email, phone, seats, notes, consent_privacy)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .bind(id, name, surname, email, phone, seats, notes, 1)
+    .bind(id, edition.id, name, surname, email, phone, seats, notes, 1)
     .run()
 
-  // Conta dopo l'insert per la mail admin (no race conditions sul counter pubblico)
-  const totalBookedSeats = await sumSeats(c.env.DB)
+  const totalBookedSeats = await sumSeats(c.env.DB, edition.id)
 
   const participantEmail = buildSpuntinoEmail({ name: `${name} ${surname}`, seats })
   const adminEmail = buildSpuntinoAdminNotificationEmail({
@@ -159,16 +118,19 @@ spuntinoRoutes.post('/', async (c) => {
   return c.json({ id, seats, total_booked: totalBookedSeats, email_sent: emailRes.ok }, 201)
 })
 
-// GET / — admin: lista completa
+// GET / — admin: lista (filtrata per edizione, default = corrente o ?edition=slug)
 spuntinoRoutes.get('/', async (c) => {
   if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
-  const { results } = await c.env.DB
-    .prepare('SELECT * FROM spuntino_bookings ORDER BY created_at DESC')
-    .all()
+  const edition = await resolveEdition(c)
+  const { results } = edition
+    ? await c.env.DB
+        .prepare('SELECT * FROM spuntino_bookings WHERE edition_id = ? ORDER BY created_at DESC')
+        .bind(edition.id)
+        .all()
+    : await c.env.DB.prepare('SELECT * FROM spuntino_bookings ORDER BY created_at DESC').all()
   return c.json(results)
 })
 
-// PUT /:id — admin: aggiorna prenotazione esistente
 spuntinoRoutes.put('/:id', async (c) => {
   if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
   const id = c.req.param('id')
@@ -207,7 +169,6 @@ spuntinoRoutes.put('/:id', async (c) => {
   return c.json(row)
 })
 
-// DELETE /:id — admin
 spuntinoRoutes.delete('/:id', async (c) => {
   if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
   const id = c.req.param('id')

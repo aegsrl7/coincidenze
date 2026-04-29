@@ -6,7 +6,9 @@ interface EventsState {
   events: Event[]
   loading: boolean
   error: string | null
-  fetchEvents: () => Promise<void>
+  /** slug attivo dell'edizione (per refetch quando cambia) */
+  editionSlug: string | null
+  fetchEvents: (editionSlug?: string | null) => Promise<void>
   createEvent: (data: Partial<Event>) => Promise<Event>
   updateEvent: (id: string, data: Partial<Event>) => Promise<void>
   deleteEvent: (id: string) => Promise<void>
@@ -16,11 +18,12 @@ export const useEventsStore = create<EventsState>((set, get) => ({
   events: [],
   loading: false,
   error: null,
+  editionSlug: null,
 
-  fetchEvents: async () => {
-    set({ loading: true, error: null })
+  fetchEvents: async (editionSlug) => {
+    set({ loading: true, error: null, editionSlug: editionSlug ?? get().editionSlug })
     try {
-      const events = await api.getEvents()
+      const events = await api.getEvents(editionSlug ?? get().editionSlug ?? undefined)
       set({ events, loading: false })
     } catch (e: any) {
       set({ error: e.message, loading: false })
@@ -28,7 +31,8 @@ export const useEventsStore = create<EventsState>((set, get) => ({
   },
 
   createEvent: async (data) => {
-    const event = await api.createEvent(data)
+    const editionSlug = get().editionSlug
+    const event = await api.createEvent(data, editionSlug)
     set({ events: [...get().events, event] })
     return event
   },

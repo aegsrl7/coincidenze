@@ -4,7 +4,8 @@ import type { EditorialPost } from '@/types'
 
 interface EditorialStore {
   posts: EditorialPost[]
-  fetchPosts: () => Promise<void>
+  editionSlug: string | null
+  fetchPosts: (editionSlug?: string | null) => Promise<void>
   createPost: (data: Partial<EditorialPost>) => Promise<void>
   updatePost: (id: string, data: Partial<EditorialPost>) => Promise<void>
   deletePost: (id: string) => Promise<void>
@@ -12,9 +13,11 @@ interface EditorialStore {
 
 export const useEditorialStore = create<EditorialStore>((set, get) => ({
   posts: [],
-  fetchPosts: async () => {
-    const posts = await api.getEditorialPosts()
-    // Parse artisti_coinvolti from JSON string
+  editionSlug: null,
+  fetchPosts: async (editionSlug) => {
+    const slug = editionSlug ?? get().editionSlug
+    set({ editionSlug: slug })
+    const posts = await api.getEditorialPosts(slug ?? undefined)
     posts.forEach((p: any) => {
       if (typeof p.artisti_coinvolti === 'string') {
         try { p.artisti_coinvolti = JSON.parse(p.artisti_coinvolti) } catch { p.artisti_coinvolti = [] }

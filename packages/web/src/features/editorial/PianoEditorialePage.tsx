@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useEditorialStore } from '@/stores/editorialStore'
 import { useAuthStore } from '@/stores/authStore'
+import { useAdminEditionSlug } from '@/stores/editionsStore'
 import { FASE_LABELS, FASE_COLORS, STATO_COLORS, type EditorialPost } from '@/types'
 import { PostFormDialog } from './PostFormDialog'
 import { PostDetailPanel } from './PostDetailPanel'
@@ -108,9 +109,10 @@ export function PianoEditorialePage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [viewingPost, setViewingPost] = useState<EditorialPost | null>(null)
 
+  const adminSlug = useAdminEditionSlug()
   useEffect(() => {
-    fetchPosts()
-  }, [fetchPosts])
+    fetchPosts(adminSlug)
+  }, [fetchPosts, adminSlug])
 
   const weeks = buildCalendarGrid(currentYear, currentMonth)
 

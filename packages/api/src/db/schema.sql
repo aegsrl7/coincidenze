@@ -1,5 +1,24 @@
 -- COINCIDENZE Database Schema
 
+-- Edizioni (multi-edizione: una giornata l'anno)
+CREATE TABLE IF NOT EXISTS editions (
+  id TEXT PRIMARY KEY,
+  slug TEXT UNIQUE NOT NULL,
+  year INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  event_date TEXT NOT NULL,
+  is_current INTEGER NOT NULL DEFAULT 0,
+  accrediti_open INTEGER NOT NULL DEFAULT 0,
+  spuntino_open INTEGER NOT NULL DEFAULT 0,
+  hero_image_url TEXT NOT NULL DEFAULT '',
+  hero_subtitle TEXT NOT NULL DEFAULT '',
+  hero_location TEXT NOT NULL DEFAULT 'Marsam Locanda · Bene Vagienna',
+  intro TEXT NOT NULL DEFAULT '',
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS artists (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -25,6 +44,7 @@ CREATE TABLE IF NOT EXISTS exhibitors (
 
 CREATE TABLE IF NOT EXISTS events (
   id TEXT PRIMARY KEY,
+  edition_id TEXT REFERENCES editions(id),
   title TEXT NOT NULL,
   description TEXT DEFAULT '',
   date TEXT NOT NULL,
@@ -103,6 +123,7 @@ CREATE TABLE IF NOT EXISTS canvas_edges (
 
 CREATE TABLE IF NOT EXISTS editorial_posts (
   id TEXT PRIMARY KEY,
+  edition_id TEXT REFERENCES editions(id),
   data TEXT NOT NULL,
   fase INTEGER NOT NULL DEFAULT 1,
   tag TEXT NOT NULL DEFAULT 'teaser',
@@ -119,6 +140,29 @@ CREATE TABLE IF NOT EXISTS editorial_posts (
   updated_at TEXT DEFAULT (datetime('now'))
 );
 
+-- Gallery e content unificati per edizione
+CREATE TABLE IF NOT EXISTS editions_gallery (
+  id TEXT PRIMARY KEY,
+  edition_id TEXT NOT NULL REFERENCES editions(id) ON DELETE CASCADE,
+  image_url TEXT NOT NULL,
+  caption TEXT NOT NULL DEFAULT '',
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS editions_content (
+  id TEXT PRIMARY KEY,
+  edition_id TEXT NOT NULL REFERENCES editions(id) ON DELETE CASCADE,
+  section TEXT NOT NULL,
+  content TEXT NOT NULL DEFAULT '',
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(edition_id, section)
+);
+
+-- Tabelle legacy: edizione0_* e edizione1_* sono state migrate in editions_*.
+-- Vengono lasciate qui solo come backup; le route le ignorano. Dopo conferma
+-- migration 0002 le rimuoverà definitivamente.
 CREATE TABLE IF NOT EXISTS edizione0_gallery (
   id TEXT PRIMARY KEY,
   image_url TEXT NOT NULL,
@@ -153,6 +197,7 @@ CREATE TABLE IF NOT EXISTS edizione1_content (
 
 CREATE TABLE IF NOT EXISTS accreditations (
   id TEXT PRIMARY KEY,
+  edition_id TEXT REFERENCES editions(id),
   ticket_code TEXT NOT NULL UNIQUE,
   name TEXT NOT NULL,
   surname TEXT NOT NULL,
@@ -172,6 +217,7 @@ CREATE TABLE IF NOT EXISTS accreditations (
 
 CREATE TABLE IF NOT EXISTS spuntino_bookings (
   id TEXT PRIMARY KEY,
+  edition_id TEXT REFERENCES editions(id),
   name TEXT NOT NULL,
   surname TEXT NOT NULL,
   email TEXT NOT NULL,
@@ -209,17 +255,26 @@ CREATE TABLE IF NOT EXISTS categories (
 );
 
 -- Indexes
+CREATE INDEX IF NOT EXISTS idx_editions_current ON editions(is_current);
+CREATE INDEX IF NOT EXISTS idx_editions_slug ON editions(slug);
+CREATE INDEX IF NOT EXISTS idx_editions_sort ON editions(sort_order);
 CREATE INDEX IF NOT EXISTS idx_events_date ON events(date);
 CREATE INDEX IF NOT EXISTS idx_events_category ON events(category);
 CREATE INDEX IF NOT EXISTS idx_events_artist ON events(artist_id);
+CREATE INDEX IF NOT EXISTS idx_events_edition ON events(edition_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
 CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON tasks(assignee_id);
 CREATE INDEX IF NOT EXISTS idx_media_artist ON media_items(artist_id);
 CREATE INDEX IF NOT EXISTS idx_canvas_nodes_type ON canvas_nodes(type);
 CREATE INDEX IF NOT EXISTS idx_editorial_posts_data ON editorial_posts(data);
 CREATE INDEX IF NOT EXISTS idx_editorial_posts_fase ON editorial_posts(fase);
+CREATE INDEX IF NOT EXISTS idx_editorial_edition ON editorial_posts(edition_id);
 CREATE INDEX IF NOT EXISTS idx_accreditations_email ON accreditations(email);
 CREATE INDEX IF NOT EXISTS idx_accreditations_ticket ON accreditations(ticket_code);
 CREATE INDEX IF NOT EXISTS idx_accreditations_created ON accreditations(created_at);
+CREATE INDEX IF NOT EXISTS idx_accreditations_edition ON accreditations(edition_id);
+CREATE INDEX IF NOT EXISTS idx_spuntino_edition ON spuntino_bookings(edition_id);
 CREATE INDEX IF NOT EXISTS idx_menu_items_category ON menu_items(category);
 CREATE INDEX IF NOT EXISTS idx_categories_type_sort ON categories(type, sort_order);
+CREATE INDEX IF NOT EXISTS idx_editions_gallery_edition ON editions_gallery(edition_id, sort_order);
+CREATE INDEX IF NOT EXISTS idx_editions_content_edition ON editions_content(edition_id);

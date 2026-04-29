@@ -204,9 +204,28 @@ export const STATO_COLORS: Record<string, string> = {
   pubblicato: '#10B981',
 }
 
-// Edizione 0
+// Edizioni
+export interface Edition {
+  id: string
+  slug: string
+  year: number
+  name: string
+  event_date: string
+  is_current: 0 | 1
+  accrediti_open: 0 | 1
+  spuntino_open: 0 | 1
+  hero_image_url: string
+  hero_subtitle: string
+  hero_location: string
+  intro: string
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
 export interface GalleryImage {
   id: string
+  edition_id?: string
   image_url: string
   caption: string
   sort_order: number
@@ -216,6 +235,7 @@ export interface GalleryImage {
 
 export interface ContentSection {
   id: string
+  edition_id?: string
   section: string
   content: string
   updated_at: string

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { api } from '@/lib/api'
+import { useAdminEditionSlug, useEditionsStore } from '@/stores/editionsStore'
 import type { SpuntinoBooking } from '@/types'
 
 function fmtDateTime(iso: string | null): string {
@@ -39,11 +40,16 @@ export function AdminSpuntinoPage() {
   const [savingEdit, setSavingEdit] = useState(false)
   const [editError, setEditError] = useState('')
 
+  const adminSlug = useAdminEditionSlug()
+  const editions = useEditionsStore((s) => s.editions)
+  const fetchEditions = useEditionsStore((s) => s.fetch)
+  const activeEdition = editions.find((e) => e.slug === adminSlug)
+
   const load = async () => {
     setLoading(true)
     try {
       const [data, status] = await Promise.all([
-        api.listSpuntinoBookings(),
+        api.listSpuntinoBookings(adminSlug),
         api.getSpuntinoStatus(),
       ])
       setItems(data as SpuntinoBooking[])
@@ -64,7 +70,9 @@ export function AdminSpuntinoPage() {
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { fetchEditions() }, [fetchEditions])
+  useEffect(() => { load() // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [adminSlug])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -136,7 +144,10 @@ export function AdminSpuntinoPage() {
   return (
     <div className="p-4 sm:p-6 max-w-6xl mx-auto">
       <div className="flex flex-wrap items-center gap-3 mb-4">
-        <h1 className="font-display text-2xl font-semibold text-navy">Spuntino delle 18</h1>
+        <div>
+          <h1 className="font-display text-2xl font-semibold text-navy">Spuntino delle 18</h1>
+          {activeEdition && <p className="text-xs uppercase tracking-wider text-viola">{activeEdition.name}</p>}
+        </div>
         <div className="flex items-center gap-2 text-sm text-ink-light">
           <span className="font-medium text-navy">{items.length}</span>
           <span>prenotazioni</span>
