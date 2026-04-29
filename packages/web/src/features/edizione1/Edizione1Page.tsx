@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { Link, useNavigationType, useSearchParams } from 'react-router-dom'
 import {
   Clock, MapPin, Pencil, X, Check, Loader2, ChevronRight, Users,
-  Ticket, Calendar, Utensils, UtensilsCrossed, Info, ChevronDown, Instagram, Phone,
+  Calendar, Utensils, Info, ChevronDown, Instagram, Phone,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PublicFooter } from '@/components/PublicFooter'
@@ -132,23 +132,12 @@ export function Edizione1Page() {
             <p className="text-white/65">Marsam Locanda · Bene Vagienna</p>
           </div>
 
-          <Link
-            to="/accrediti"
-            className="inline-flex items-center gap-2 mt-10 bg-crema text-navy px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-white transition-colors shadow-lg"
-          >
-            <Ticket className="h-4 w-4" />
-            Accreditati gratuitamente
-          </Link>
-          <p className="text-xs text-white/55 mt-3">Ingresso libero previo accredito online</p>
-
-          <Link
-            to="/spuntino"
-            className="inline-flex items-center gap-2 mt-5 bg-transparent border border-white/35 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-white/10 transition-colors"
-          >
-            <UtensilsCrossed className="h-4 w-4" />
-            Prenota lo spuntino delle 18
-          </Link>
-          <p className="text-xs text-white/55 mt-3">Sei piatti in sequenza · 25€ · posti limitati</p>
+          <div className="inline-block mt-10 bg-white/10 backdrop-blur-sm border border-white/25 text-white px-5 py-3 rounded-lg text-sm font-medium">
+            Edizione 1 conclusa
+          </div>
+          <p className="text-xs text-white/65 mt-3 max-w-md mx-auto leading-relaxed">
+            Ci rivediamo per l'Edizione 2027 — torna a trovarci fra qualche mese.
+          </p>
         </div>
 
         <button
@@ -279,38 +268,12 @@ function ProgrammaTab({
   }
   return (
     <div className="space-y-2">
-      <SpuntinoCta className="mb-4" />
       {scheduledEvents.map((event) => (
         <EventRow key={event.id} event={event} />
       ))}
       {allDayEvents.map((event) => (
         <EventRow key={event.id} event={event} allDay />
       ))}
-    </div>
-  )
-}
-
-function SpuntinoCta({ className = '' }: { className?: string }) {
-  return (
-    <div className={`bg-viola/10 border border-viola/25 rounded-xl p-4 sm:p-5 ${className}`}>
-      <div className="flex items-start gap-3">
-        <div className="h-9 w-9 rounded-full bg-viola/20 flex items-center justify-center shrink-0">
-          <UtensilsCrossed className="h-4 w-4 text-viola" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-navy">Lo spuntino delle 18</p>
-          <p className="text-xs text-ink-light mt-0.5 leading-relaxed">
-            Sei piatti in sequenza, sotto il portico di Marsam. Posti limitati, 25€ a persona, prenotazione obbligatoria.
-          </p>
-          <Link
-            to="/spuntino"
-            className="inline-flex items-center gap-1.5 bg-viola hover:bg-viola/90 text-white text-xs font-medium px-3 py-1.5 rounded-full transition-colors mt-3"
-          >
-            <UtensilsCrossed className="h-3.5 w-3.5" />
-            Prenota un posto
-          </Link>
-        </div>
-      </div>
     </div>
   )
 }
@@ -405,7 +368,6 @@ function MenuTab({ items, isAdmin }: { items: MenuItem[]; isAdmin: boolean }) {
 
   return (
     <div className="space-y-6">
-      <SpuntinoCta />
       <ReservationNotice />
 
       {items.length === 0 ? (
