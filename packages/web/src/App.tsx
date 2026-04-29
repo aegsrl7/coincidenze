@@ -35,9 +35,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Pubblico */}
+        {/* Pubblico — rotte statiche più specifiche prima */}
         <Route path="/" element={<HomeRedirect />} />
-        <Route path="/edizione-:slugSuffix" element={<EditionPageWithSlugPrefix />} />
         <Route path="/programma-instagram" element={<ProgrammaInstagramPage />} />
         <Route path="/edizione-1-v2" element={<Navigate to="/" replace />} />
         <Route path="/accrediti" element={<Navigate to="/" replace />} />
@@ -46,6 +45,8 @@ export default function App() {
         <Route path="/artisti/:id" element={<ArtistDetailPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/login" element={<LoginPage />} />
+        {/* Edizioni (param dinamico full-segment, es. "edizione-1") */}
+        <Route path="/:editionSlug" element={<EditionRoute />} />
 
         {/* Redirect legacy → /admin */}
         <Route path="/canvas" element={<Navigate to="/admin/programma" replace />} />
@@ -81,12 +82,17 @@ export default function App() {
   )
 }
 
-// React Router cattura tutto dopo "/edizione-" come :slugSuffix.
-// Riassemblo lo slug completo (es. "edizione-1") e lo passo a EditionPage.
+// React Router v7 non supporta param parziali nel segmento (es. /edizione-:slug),
+// servono full-segment params. Usiamo /:editionSlug e validiamo dentro che sia
+// un'edizione (slug del DB tipo "edizione-1"). Rotte non-edizione non-statiche
+// finiscono qui e vengono reindirizzate alla home.
 import { useParams } from 'react-router-dom'
 
-function EditionPageWithSlugPrefix() {
-  const { slugSuffix } = useParams<{ slugSuffix: string }>()
-  const slug = `edizione-${slugSuffix || ''}`
+function EditionRoute() {
+  const { editionSlug } = useParams<{ editionSlug: string }>()
+  const slug = editionSlug || ''
+  if (!slug.startsWith('edizione-')) {
+    return <Navigate to="/" replace />
+  }
   return <EditionPage key={slug} slug={slug} />
 }
