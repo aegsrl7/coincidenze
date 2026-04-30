@@ -134,7 +134,20 @@ export const api = {
   deleteEditorialPost: (id: string) => request<void>(`/editorial/${id}`, { method: 'DELETE' }),
 
   // Accrediti (scoped per edizione)
-  createAccreditation: (data: AccreditationInput) => request<{ ticket_code: string; existing?: boolean; email_sent?: boolean }>('/accrediti', { method: 'POST', body: JSON.stringify(data) }),
+  createAccreditation: (data: AccreditationInput) => request<{
+    ticket_code: string
+    existing?: boolean
+    email_sent?: boolean
+    ticket?: {
+      id: string
+      edition_id: string
+      ticket_code: string
+      name: string
+      surname: string
+      checked_in_at: string | null
+      created_at: string
+    }
+  }>('/accrediti', { method: 'POST', body: JSON.stringify(data) }),
   getAccreditationByCode: (code: string) => request<Accreditation>(`/accrediti/by-code/${encodeURIComponent(code)}`),
   listAccreditations: (editionSlug?: string | null) => request<Accreditation[]>(withEdition('/accrediti', editionSlug)),
   checkInAccreditation: (code: string) => request<{ accreditation: Accreditation; already_checked_in: boolean }>(`/accrediti/${encodeURIComponent(code)}/check-in`, { method: 'POST' }),

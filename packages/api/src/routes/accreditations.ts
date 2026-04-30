@@ -57,12 +57,23 @@ accreditationsRoutes.post('/', async (c) => {
 
   // Idempotenza per email *nella stessa edizione*
   const existing = await db
-    .prepare('SELECT ticket_code FROM accreditations WHERE email = ? AND edition_id = ?')
+    .prepare(
+      `SELECT id, edition_id, ticket_code, name, surname, checked_in_at, created_at
+       FROM accreditations WHERE email = ? AND edition_id = ?`
+    )
     .bind(email, edition.id)
-    .first<{ ticket_code: string }>()
+    .first<{
+      id: string
+      edition_id: string
+      ticket_code: string
+      name: string
+      surname: string
+      checked_in_at: string | null
+      created_at: string
+    }>()
 
   if (existing) {
-    return c.json({ ticket_code: existing.ticket_code, existing: true }, 200)
+    return c.json({ ticket_code: existing.ticket_code, existing: true, ticket: existing }, 200)
   }
 
   const id = crypto.randomUUID()
@@ -122,7 +133,22 @@ accreditationsRoutes.post('/', async (c) => {
     console.error('Notifica admin fallita per accredito', id, adminRes.error)
   }
 
-  return c.json({ ticket_code: ticketCode, email_sent: emailRes.ok }, 201)
+  // Restituiamo anche il record "safe" (no email/phone/cap/birth_date) così il
+  // client può renderizzare BigliettoPage senza un GET di follow-up — evita
+  // 404 spurii dovuti a read-after-write lag tra primary e replica D1.
+  return c.json({
+    ticket_code: ticketCode,
+    email_sent: emailRes.ok,
+    ticket: {
+      id,
+      edition_id: edition.id,
+      ticket_code: ticketCode,
+      name,
+      surname,
+      checked_in_at: null as string | null,
+      created_at: new Date().toISOString(),
+    },
+  }, 201)
 })
 
 // GET /by-code/:code — pubblico. NON espone email: chi ha il ticket_code può

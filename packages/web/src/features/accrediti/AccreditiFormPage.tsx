@@ -53,7 +53,9 @@ export function AccreditiFormPage() {
         consent_photo: consentPhoto,
         hp_field: hpRef.current?.value || '',
       })
-      navigate(`/biglietto/${res.ticket_code}`, { replace: true })
+      // Passiamo il ticket via state: BigliettoPage lo usa subito senza dover
+      // fare un GET — evita "Biglietto non trovato" da D1 replica lag.
+      navigate(`/biglietto/${res.ticket_code}`, { replace: true, state: { ticket: res.ticket } })
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Errore sconosciuto'
       setError(msg)

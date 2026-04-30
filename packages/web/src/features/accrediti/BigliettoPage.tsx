@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useLocation, Link } from 'react-router-dom'
 import { Loader2, CheckCircle2, AlertCircle, ArrowLeft, Calendar, MapPin, Clock, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PublicFooter } from '@/components/PublicFooter'
@@ -11,18 +11,44 @@ interface Ticket {
   ticket_code: string
   name: string
   surname: string
-  email: string
   checked_in_at: string | null
   created_at: string
 }
 
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
+
+// Retry con backoff: difende da read-after-write lag delle replica D1 nei
+// pochi casi in cui un utente ricarica la pagina nei primi 1-2 secondi dopo
+// la creazione del biglietto. Per i link da email/bookmark il primo tentativo
+// è già sufficiente.
+async function fetchTicketWithRetry(code: string): Promise<Ticket> {
+  const API_BASE = import.meta.env.DEV ? '/api' : 'https://api.coincidenze.org/api'
+  const url = `${API_BASE}/accrediti/by-code/${encodeURIComponent(code)}`
+  const delays = [0, 250, 600, 1200]
+
+  let lastStatus = 0
+  for (const delay of delays) {
+    if (delay) await sleep(delay)
+    const res = await fetch(url)
+    if (res.ok) return res.json()
+    lastStatus = res.status
+    if (res.status !== 404) break
+  }
+  throw new Error(lastStatus === 404 ? 'Biglietto non trovato' : 'Errore nel caricamento')
+}
+
 export function BigliettoPage() {
   const { code } = useParams<{ code: string }>()
+  const location = useLocation()
+  const stateTicket = (location.state as { ticket?: Ticket } | null)?.ticket ?? null
+
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const checkAuth = useAuthStore((s) => s.checkAuth)
 
-  const [ticket, setTicket] = useState<Ticket | null>(null)
-  const [loading, setLoading] = useState(true)
+  // Se arriviamo dalla form (POST appena fatta), il record è già nello state
+  // → niente GET, niente race con D1.
+  const [ticket, setTicket] = useState<Ticket | null>(stateTicket)
+  const [loading, setLoading] = useState(stateTicket === null)
   const [error, setError] = useState('')
   const [checkingIn, setCheckingIn] = useState(false)
   const [checkInFlash, setCheckInFlash] = useState<'none' | 'now' | 'already'>('none')
@@ -33,16 +59,14 @@ export function BigliettoPage() {
 
   useEffect(() => {
     if (!code) return
-    const API_BASE = import.meta.env.DEV ? '/api' : 'https://api.coincidenze.org/api'
-    fetch(`${API_BASE}/accrediti/by-code/${encodeURIComponent(code)}`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error(res.status === 404 ? 'Biglietto non trovato' : 'Errore nel caricamento')
-        return res.json()
-      })
-      .then(setTicket)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
-  }, [code])
+    if (stateTicket) return // già pronto da location.state
+    let cancelled = false
+    fetchTicketWithRetry(code)
+      .then((t) => { if (!cancelled) setTicket(t) })
+      .catch((err) => { if (!cancelled) setError(err.message) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [code, stateTicket])
 
   const handleCheckIn = async () => {
     if (!code) return
