@@ -125,12 +125,14 @@ accreditationsRoutes.post('/', async (c) => {
   return c.json({ ticket_code: ticketCode, email_sent: emailRes.ok }, 201)
 })
 
-// GET /by-code/:code — pubblico
+// GET /by-code/:code — pubblico. NON espone email: chi ha il ticket_code può
+// vedere solo i campi minimi necessari alla pagina biglietto. L'email resta
+// visibile solo lato admin tramite GET /accrediti.
 accreditationsRoutes.get('/by-code/:code', async (c) => {
   const code = c.req.param('code')
   const row = await c.env.DB
     .prepare(
-      `SELECT id, edition_id, ticket_code, name, surname, email, checked_in_at, created_at
+      `SELECT id, edition_id, ticket_code, name, surname, checked_in_at, created_at
        FROM accreditations WHERE ticket_code = ?`
     )
     .bind(code)
@@ -174,12 +176,16 @@ accreditationsRoutes.post('/:code/check-in', async (c) => {
       .run()
   }
 
-  const full = await c.env.DB
-    .prepare('SELECT * FROM accreditations WHERE id = ?')
+  // Endpoint pubblico: niente email/phone/cap/birth_date nel payload.
+  const safe = await c.env.DB
+    .prepare(
+      `SELECT id, edition_id, ticket_code, name, surname, checked_in_at, created_at
+       FROM accreditations WHERE id = ?`
+    )
     .bind(row.id)
     .first()
 
-  return c.json({ accreditation: full, already_checked_in: alreadyCheckedIn })
+  return c.json({ accreditation: safe, already_checked_in: alreadyCheckedIn })
 })
 
 // POST /:code/uncheck-in — admin

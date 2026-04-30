@@ -119,7 +119,7 @@ hr{border:none;border-top:1px solid #d4cfc7;margin:3rem 0}
       if (a.bio) html += `<div class="row"><span class="label">Bio</span><span class="value">${esc(a.bio)}</span></div>`
       if (a.website) html += `<div class="row"><span class="label">Sito</span><span class="value">${esc(a.website)}</span></div>`
       if (a.image_url) html += `<div class="row"><span class="label">Immagine</span><span class="value">${esc(a.image_url)}</span></div>`
-      if (a.notes) html += `<div class="row"><span class="label">Note</span><span class="value" style="font-style:italic">${esc(a.notes)}</span></div>`
+      // notes: campo admin-only, non pubblicato
       html += '</div>'
     }
   }
@@ -146,7 +146,7 @@ hr{border:none;border-top:1px solid #d4cfc7;margin:3rem 0}
     if (ev.location) html += `<div class="row"><span class="label">Luogo</span><span class="value">${esc(ev.location)}</span></div>`
     if (artistNames) html += `<div class="row"><span class="label">Artisti</span><span class="value">${esc(artistNames)}</span></div>`
     if (ev.description) html += `<div class="row"><span class="label">Descrizione</span><span class="value">${esc(ev.description)}</span></div>`
-    if (ev.notes) html += `<div class="row"><span class="label">Note</span><span class="value" style="font-style:italic">${esc(ev.notes)}</span></div>`
+    // notes: campo admin-only, non pubblicato
     html += '</div>'
   }
 
