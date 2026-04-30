@@ -121,7 +121,7 @@ export function AdminMenuPage() {
 
   const handleSaveEdit = async () => {
     if (!editDraft) return
-    await api.updateMenuItem(editDraft.id, editDraft)
+    await api.updateMenuItem(editDraft.id, { ...editDraft })
     setEditingId(null)
     setEditDraft(null)
     await load()
