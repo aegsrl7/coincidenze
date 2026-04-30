@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Loader2, ArrowLeft, CheckCircle2, Clock, MapPin, Wine } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,15 +25,24 @@ export function SpuntinoPage() {
   const [seats, setSeats] = useState(1)
   const [notes, setNotes] = useState('')
   const [consentPrivacy, setConsentPrivacy] = useState(false)
-  const [company, setCompany] = useState('') // honeypot
+
+  // Honeypot uncontrolled — clear post-mount per battere autofill che ignora autoComplete="off"
+  const hpRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    const t = window.setTimeout(() => { if (hpRef.current) hpRef.current.value = '' }, 50)
+    return () => window.clearTimeout(t)
+  }, [])
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState<{ seats: number; emailSent: boolean } | null>(null)
   const [open, setOpen] = useState<boolean | null>(null)
+  const [remaining, setRemaining] = useState<number | null>(null)
 
   useEffect(() => {
-    api.getSpuntinoStatus().then((s) => setOpen(s.open)).catch(() => setOpen(true))
+    api.getSpuntinoStatus()
+      .then((s) => { setOpen(s.open); setRemaining(s.remaining) })
+      .catch(() => setOpen(true))
   }, [])
 
   const handleSubmit = async (e: FormEvent) => {
@@ -48,7 +57,7 @@ export function SpuntinoPage() {
       const res = await api.createSpuntinoBooking({
         name, surname, email, phone, seats, notes,
         consent_privacy: consentPrivacy,
-        company,
+        hp_field: hpRef.current?.value || '',
       })
       setSuccess({ seats: res.seats, emailSent: res.email_sent })
     } catch (err) {
@@ -60,7 +69,12 @@ export function SpuntinoPage() {
   }
 
   const totalDue = seats * PRICE_PER_SEAT
-  const maxSelectable = 20
+  const maxSelectable = remaining !== null ? Math.min(20, Math.max(1, remaining)) : 20
+  const soldOut = remaining !== null && remaining === 0
+
+  useEffect(() => {
+    if (seats > maxSelectable) setSeats(maxSelectable)
+  }, [maxSelectable, seats])
 
   if (success) {
     return (
@@ -138,6 +152,14 @@ export function SpuntinoPage() {
               se vuoi essere avvisato per la prossima volta.
             </p>
           </div>
+        ) : soldOut ? (
+          <div className="bg-bordeaux/5 border border-bordeaux/20 rounded-xl p-6 text-center">
+            <p className="text-sm text-bordeaux">
+              Posti esauriti. Scrivici a{' '}
+              <a href="mailto:coincidenze.arte@gmail.com" className="underline">coincidenze.arte@gmail.com</a>{' '}
+              per metterti in lista d'attesa.
+            </p>
+          </div>
         ) : (
         <form onSubmit={handleSubmit} className="bg-white/70 rounded-2xl border border-navy/10 p-6 shadow-sm space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -191,13 +213,14 @@ export function SpuntinoPage() {
               </span>
             </label>
 
-            {/* honeypot */}
+            {/* honeypot uncontrolled */}
             <input
+              ref={hpRef}
               type="text"
+              name="hp_field"
               tabIndex={-1}
               autoComplete="off"
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
+              defaultValue=""
               style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
               aria-hidden="true"
             />

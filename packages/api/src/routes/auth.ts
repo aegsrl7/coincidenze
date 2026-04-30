@@ -4,18 +4,50 @@ import type { Env } from '../index'
 
 export const authRoutes = new Hono<Env>()
 
+const LOGIN_MAX_FAILURES = 5
+const LOGIN_WINDOW_MIN = 15
+
+function clientIp(c: { req: { header: (n: string) => string | undefined } }): string {
+  return (
+    c.req.header('cf-connecting-ip') ||
+    c.req.header('x-forwarded-for')?.split(',')[0].trim() ||
+    'unknown'
+  )
+}
+
 // POST /auth/login
 authRoutes.post('/login', async (c) => {
-  const { password } = await c.req.json()
+  const { password } = await c.req.json().catch(() => ({}))
   const secret = c.env.AUTH_SECRET
 
   if (!secret) {
     return c.json({ error: 'AUTH_SECRET non configurato' }, 500)
   }
 
+  // Throttle: max LOGIN_MAX_FAILURES tentativi falliti per IP nella finestra.
+  const ip = clientIp(c)
+  const since = new Date(Date.now() - LOGIN_WINDOW_MIN * 60 * 1000).toISOString().replace('T', ' ').slice(0, 19)
+  const failuresRow = await c.env.DB
+    .prepare("SELECT COUNT(*) AS c FROM login_attempts WHERE ip = ? AND failed_at > ?")
+    .bind(ip, since)
+    .first<{ c: number }>()
+  if ((failuresRow?.c ?? 0) >= LOGIN_MAX_FAILURES) {
+    return c.json(
+      { error: `Troppi tentativi falliti. Riprova fra ${LOGIN_WINDOW_MIN} minuti.` },
+      429
+    )
+  }
+
   if (password !== secret) {
+    await c.env.DB
+      .prepare("INSERT INTO login_attempts (ip, failed_at) VALUES (?, datetime('now'))")
+      .bind(ip)
+      .run()
     return c.json({ error: 'Password errata' }, 401)
   }
+
+  // Login OK: pulisci i fallimenti pregressi per questo IP.
+  await c.env.DB.prepare('DELETE FROM login_attempts WHERE ip = ?').bind(ip).run()
 
   // Create a session token (HMAC-based)
   const encoder = new TextEncoder()

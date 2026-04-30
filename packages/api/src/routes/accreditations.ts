@@ -31,9 +31,10 @@ function sanitize(s: unknown): string {
 accreditationsRoutes.post('/', async (c) => {
   const body = await c.req.json().catch(() => ({})) as Record<string, unknown>
 
-  // Honeypot
-  if (typeof body.company === 'string' && body.company.trim().length > 0) {
-    return c.json({ ticket_code: 'ok' }, 201)
+  // Honeypot — restituiamo 400 generico invece di stub `ticket_code: 'ok'`,
+  // altrimenti il client navigherebbe a /biglietto/ok → 404.
+  if (typeof body.hp_field === 'string' && body.hp_field.trim().length > 0) {
+    return c.json({ error: 'Richiesta non valida' }, 400)
   }
 
   const edition = await getCurrentEdition(c.env.DB)

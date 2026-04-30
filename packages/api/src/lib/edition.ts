@@ -10,6 +10,7 @@ export interface EditionRow {
   is_current: number
   accrediti_open: number
   spuntino_open: number
+  spuntino_capacity: number
   hero_image_url: string
   hero_subtitle: string
   hero_location: string

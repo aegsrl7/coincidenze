@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS editions (
   is_current INTEGER NOT NULL DEFAULT 0,
   accrediti_open INTEGER NOT NULL DEFAULT 0,
   spuntino_open INTEGER NOT NULL DEFAULT 0,
+  spuntino_capacity INTEGER NOT NULL DEFAULT 30,
   hero_image_url TEXT NOT NULL DEFAULT '',
   hero_subtitle TEXT NOT NULL DEFAULT '',
   hero_location TEXT NOT NULL DEFAULT 'Marsam Locanda · Bene Vagienna',
@@ -162,41 +163,6 @@ CREATE TABLE IF NOT EXISTS editions_content (
   UNIQUE(edition_id, section)
 );
 
--- Tabelle legacy: edizione0_* e edizione1_* sono state migrate in editions_*.
--- Vengono lasciate qui solo come backup; le route le ignorano. Dopo conferma
--- migration 0002 le rimuoverà definitivamente.
-CREATE TABLE IF NOT EXISTS edizione0_gallery (
-  id TEXT PRIMARY KEY,
-  image_url TEXT NOT NULL,
-  caption TEXT DEFAULT '',
-  sort_order INTEGER DEFAULT 0,
-  created_at TEXT DEFAULT (datetime('now')),
-  updated_at TEXT DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS edizione0_content (
-  id TEXT PRIMARY KEY,
-  section TEXT NOT NULL UNIQUE,
-  content TEXT DEFAULT '',
-  updated_at TEXT DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS edizione1_gallery (
-  id TEXT PRIMARY KEY,
-  image_url TEXT NOT NULL,
-  caption TEXT DEFAULT '',
-  sort_order INTEGER DEFAULT 0,
-  created_at TEXT DEFAULT (datetime('now')),
-  updated_at TEXT DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS edizione1_content (
-  id TEXT PRIMARY KEY,
-  section TEXT NOT NULL UNIQUE,
-  content TEXT DEFAULT '',
-  updated_at TEXT DEFAULT (datetime('now'))
-);
-
 CREATE TABLE IF NOT EXISTS accreditations (
   id TEXT PRIMARY KEY,
   edition_id TEXT REFERENCES editions(id),
@@ -245,6 +211,12 @@ CREATE TABLE IF NOT EXISTS menu_items (
   updated_at TEXT DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS login_attempts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ip TEXT NOT NULL,
+  failed_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS categories (
   id TEXT PRIMARY KEY,
   type TEXT NOT NULL CHECK(type IN ('artist', 'menu')),
@@ -284,3 +256,4 @@ CREATE INDEX IF NOT EXISTS idx_media_items_edition ON media_items(edition_id);
 CREATE INDEX IF NOT EXISTS idx_categories_type_sort ON categories(type, sort_order);
 CREATE INDEX IF NOT EXISTS idx_editions_gallery_edition ON editions_gallery(edition_id, sort_order);
 CREATE INDEX IF NOT EXISTS idx_editions_content_edition ON editions_content(edition_id);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_ip_time ON login_attempts(ip, failed_at);

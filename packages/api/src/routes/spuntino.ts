@@ -35,12 +35,18 @@ async function sumSeats(db: D1Database, editionId: string): Promise<number> {
   return row?.total ?? 0
 }
 
-// GET /status — pubblico: stato apri/chiudi e contatore prenotazioni dell'edizione corrente
+// GET /status — pubblico: stato apri/chiudi, contatore prenotazioni e capacità
 spuntinoRoutes.get('/status', async (c) => {
   const edition = await getCurrentEdition(c.env.DB)
-  if (!edition) return c.json({ open: false, taken: 0 })
+  if (!edition) return c.json({ open: false, taken: 0, capacity: 0, remaining: 0 })
   const taken = await sumSeats(c.env.DB, edition.id)
-  return c.json({ open: edition.spuntino_open === 1, taken })
+  const capacity = edition.spuntino_capacity ?? 30
+  return c.json({
+    open: edition.spuntino_open === 1,
+    taken,
+    capacity,
+    remaining: Math.max(0, capacity - taken),
+  })
 })
 
 // PUT /status — admin: cambia spuntino_open dell'edizione corrente
@@ -62,8 +68,9 @@ spuntinoRoutes.put('/status', async (c) => {
 spuntinoRoutes.post('/', async (c) => {
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>
 
-  if (typeof body.company === 'string' && body.company.trim().length > 0) {
-    return c.json({ ok: true }, 201) // honeypot
+  // Honeypot
+  if (typeof body.hp_field === 'string' && body.hp_field.trim().length > 0) {
+    return c.json({ error: 'Richiesta non valida' }, 400)
   }
 
   const edition = await getCurrentEdition(c.env.DB)
@@ -81,6 +88,21 @@ spuntinoRoutes.post('/', async (c) => {
   if (!isValidEmail(email)) return c.json({ error: 'Email non valida' }, 400)
   if (!phone) return c.json({ error: 'Telefono obbligatorio' }, 400)
   if (!body.consent_privacy) return c.json({ error: 'Consenso privacy obbligatorio' }, 400)
+
+  // Enforcement capacità: blocca se l'INSERT sfora `spuntino_capacity`. Race window
+  // residua tra check e insert ≈ ms — accettabile per piccoli numeri; se diventa
+  // problema usare un trigger/transaction più stretta.
+  const capacity = edition.spuntino_capacity ?? 30
+  const taken = await sumSeats(c.env.DB, edition.id)
+  const remaining = Math.max(0, capacity - taken)
+  if (seats > remaining) {
+    return c.json({
+      error: remaining === 0
+        ? 'Posti esauriti per questa edizione.'
+        : `Restano solo ${remaining} ${remaining === 1 ? 'posto' : 'posti'}.`,
+      remaining,
+    }, 409)
+  }
 
   const id = crypto.randomUUID()
   await c.env.DB

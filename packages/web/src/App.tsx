@@ -12,9 +12,11 @@ import { EditionPage } from '@/features/edition/EditionPage'
 import { HomeRedirect } from '@/features/edition/HomeRedirect'
 import { ProgrammaInstagramPage } from '@/features/edizione1/ProgrammaInstagramPage'
 import { BigliettoPage } from '@/features/accrediti/BigliettoPage'
+import { AccreditiGate } from '@/features/accrediti/AccreditiGate'
 import { AdminAccreditiPage } from '@/features/accrediti/AdminAccreditiPage'
 import { CheckInPage } from '@/features/accrediti/CheckInPage'
 import { AdminSpuntinoPage } from '@/features/spuntino/AdminSpuntinoPage'
+import { SpuntinoGate } from '@/features/spuntino/SpuntinoGate'
 import { ArtistDetailPage } from '@/features/artists/ArtistDetailPage'
 import { AdminMenuPage } from '@/features/menu/AdminMenuPage'
 import { AdminCategoriesPage } from '@/features/categories/AdminCategoriesPage'
@@ -39,8 +41,9 @@ export default function App() {
         <Route path="/" element={<HomeRedirect />} />
         <Route path="/programma-instagram" element={<ProgrammaInstagramPage />} />
         <Route path="/edizione-1-v2" element={<Navigate to="/" replace />} />
-        <Route path="/accrediti" element={<Navigate to="/" replace />} />
-        <Route path="/spuntino" element={<Navigate to="/" replace />} />
+        {/* Le forme pubbliche si attivano dal flag accrediti_open/spuntino_open dell'edizione corrente */}
+        <Route path="/accrediti" element={<AccreditiGate />} />
+        <Route path="/spuntino" element={<SpuntinoGate />} />
         <Route path="/biglietto/:code" element={<BigliettoPage />} />
         <Route path="/artisti/:id" element={<ArtistDetailPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />

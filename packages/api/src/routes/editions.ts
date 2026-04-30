@@ -121,17 +121,20 @@ editionsRoutes.patch('/:id', async (c) => {
   const intro = typeof body.intro === 'string' ? sanitize(body.intro, 5000) : existing.intro
   const accrediti = body.accrediti_open !== undefined ? toBool(body.accrediti_open) : existing.accrediti_open
   const spuntino = body.spuntino_open !== undefined ? toBool(body.spuntino_open) : existing.spuntino_open
+  const capacity = typeof body.spuntino_capacity === 'number' && body.spuntino_capacity >= 0
+    ? Math.floor(body.spuntino_capacity)
+    : existing.spuntino_capacity
 
   await c.env.DB
     .prepare(
       `UPDATE editions SET
         slug = ?, name = ?, year = ?, event_date = ?,
         hero_image_url = ?, hero_subtitle = ?, hero_location = ?, intro = ?,
-        accrediti_open = ?, spuntino_open = ?,
+        accrediti_open = ?, spuntino_open = ?, spuntino_capacity = ?,
         updated_at = datetime('now')
       WHERE id = ?`
     )
-    .bind(slug, name, year, eventDate, heroImage, heroSubtitle, heroLocation, intro, accrediti, spuntino, id)
+    .bind(slug, name, year, eventDate, heroImage, heroSubtitle, heroLocation, intro, accrediti, spuntino, capacity, id)
     .run()
 
   const row = await c.env.DB.prepare('SELECT * FROM editions WHERE id = ?').bind(id).first<EditionRow>()

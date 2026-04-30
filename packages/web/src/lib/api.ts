@@ -120,7 +120,7 @@ export const api = {
   deleteAccreditation: (id: string) => request<void>(`/accrediti/${id}`, { method: 'DELETE' }),
 
   // Spuntino delle 18 (scoped per edizione)
-  getSpuntinoStatus: () => request<{ open: boolean; taken: number }>('/spuntino/status'),
+  getSpuntinoStatus: () => request<{ open: boolean; taken: number; capacity: number; remaining: number }>('/spuntino/status'),
   setSpuntinoStatus: (open: boolean) => request<{ open: boolean }>('/spuntino/status', { method: 'PUT', body: JSON.stringify({ open }) }),
   createSpuntinoBooking: (data: any) => request<{ id: string; seats: number; total_booked: number; email_sent: boolean }>('/spuntino', { method: 'POST', body: JSON.stringify(data) }),
   listSpuntinoBookings: (editionSlug?: string | null) => request<any[]>(withEdition('/spuntino', editionSlug)),

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Loader2, CheckCircle2, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -18,7 +18,14 @@ export function AccreditiFormPage() {
   const [consentPrivacy, setConsentPrivacy] = useState(false)
   const [consentNewsletter, setConsentNewsletter] = useState(false)
   const [consentPhoto, setConsentPhoto] = useState(false)
-  const [company, setCompany] = useState('') // honeypot
+
+  // Honeypot uncontrolled. I browser ignorano spesso autoComplete="off"; svuotiamo
+  // dopo il mount e leggiamo via ref al submit così l'autofill non passa al server.
+  const hpRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    const t = window.setTimeout(() => { if (hpRef.current) hpRef.current.value = '' }, 50)
+    return () => window.clearTimeout(t)
+  }, [])
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -44,7 +51,7 @@ export function AccreditiFormPage() {
         consent_privacy: consentPrivacy,
         consent_newsletter: consentNewsletter,
         consent_photo: consentPhoto,
-        company,
+        hp_field: hpRef.current?.value || '',
       })
       navigate(`/biglietto/${res.ticket_code}`, { replace: true })
     } catch (err) {
@@ -82,13 +89,14 @@ export function AccreditiFormPage() {
         </header>
 
         <form onSubmit={handleSubmit} className="bg-white/70 backdrop-blur rounded-2xl border border-navy/10 shadow-sm p-6 sm:p-8 space-y-5">
-          {/* Honeypot — non visibile, deve restare vuoto */}
+          {/* Honeypot — uncontrolled, name e label non-semantici per evitare autofill */}
           <input
+            ref={hpRef}
             type="text"
+            name="hp_field"
             tabIndex={-1}
             autoComplete="off"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
+            defaultValue=""
             className="absolute -left-[9999px] w-px h-px opacity-0"
             aria-hidden="true"
           />

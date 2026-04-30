@@ -64,6 +64,7 @@ export const MACRO_TO_CATEGORIES: Record<MacroCategory, EventCategory[]> = {
 // Entità — snake_case per match diretto con API/D1
 export interface Event {
   id: string
+  edition_id?: string
   title: string
   description: string
   date: string
@@ -80,6 +81,7 @@ export interface Event {
 
 export interface Artist {
   id: string
+  edition_id?: string
   name: string
   bio: string
   category: EventCategory
@@ -103,6 +105,7 @@ export interface Exhibitor {
 
 export interface MediaItem {
   id: string
+  edition_id?: string
   title: string
   type: 'audio' | 'video' | 'image'
   url: string
@@ -164,6 +167,7 @@ export interface CanvasEdge {
 // Piano Editoriale
 export interface EditorialPost {
   id: string
+  edition_id?: string
   data: string
   fase: number
   tag: string
@@ -214,6 +218,7 @@ export interface Edition {
   is_current: 0 | 1
   accrediti_open: 0 | 1
   spuntino_open: 0 | 1
+  spuntino_capacity: number
   hero_image_url: string
   hero_subtitle: string
   hero_location: string
@@ -244,6 +249,7 @@ export interface ContentSection {
 // Accrediti
 export interface Accreditation {
   id: string
+  edition_id?: string
   ticket_code: string
   name: string
   surname: string
@@ -273,11 +279,12 @@ export interface AccreditationInput {
   consent_photo: boolean
   notes?: string
   // honeypot — se compilato il form viene rifiutato
-  company?: string
+  hp_field?: string
 }
 
 export interface SpuntinoBooking {
   id: string
+  edition_id?: string
   name: string
   surname: string
   email: string
@@ -293,6 +300,7 @@ export interface SpuntinoBooking {
 // Menu
 export interface MenuItem {
   id: string
+  edition_id?: string
   category: string
   name: string
   description: string
