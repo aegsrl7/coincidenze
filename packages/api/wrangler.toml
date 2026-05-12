@@ -18,3 +18,8 @@ database_id = "36829bf3-c3e6-4c18-8df8-40dea1d2bc42"
 [[r2_buckets]]
 binding = "MEDIA_BUCKET"
 bucket_name = "coincidenze-media"
+
+# Cron: due trigger UTC, lo handler filtra per ora locale Europe/Rome
+# 16 UTC = 18 Rome estate (CEST), 17 UTC = 18 Rome inverno (CET)
+[triggers]
+crons = ["0 16 * * *", "0 17 * * *"]

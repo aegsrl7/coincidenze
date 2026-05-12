@@ -17,6 +17,9 @@ import { spuntinoRoutes } from './routes/spuntino'
 import { menuRoutes } from './routes/menu'
 import { categoriesRoutes } from './routes/categories'
 import { requireAuth } from './middleware/auth'
+import { sendEmail, buildReminderEmail } from './lib/email'
+
+const REMINDER_TO = 'coincidenze.arte@gmail.com'
 
 export type Env = {
   Bindings: {
@@ -112,4 +115,36 @@ app.route('/api/editorial', editorialRoutes)
 app.route('/api/menu', menuRoutes)
 app.route('/api/categories', categoriesRoutes)
 
-export default app
+// Reminder giornaliero piano editoriale: cron fires alle 16 e 17 UTC,
+// qui filtriamo per ora locale Europe/Rome così copriamo CEST e CET.
+async function scheduled(_event: ScheduledController, env: Env['Bindings']): Promise<void> {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Rome',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', hour12: false,
+  }).formatToParts(new Date())
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
+  if (parseInt(get('hour'), 10) !== 18) return
+
+  const today = `${get('year')}-${get('month')}-${get('day')}`
+
+  const { results } = await env.DB
+    .prepare("SELECT data, titolo, emoji, tag, formato FROM editorial_posts WHERE data = ? AND stato = 'da_fare' ORDER BY tag, titolo")
+    .bind(today)
+    .all<{ data: string; titolo: string; emoji: string; tag: string; formato: string }>()
+
+  if (!results || results.length === 0) return
+
+  const dateLabel = new Intl.DateTimeFormat('it-IT', {
+    timeZone: 'Europe/Rome',
+    weekday: 'long', day: 'numeric', month: 'long',
+  }).format(new Date())
+
+  const { subject, html, text } = buildReminderEmail({ dateLabel, posts: results })
+  await sendEmail(env, { to: REMINDER_TO, subject, html, text })
+}
+
+export default {
+  fetch: app.fetch,
+  scheduled,
+}

@@ -310,6 +310,72 @@ export function buildSpuntinoAdminNotificationEmail(opts: {
   return { subject, html, text }
 }
 
+interface ReminderPostRow {
+  data: string
+  titolo: string
+  emoji: string
+  tag: string
+  formato: string
+}
+
+export function buildReminderEmail(opts: {
+  dateLabel: string
+  posts: ReminderPostRow[]
+}): { subject: string; html: string; text: string } {
+  const count = opts.posts.length
+  const subject = count === 1
+    ? `Reminder · 1 post in programma oggi`
+    : `Reminder · ${count} post in programma oggi`
+
+  const text = [
+    `Promemoria piano editoriale · ${opts.dateLabel}`,
+    ``,
+    ...opts.posts.map((p) => `• ${p.emoji} ${p.titolo}${p.formato ? ` (${p.formato})` : ''}`),
+    ``,
+    `Apri il calendario: https://coincidenze.org/admin/piano-editoriale`,
+  ].join('\n')
+
+  const rows = opts.posts
+    .map(
+      (p) => `
+        <tr>
+          <td style="padding:10px 0;border-top:1px solid #eee;font-size:15px;color:#1a1a1a;">
+            <span style="font-size:18px;margin-right:8px;">${escapeHtml(p.emoji || '•')}</span>
+            <strong style="color:#2C3E6B;">${escapeHtml(p.titolo)}</strong>
+            ${p.formato ? `<div style="margin:4px 0 0 30px;font-size:12px;color:#888;">${escapeHtml(p.formato)} · ${escapeHtml(p.tag)}</div>` : ''}
+          </td>
+        </tr>`
+    )
+    .join('')
+
+  const html = `<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#F5F0E8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;color:#1a1a1a;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#F5F0E8;padding:24px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:480px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid rgba(44,62,107,0.1);">
+        <tr><td style="background:#2C3E6B;color:#ffffff;padding:16px 20px;">
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.75;">COINCIDENZE · Piano editoriale</div>
+          <div style="font-family:Georgia,'Playfair Display',serif;font-size:18px;font-weight:600;margin-top:2px;">Promemoria di oggi</div>
+          <div style="font-size:13px;opacity:0.85;margin-top:2px;">${escapeHtml(opts.dateLabel)}</div>
+        </td></tr>
+        <tr><td style="padding:8px 20px 16px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">${rows}</table>
+        </td></tr>
+        <tr><td style="padding:14px 20px;background:#F5F0E8;border-top:1px solid #eee;text-align:center;">
+          <a href="https://coincidenze.org/admin/piano-editoriale" style="display:inline-block;background:#2C3E6B;color:#ffffff;text-decoration:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:500;">
+            Apri il calendario
+          </a>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+
+  return { subject, html, text }
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
