@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { api } from '@/lib/api'
+import { useCan } from '@/stores/authStore'
 import { useAdminEditionSlug, useEditionsStore } from '@/stores/editionsStore'
 import type { Accreditation } from '@/types'
 
@@ -37,6 +38,8 @@ function toCsv(rows: Accreditation[]): string {
 }
 
 export function AdminAccreditiPage() {
+  const canUncheck = useCan('accrediti.checkin')
+  const canDelete = useCan('accrediti.delete')
   const [items, setItems] = useState<Accreditation[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
@@ -222,7 +225,7 @@ export function AdminAccreditiPage() {
                             <CheckCircle2 className="h-3.5 w-3.5" />
                             <span className="hidden sm:inline ml-1">Check-in</span>
                           </Button>
-                        ) : (
+                        ) : canUncheck && (
                           <Button
                             size="sm"
                             variant="ghost"
@@ -243,13 +246,15 @@ export function AdminAccreditiPage() {
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
                         </Link>
-                        <button
-                          onClick={() => setDeleteTarget(a)}
-                          className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-bordeaux/10 text-ink-muted hover:text-bordeaux"
-                          title="Elimina"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        {canDelete && (
+                          <button
+                            onClick={() => setDeleteTarget(a)}
+                            className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-bordeaux/10 text-ink-muted hover:text-bordeaux"
+                            title="Elimina"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

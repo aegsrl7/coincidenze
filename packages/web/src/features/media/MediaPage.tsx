@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useMediaStore } from '@/stores/mediaStore'
 import { useArtistsStore } from '@/stores/artistsStore'
-import { useAuthStore } from '@/stores/authStore'
+import { useCan } from '@/stores/authStore'
 import { useCategoryMaps } from '@/stores/categoriesStore'
 import { useEditionsStore, useAdminEditionSlug } from '@/stores/editionsStore'
 import { type MediaItem } from '@/types'
@@ -19,7 +19,7 @@ const typeLabels = { audio: 'Audio', video: 'Video', image: 'Immagine' }
 export function MediaPage() {
   const { items, fetchMedia } = useMediaStore()
   const { artists, fetchArtists } = useArtistsStore()
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const canEdit = useCan('media.edit')
   const { labels, colors } = useCategoryMaps('artist')
   const [showForm, setShowForm] = useState(false)
   const [editingItem, setEditingItem] = useState<MediaItem | null>(null)
@@ -57,7 +57,7 @@ export function MediaPage() {
       )}
       {/* Filtri */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
-        {isAuthenticated && (
+        {canEdit && (
           <Button onClick={() => { setEditingItem(null); setShowForm(true) }}>
             <Plus className="h-4 w-4" /> Aggiungi Media
           </Button>
@@ -106,7 +106,7 @@ export function MediaPage() {
               <Card
                 key={item.id}
                 className="overflow-hidden transition-shadow hover:shadow-md group cursor-pointer"
-                onClick={() => { if (isAuthenticated) { setEditingItem(item); setShowForm(true) } }}
+                onClick={() => { if (canEdit) { setEditingItem(item); setShowForm(true) } }}
               >
                 {/* Thumbnail / placeholder */}
                 <div className="relative h-36 bg-beige-dark flex items-center justify-center">
@@ -176,7 +176,7 @@ export function MediaPage() {
         </div>
       )}
 
-      {isAuthenticated && showForm && (
+      {canEdit && showForm && (
         <MediaFormDialog
           open={showForm}
           onClose={() => { setShowForm(false); setEditingItem(null) }}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { useIsAdmin } from '@/stores/authStore'
+import { useCan } from '@/stores/authStore'
 import { Bold, Italic, Link2, List } from 'lucide-react'
 import {
   Dialog,
@@ -160,7 +160,7 @@ export function ArtistFormDialog({ open, onClose, editItem }: Props) {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const isEditing = !!editItem
-  const isAdmin = useIsAdmin()
+  const canDelete = useCan('artisti.delete')
 
   useEffect(() => {
     if (editItem) {
@@ -275,8 +275,8 @@ export function ArtistFormDialog({ open, onClose, editItem }: Props) {
           </div>
 
           <div className="flex items-center justify-between pt-4">
-            {/* Eliminare è solo dell'admin: l'agenzia crea e modifica */}
-            {isEditing && isAdmin ? (
+            {/* Elimina solo chi ha il permesso dell'area */}
+            {isEditing && canDelete ? (
               <Button
                 variant="outline"
                 className="text-red-600 hover:bg-red-50 hover:text-red-700"

@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import type { Env } from '../index'
 import { resolveEdition } from '../lib/edition'
-import { canSeeNotes, withoutNotes } from '../lib/session'
+import { can, withoutNotes } from '../lib/session'
 
 export const mediaRoutes = new Hono<Env>()
 
@@ -14,7 +14,7 @@ mediaRoutes.get('/', async (c) => {
         .all()
     : await c.env.DB.prepare('SELECT * FROM media_items ORDER BY created_at DESC').all()
   const rows = results as Record<string, unknown>[]
-  return c.json(canSeeNotes(c.get('role')) ? rows : rows.map(withoutNotes))
+  return c.json(can(c, 'note.view') ? rows : rows.map(withoutNotes))
 })
 
 mediaRoutes.post('/', async (c) => {
@@ -22,12 +22,12 @@ mediaRoutes.post('/', async (c) => {
   const id = crypto.randomUUID()
   const edition = await resolveEdition(c)
   const editionId = body.edition_id || edition?.id || null
-  const adminNotes = canSeeNotes(c.get('role'))
+  const withNotes = can(c, 'note.view')
   await c.env.DB.prepare(
     'INSERT INTO media_items (id, edition_id, title, type, url, thumbnail_url, artist_id, category, duration, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-  ).bind(id, editionId, body.title, body.type, body.url, body.thumbnailUrl || '', body.artistId || null, body.category || null, body.duration || null, adminNotes ? body.notes || '' : '').run()
+  ).bind(id, editionId, body.title, body.type, body.url, body.thumbnailUrl || '', body.artistId || null, body.category || null, body.duration || null, withNotes ? body.notes || '' : '').run()
   const created = { id, edition_id: editionId, ...body }
-  return c.json(adminNotes ? created : withoutNotes(created), 201)
+  return c.json(withNotes ? created : withoutNotes(created), 201)
 })
 
 mediaRoutes.put('/:id', async (c) => {
@@ -39,13 +39,13 @@ mediaRoutes.put('/:id', async (c) => {
       .bind(body.edition_id || null, id)
       .run()
   }
-  // Le note le scrive solo l'admin: per gli altri restano quelle già salvate
-  const adminNotes = canSeeNotes(c.get('role'))
+  // Le note le scrive solo chi ha note.view: per gli altri restano quelle già salvate
+  const withNotes = can(c, 'note.view')
   await c.env.DB.prepare(
-    `UPDATE media_items SET title = ?, type = ?, url = ?, thumbnail_url = ?, artist_id = ?, category = ?, duration = ?${adminNotes ? ', notes = ?' : ''}, updated_at = datetime('now') WHERE id = ?`
-  ).bind(body.title, body.type, body.url, body.thumbnailUrl || '', body.artistId || null, body.category || null, body.duration || null, ...(adminNotes ? [body.notes || ''] : []), id).run()
+    `UPDATE media_items SET title = ?, type = ?, url = ?, thumbnail_url = ?, artist_id = ?, category = ?, duration = ?${withNotes ? ', notes = ?' : ''}, updated_at = datetime('now') WHERE id = ?`
+  ).bind(body.title, body.type, body.url, body.thumbnailUrl || '', body.artistId || null, body.category || null, body.duration || null, ...(withNotes ? [body.notes || ''] : []), id).run()
   const updated = { id, ...body }
-  return c.json(adminNotes ? updated : withoutNotes(updated))
+  return c.json(withNotes ? updated : withoutNotes(updated))
 })
 
 mediaRoutes.delete('/:id', async (c) => {

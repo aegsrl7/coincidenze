@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useIsAdmin } from '@/stores/authStore'
+import { useCan } from '@/stores/authStore'
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,7 @@ interface PostFormDialogProps {
 export function PostFormDialog({ open, onClose, editPost, defaultDate }: PostFormDialogProps) {
   const { createPost, updatePost, deletePost } = useEditorialStore()
   const isEditing = !!editPost
-  const isAdmin = useIsAdmin()
+  const canDelete = useCan('editoriale.delete')
   const [saving, setSaving] = useState(false)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -232,8 +232,8 @@ export function PostFormDialog({ open, onClose, editPost, defaultDate }: PostFor
           </div>
 
           <div className="flex items-center justify-between pt-4">
-            {/* Eliminare è solo dell'admin: l'agenzia crea e modifica */}
-            {isEditing && isAdmin ? (
+            {/* Elimina solo chi ha il permesso dell'area */}
+            {isEditing && canDelete ? (
               <Button
                 variant="outline"
                 className="text-red-600 hover:bg-red-50 hover:text-red-700"

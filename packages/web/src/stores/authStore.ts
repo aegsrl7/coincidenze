@@ -1,41 +1,43 @@
 import { create } from 'zustand'
-import { api } from '@/lib/api'
-import type { UserRole } from '@/types'
+import { api, type MeResponse } from '@/lib/api'
+import type { SessionUser } from '@/types'
 
-type LoginResult = { ok: true } | { ok: false; error: string }
+type Result = { ok: true } | { ok: false; error: string }
 
 interface AuthState {
   isAuthenticated: boolean
-  /** admin = tutto, agency = agenzia social/marketing (programma, artisti, media, piano editoriale) */
-  role: UserRole | null
+  user: SessionUser | null
+  /** Permessi del ruolo dell'utente, es. "programma.edit" (catalogo nell'API) */
+  permissions: string[]
   loading: boolean
   checkAuth: () => Promise<void>
-  login: (password: string) => Promise<LoginResult>
+  login: (email: string, password: string) => Promise<Result>
   logout: () => Promise<void>
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  isAuthenticated: false,
-  role: null,
+function fromMe(res: MeResponse) {
+  return { isAuthenticated: res.authenticated, user: res.user, permissions: res.permissions ?? [] }
+}
+
+const signedOut = { isAuthenticated: false, user: null, permissions: [] as string[] }
+
+export const useAuthStore = create<AuthState>((set, get) => ({
+  ...signedOut,
   loading: true,
 
   checkAuth: async () => {
     try {
-      const res = await api.authMe()
-      set({ isAuthenticated: res.authenticated, role: res.role ?? null, loading: false })
+      set({ ...fromMe(await api.authMe()), loading: false })
     } catch {
-      set({ isAuthenticated: false, role: null, loading: false })
+      set({ ...signedOut, loading: false })
     }
   },
 
-  login: async (password: string) => {
+  login: async (email, password) => {
     try {
-      const res = await api.login(password)
-      if (res.authenticated) {
-        set({ isAuthenticated: true, role: res.role ?? null })
-        return { ok: true }
-      }
-      return { ok: false, error: 'Password errata' }
+      await api.login(email, password)
+      await get().checkAuth()
+      return get().isAuthenticated ? { ok: true } : { ok: false, error: 'Accesso non riuscito' }
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : 'Accesso non riuscito' }
     }
@@ -45,12 +47,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       await api.logout()
     } finally {
-      set({ isAuthenticated: false, role: null })
+      set(signedOut)
     }
   },
 }))
 
-/** true solo per il ruolo admin (accrediti, spuntino, team, edizioni, testi delle pagine pubbliche) */
-export function useIsAdmin(): boolean {
-  return useAuthStore((s) => s.role === 'admin')
+/** true se l'utente ha il permesso (es. useCan('programma.edit')) */
+export function useCan(permission: string): boolean {
+  return useAuthStore((s) => s.permissions.includes(permission))
 }

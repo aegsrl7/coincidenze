@@ -209,8 +209,43 @@ export const STATO_COLORS: Record<string, string> = {
 }
 
 // Edizioni
-/** Ruolo dell'area riservata: admin (tutto) o agency (agenzia social/marketing) */
-export type UserRole = 'admin' | 'agency'
+/** Utente della sessione (area riservata) */
+export interface SessionUser {
+  id: string
+  name: string
+  email: string
+  role: { id: string; name: string }
+}
+
+/** Utente nella pagina Utenti */
+export interface AdminUser {
+  id: string
+  email: string
+  name: string
+  role: { id: string; name: string }
+  active: boolean
+  /** invitato = non ha ancora scelto la password */
+  status: 'attivo' | 'invitato' | 'disattivato'
+  last_login_at: string | null
+  created_at: string
+}
+
+export interface Role {
+  id: string
+  name: string
+  description: string
+  permissions: string[]
+  /** Amministratore: tutti i permessi, non modificabile */
+  is_system: boolean
+  users: number
+}
+
+/** Catalogo dei permessi servito dall'API (fonte unica in packages/api/src/lib/permissions.ts) */
+export interface PermissionCatalog {
+  areas: { key: string; label: string; actions: string[] }[]
+  actions: Record<string, string>
+  hints: Record<string, string>
+}
 
 export interface Edition {
   id: string

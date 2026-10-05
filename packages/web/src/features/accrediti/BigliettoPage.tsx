@@ -3,7 +3,7 @@ import { useParams, useLocation, Link } from 'react-router-dom'
 import { Loader2, CheckCircle2, AlertCircle, ArrowLeft, Calendar, MapPin, Clock, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PublicFooter } from '@/components/PublicFooter'
-import { useAuthStore, useIsAdmin } from '@/stores/authStore'
+import { useAuthStore, useCan } from '@/stores/authStore'
 import { useEditionsStore } from '@/stores/editionsStore'
 import { api } from '@/lib/api'
 import { editionDateLine } from '@/lib/utils'
@@ -45,7 +45,7 @@ export function BigliettoPage() {
   const location = useLocation()
   const stateTicket = (location.state as { ticket?: Ticket } | null)?.ticket ?? null
 
-  const isAdmin = useIsAdmin()
+  const canUncheck = useCan('accrediti.checkin')
   const checkAuth = useAuthStore((s) => s.checkAuth)
   const editions = useEditionsStore((s) => s.editions)
   const editionsLoaded = useEditionsStore((s) => s.loaded)
@@ -267,8 +267,8 @@ export function BigliettoPage() {
             </p>
           </div>
 
-          {/* Azioni admin: annulla check-in */}
-          {isAdmin && isCheckedIn && (
+          {/* Staff con permesso check-in: annulla check-in */}
+          {canUncheck && isCheckedIn && (
             <div className="border-t border-navy/10 px-6 py-4 space-y-2 bg-navy/3">
               <p className="text-[10px] uppercase tracking-wider text-ink-muted text-center">
                 Gestione staff

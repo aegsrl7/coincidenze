@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useIsAdmin } from '@/stores/authStore'
+import { useCan } from '@/stores/authStore'
 import {
   Dialog,
   DialogContent,
@@ -38,7 +38,7 @@ export function MediaFormDialog({ open, onClose, editItem }: Props) {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const isEditing = !!editItem
-  const isAdmin = useIsAdmin()
+  const canDelete = useCan('media.delete')
 
   useEffect(() => {
     if (editItem) {
@@ -170,8 +170,8 @@ export function MediaFormDialog({ open, onClose, editItem }: Props) {
           </div>
 
           <div className="flex items-center justify-between pt-4">
-            {/* Eliminare è solo dell'admin: l'agenzia crea e modifica */}
-            {isEditing && isAdmin ? (
+            {/* Elimina solo chi ha il permesso dell'area */}
+            {isEditing && canDelete ? (
               <Button
                 variant="outline"
                 className="text-red-600 hover:bg-red-50 hover:text-red-700"

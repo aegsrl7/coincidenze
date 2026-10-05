@@ -30,12 +30,14 @@ npm run deploy --workspace=packages/api       # deploy Worker
 
 In dev il frontend chiama `/api` e Vite fa proxy verso `http://localhost:8787` (`vite.config.ts`). In produzione il client usa direttamente `https://api.coincidenze.org/api` (`packages/web/src/lib/api.ts`).
 
-Per il login in locale serve `packages/api/.dev.vars` (non committato) con `AUTH_SECRET=...` e `AGENCY_PASSWORD=...`. Senza `RESEND_API_KEY` le email non partono (l'errore finisce solo nel log). `wrangler dev` presenta l'host di produzione, quindi il cookie di sessione arriva `Secure`: il browser lo accetta su localhost, client come curl o Python no.
+Per il login in locale serve `packages/api/.dev.vars` (non committato) con `AUTH_SECRET=...` e `SESSION_SECRET=...` (casuale). Con il DB vuoto `/login` mostra il "Primo accesso": si crea l'amministratore inserendo `AUTH_SECRET`. Senza `RESEND_API_KEY` le email non partono (l'errore finisce solo nel log) e la pagina Utenti mostra il link di invito da copiare. `wrangler dev` presenta l'host di produzione, quindi il cookie di sessione arriva `Secure`: il browser lo accetta su localhost, client come curl o Python no.
 
 ## Deploy
 Push su `main` → GitHub Actions (`.github/workflows/deploy.yml`) deploya in parallelo:
 - Pages (`coincidenze.org`) da `packages/web/dist`
 - Worker (`api.coincidenze.org`) da `packages/api`
+
+Secret del Worker: `AUTH_SECRET` (password condivisa, serve solo al primo amministratore), `SESSION_SECRET` (firma delle sessioni, casuale), `RESEND_API_KEY`.
 
 **Le migration D1 di produzione sono manuali**: applicare i file in `packages/api/src/db/migrations/NNNN_*.sql` con `wrangler d1 execute coincidenze-db --remote --file=...`, **prima** del push che porta il codice che le usa. Il 12 maggio 2026 il codice di 0004/0005 è andato online senza migration e il login ha risposto 500 fino al 5 ottobre. Prima di scrivere in prod prendere il punto di ripristino con `wrangler d1 time-travel info coincidenze-db` (con la wrangler 3 del progetto dà errore di autenticazione, usare la wrangler 4 globale).
 
@@ -43,11 +45,12 @@ Push su `main` → GitHub Actions (`.github/workflows/deploy.yml`) deploya in pa
 
 ### Routing & auth
 - `packages/api/src/index.ts` monta tutte le route Hono sotto `/api/*`, più `/dati` (HTML statico).
-- Ruoli: `admin` (password = secret `AUTH_SECRET`) e `agency` (secret `AGENCY_PASSWORD`, agenzia social/marketing). Il token di sessione (`lib/session.ts`) contiene il ruolo ed è firmato con una chiave per ruolo: cambiare `AGENCY_PASSWORD` chiude solo le sessioni dell'agenzia. Senza `AGENCY_PASSWORD` il ruolo agency è disattivato.
-- `index.ts` mette il ruolo in `c.get('role')` per ogni `/api/*`. Ogni gruppo di rotte dichiara chi legge e chi scrive con `requireRole({ read, write })` (`middleware/auth.ts`): letture pubbliche solo per quello che serve alle pagine pubbliche (eventi, artisti, media, menu, categorie, edizioni); l'agenzia scrive su eventi, artisti, media e piano editoriale; team, task, espositori, canvas solo admin. Il campo `notes` arriva solo a chi ha fatto login (`withoutNotes`).
-- Le route miste (edizioni, accrediti, spuntino) controllano l'admin al loro interno con `isAdmin(c)` / `deny(c)`; restano pubblici POST accrediti/spuntino, il biglietto by-code e il self check-in.
-- Frontend: rotte pubbliche in `App.tsx` (es. `/biglietto/:code`, `/accrediti`, `/spuntino`, `/:editionSlug`), tutto `/admin/*` è dietro `<RequireAuth>` + `<AppShell>`; le pagine solo admin stanno dentro `<RequireAuth roles={['admin']}>` e la sidebar nasconde le voci `adminOnly`. Esistono redirect legacy da `/canvas`, `/programma`, ecc. verso `/admin/*`.
-- React Router v7 **non supporta param parziali** (es. `/edizione-:slug`): le edizioni usano un full-segment param `/:editionSlug` validato in `EditionRoute` (vedi commento in `App.tsx:92`).
+- Utenti personali (email + password PBKDF2, `lib/passwords.ts`) con un ruolo ciascuno; i ruoli sono insiemi di permessi gestiti dalle pagine `/admin/utenti` e `/admin/ruoli`. Catalogo dei permessi in `lib/permissions.ts` (unica fonte, esposto a `/api/roles/catalog`); il ruolo di sistema Amministratore li ha tutti. Ruoli iniziali: Amministratore, Organizzazione, Agenzia, Check-in (migration 0008).
+- Nuovi utenti: invito via email con link monouso (7 giorni); password dimenticata: link da 1 ora (`lib/accounts.ts`, tabella `user_tokens`, nel DB solo l'hash del token). `AUTH_SECRET` serve solo a `/api/auth/setup`, che funziona quando non c'è nessun amministratore attivo. Il sistema impedisce di restare senza un utente con `utenti.manage`.
+- Sessione: cookie `v1.<userId>.<sessionVersion>.<ts>.<firma>` firmato con `SESSION_SECRET` (`lib/session.ts`). A ogni richiesta `/api/*` l'utente viene ricaricato dal DB in `c.get('user')`: cambi di ruolo valgono subito, disattivare o cambiare password alza `session_version` e chiude le sessioni.
+- Ogni gruppo di rotte dichiara i permessi con `requirePermission({ read, write, remove })` (`middleware/auth.ts`): letture pubbliche solo per quello che serve alle pagine pubbliche (eventi, artisti, media, menu, categorie, edizioni). Le route miste (edizioni, accrediti, spuntino, upload) controllano dentro con `can(c, '...')` / `deny(c)`; restano pubblici POST accrediti/spuntino, il biglietto by-code e il self check-in. Il campo `notes` lo legge e lo scrive solo chi ha `note.view`.
+- Frontend: rotte pubbliche in `App.tsx` (es. `/biglietto/:code`, `/accesso/:token`, `/accrediti`, `/spuntino`, `/:editionSlug`); tutto `/admin/*` è dietro `<RequireAuth>` + `<AppShell>` e ogni sezione dietro il permesso indicato in `lib/adminNav.ts`, che alimenta anche la sidebar. Nei componenti si usa `useCan('...')` dallo store `authStore`. `/admin` apre la prima sezione permessa. Esistono redirect legacy da `/canvas`, `/programma`, ecc. verso `/admin/*`.
+- React Router v7 **non supporta param parziali** (es. `/edizione-:slug`): le edizioni usano un full-segment param `/:editionSlug` validato in `EditionRoute` (vedi commento in `App.tsx:107`).
 
 ### Multi-edizione (concetto centrale)
 La tabella `editions` è il punto di scoping per quasi tutti i contenuti (`artists`, `events`, `media`, `menu_items`, accrediti, spuntino). I flag `is_current`, `accrediti_open`, `spuntino_open` sull'edizione corrente guidano la home pubblica e l'apertura dei form.

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useTasksStore } from '@/stores/tasksStore'
 import { useTeamStore } from '@/stores/teamStore'
-import { useAuthStore } from '@/stores/authStore'
+import { useCan } from '@/stores/authStore'
 import { useAdminEditionSlug } from '@/stores/editionsStore'
 import { useCategoryMaps } from '@/stores/categoriesStore'
 import { type Task, type TeamMember } from '@/types'
@@ -25,7 +25,7 @@ type ColumnId = typeof COLUMNS[number]['id']
 export function TeamPage() {
   const { tasks, fetchTasks, updateTask, deleteTask } = useTasksStore()
   const { members, fetchMembers, createMember, deleteMember } = useTeamStore()
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const canEdit = useCan('team.edit')
   const { labels, colors } = useCategoryMaps('artist')
   const [showForm, setShowForm] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined)
@@ -118,7 +118,7 @@ export function TeamPage() {
       {/* Sezione Membri */}
       <section>
         <div className="flex items-center gap-3 mb-4">
-          {isAuthenticated && (
+          {canEdit && (
             <Button
               size="sm"
               onClick={() => setShowAddMember(!showAddMember)}
@@ -130,7 +130,7 @@ export function TeamPage() {
           <h3 className="font-display text-sm font-semibold text-navy">Membri del Team</h3>
         </div>
 
-        {isAuthenticated && showAddMember && (
+        {canEdit && showAddMember && (
           <div className="flex flex-wrap gap-2 mb-4 p-3 rounded-md bg-beige-dark/50 border border-navy/10">
             <Input
               placeholder="Nome"
@@ -158,9 +158,9 @@ export function TeamPage() {
               <div
                 key={m.id}
                 className={`flex items-center gap-2 rounded-full bg-crema border border-navy/10 px-3 py-1.5 ${
-                  isAuthenticated ? 'cursor-pointer hover:bg-beige-dark transition-colors' : ''
+                  canEdit ? 'cursor-pointer hover:bg-beige-dark transition-colors' : ''
                 }`}
-                onClick={() => isAuthenticated && setEditingMember(m)}
+                onClick={() => canEdit && setEditingMember(m)}
               >
                 <div className="flex h-6 w-6 items-center justify-center rounded-full bg-navy/10">
                   <User className="h-3 w-3 text-navy" />
@@ -178,7 +178,7 @@ export function TeamPage() {
       {/* Sezione Task */}
       <section>
         <div className="flex items-center gap-3 mb-4">
-          {isAuthenticated && (
+          {canEdit && (
             <Button size="sm" onClick={() => { setEditingTask(undefined); setShowForm(true) }}>
               <Plus className="h-4 w-4" /> Nuovo Task
             </Button>
@@ -195,9 +195,9 @@ export function TeamPage() {
                 ? 'border-navy/40 bg-navy/5'
                 : 'border-transparent bg-beige-dark/30'
             }`}
-            onDragOver={isAuthenticated ? (e) => handleDragOver(e, col.id) : undefined}
-            onDragLeave={isAuthenticated ? handleDragLeave : undefined}
-            onDrop={isAuthenticated ? () => handleDrop(col.id) : undefined}
+            onDragOver={canEdit ? (e) => handleDragOver(e, col.id) : undefined}
+            onDragLeave={canEdit ? handleDragLeave : undefined}
+            onDrop={canEdit ? () => handleDrop(col.id) : undefined}
           >
             <div className="flex items-center gap-2 mb-3">
               <div className="h-2 w-2 rounded-full" style={{ backgroundColor: col.color }} />
@@ -211,22 +211,22 @@ export function TeamPage() {
               {getColumnTasks(col.id).map((task) => (
                 <Card
                   key={task.id}
-                  draggable={isAuthenticated}
-                  onDragStart={isAuthenticated ? (e) => handleDragStart(e, task.id) : undefined}
+                  draggable={canEdit}
+                  onDragStart={canEdit ? (e) => handleDragStart(e, task.id) : undefined}
                   onDragEnd={handleDragEnd}
                   onClick={() => {
-                    if (isAuthenticated) {
+                    if (canEdit) {
                       setEditingTask(task)
                       setShowForm(true)
                     }
                   }}
-                  className={`${isAuthenticated ? 'cursor-grab active:cursor-grabbing' : ''} transition-all ${
+                  className={`${canEdit ? 'cursor-grab active:cursor-grabbing' : ''} transition-all ${
                     draggedTaskId === task.id ? 'opacity-50 scale-95' : ''
                   }`}
                 >
                   <CardContent className="p-3">
                     <div className="flex items-start gap-2">
-                      {isAuthenticated && (
+                      {canEdit && (
                         <GripVertical className="h-4 w-4 mt-0.5 text-ink-muted/50 shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
@@ -259,7 +259,7 @@ export function TeamPage() {
                           )}
                         </div>
                       </div>
-                      {isAuthenticated && (
+                      {canEdit && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -279,7 +279,7 @@ export function TeamPage() {
 
               {getColumnTasks(col.id).length === 0 && (
                 <p className="py-8 text-center text-xs text-ink-muted/50">
-                  {isAuthenticated ? 'Trascina qui un task' : 'Nessun task'}
+                  {canEdit ? 'Trascina qui un task' : 'Nessun task'}
                 </p>
               )}
             </div>
@@ -289,11 +289,11 @@ export function TeamPage() {
 
       </section>
 
-      {isAuthenticated && showForm && (
+      {canEdit && showForm && (
         <TaskFormDialog open={showForm} onClose={() => { setShowForm(false); setEditingTask(undefined) }} task={editingTask} />
       )}
 
-      {isAuthenticated && editingMember && (
+      {canEdit && editingMember && (
         <MemberFormDialog
           open={!!editingMember}
           onClose={() => setEditingMember(null)}

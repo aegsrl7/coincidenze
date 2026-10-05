@@ -409,3 +409,69 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
 }
+
+// ── Accesso all'area riservata: invito e reset password ─────────────────
+
+function accessEmailHtml(opts: { title: string; paragraphs: string[]; button: string; link: string; footer: string }): string {
+  const paragraphs = opts.paragraphs
+    .map((p) => `<p style="margin:0 0 12px;font-size:14px;color:#444;line-height:1.5;">${escapeHtml(p)}</p>`)
+    .join('')
+  return `<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#F5F0E8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;color:#1a1a1a;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#F5F0E8;padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:480px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid rgba(44,62,107,0.1);">
+        <tr><td style="background:#2C3E6B;color:#ffffff;padding:18px 24px;">
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.75;">COINCIDENZE · Area riservata</div>
+          <div style="font-family:Georgia,'Playfair Display',serif;font-size:20px;font-weight:600;margin-top:2px;">${escapeHtml(opts.title)}</div>
+        </td></tr>
+        <tr><td style="padding:24px;">
+          ${paragraphs}
+          <p style="margin:20px 0 8px;text-align:center;">
+            <a href="${escapeHtml(opts.link)}" style="display:inline-block;background:#6B3FA0;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-size:15px;font-weight:600;">${escapeHtml(opts.button)}</a>
+          </p>
+          <p style="margin:12px 0 0;font-size:11px;color:#888;word-break:break-all;">Se il pulsante non funziona, copia questo indirizzo nel browser:<br>${escapeHtml(opts.link)}</p>
+        </td></tr>
+        <tr><td style="padding:14px 24px;background:#F5F0E8;font-size:11px;color:#777;">${escapeHtml(opts.footer)}</td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+}
+
+export function buildInviteEmail(opts: { name: string; link: string; roleName: string }): { subject: string; html: string; text: string } {
+  const subject = 'Il tuo accesso all’area riservata di COINCIDENZE'
+  const intro = opts.roleName
+    ? `ti abbiamo creato un accesso all’area riservata di COINCIDENZE con il ruolo ${opts.roleName}.`
+    : 'ti abbiamo creato un accesso all’area riservata di COINCIDENZE.'
+  const choose = 'Per attivarlo scegli la tua password da questo link, valido 7 giorni.'
+  const footer = 'Se non ti aspettavi questo invito puoi ignorare il messaggio.'
+  const text = [`Ciao ${opts.name},`, '', intro, choose, '', opts.link, '', footer, '', 'COINCIDENZE'].join('\n')
+  const html = accessEmailHtml({
+    title: 'Il tuo accesso',
+    paragraphs: [`Ciao ${opts.name},`, intro, choose],
+    button: 'Scegli la password',
+    link: opts.link,
+    footer,
+  })
+  return { subject, html, text }
+}
+
+export function buildResetEmail(opts: { name: string; link: string; hours: number }): { subject: string; html: string; text: string } {
+  const subject = 'Reimposta la password · COINCIDENZE'
+  const validity = opts.hours === 1 ? '1 ora' : `${opts.hours} ore`
+  const intro = 'abbiamo ricevuto una richiesta per reimpostare la password del tuo accesso all’area riservata di COINCIDENZE.'
+  const choose = `Scegli la nuova password da questo link, valido ${validity}.`
+  const footer = 'Se la richiesta non l’hai fatta tu, ignora il messaggio: la password attuale resta valida.'
+  const text = [`Ciao ${opts.name},`, '', intro, choose, '', opts.link, '', footer, '', 'COINCIDENZE'].join('\n')
+  const html = accessEmailHtml({
+    title: 'Nuova password',
+    paragraphs: [`Ciao ${opts.name},`, intro, choose],
+    button: 'Scegli la nuova password',
+    link: opts.link,
+    footer,
+  })
+  return { subject, html, text }
+}

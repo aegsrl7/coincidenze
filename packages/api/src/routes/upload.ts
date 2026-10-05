@@ -1,5 +1,7 @@
 import { Hono } from 'hono'
 import type { Env } from '../index'
+import { deny } from '../middleware/auth'
+import { canAny } from '../lib/session'
 
 export const uploadRoutes = new Hono<Env>()
 
@@ -42,9 +44,9 @@ function sniffMime(bytes: Uint8Array): string | null {
   return null
 }
 
-// POST /api/upload — upload file to R2 (admin e agenzia)
+// POST /api/upload — upload file to R2 (chi modifica media, artisti, programma o edizioni)
 uploadRoutes.post('/upload', async (c) => {
-  if (!c.get('role')) return c.json({ error: 'Non autenticato' }, 401)
+  if (!canAny(c, ['media.edit', 'artisti.edit', 'programma.edit', 'edizioni.edit'])) return deny(c)
 
   // Un corpo che non è multipart/form-data fa lanciare formData(): rispondiamo 400, non 500
   const formData = await c.req.formData().catch(() => null)

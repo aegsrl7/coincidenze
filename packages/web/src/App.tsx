@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { RequireAuth } from '@/components/RequireAuth'
@@ -22,8 +22,30 @@ import { AdminMenuPage } from '@/features/menu/AdminMenuPage'
 import { AdminCategoriesPage } from '@/features/categories/AdminCategoriesPage'
 import { AdminEdizioniPage } from '@/features/editions/AdminEdizioniPage'
 import { PrivacyPage } from '@/features/legal/PrivacyPage'
+import { SetPasswordPage } from '@/features/auth/SetPasswordPage'
+import { AccountPage } from '@/features/auth/AccountPage'
+import { UtentiPage } from '@/features/users/UtentiPage'
+import { RuoliPage } from '@/features/users/RuoliPage'
+import { AdminHome } from '@/components/AdminHome'
+import { ADMIN_NAV } from '@/lib/adminNav'
 import { useAuthStore } from '@/stores/authStore'
 import { useCategoriesStore } from '@/stores/categoriesStore'
+
+const ADMIN_PAGES: Record<string, ReactNode> = {
+  '/admin/programma': <ProgrammaPage />,
+  '/admin/artisti': <ArtistsPage />,
+  '/admin/accrediti': <AdminAccreditiPage />,
+  '/admin/check-in': <CheckInPage />,
+  '/admin/spuntino': <AdminSpuntinoPage />,
+  '/admin/menu': <AdminMenuPage />,
+  '/admin/categorie': <AdminCategoriesPage />,
+  '/admin/team': <TeamPage />,
+  '/admin/media': <MediaPage />,
+  '/admin/piano-editoriale': <PianoEditorialePage />,
+  '/admin/edizioni': <AdminEdizioniPage />,
+  '/admin/utenti': <UtentiPage />,
+  '/admin/ruoli': <RuoliPage />,
+}
 
 export default function App() {
   const checkAuth = useAuthStore((s) => s.checkAuth)
@@ -48,6 +70,8 @@ export default function App() {
         <Route path="/artisti/:id" element={<ArtistDetailPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/login" element={<LoginPage />} />
+        {/* Link di invito e di reset password mandati via email */}
+        <Route path="/accesso/:token" element={<SetPasswordPage />} />
         {/* Edizioni (param dinamico full-segment, es. "edizione-1") */}
         <Route path="/:editionSlug" element={<EditionRoute />} />
 
@@ -59,26 +83,17 @@ export default function App() {
         <Route path="/media" element={<Navigate to="/admin/media" replace />} />
         <Route path="/piano-editoriale" element={<Navigate to="/admin/piano-editoriale" replace />} />
 
-        {/* Area riservata (protetta) */}
+        {/* Area riservata: ogni sezione richiede il permesso indicato in lib/adminNav.ts */}
         <Route element={<RequireAuth />}>
           <Route element={<AppShell />}>
-            <Route path="/admin" element={<Navigate to="/admin/programma" replace />} />
-            <Route path="/admin/canvas" element={<Navigate to="/admin/programma" replace />} />
-            {/* Admin e agenzia */}
-            <Route path="/admin/programma" element={<ProgrammaPage />} />
-            <Route path="/admin/artisti" element={<ArtistsPage />} />
-            <Route path="/admin/media" element={<MediaPage />} />
-            <Route path="/admin/piano-editoriale" element={<PianoEditorialePage />} />
-            {/* Solo admin: dati personali e impostazioni */}
-            <Route element={<RequireAuth roles={['admin']} />}>
-              <Route path="/admin/team" element={<TeamPage />} />
-              <Route path="/admin/accrediti" element={<AdminAccreditiPage />} />
-              <Route path="/admin/check-in" element={<CheckInPage />} />
-              <Route path="/admin/spuntino" element={<AdminSpuntinoPage />} />
-              <Route path="/admin/menu" element={<AdminMenuPage />} />
-              <Route path="/admin/categorie" element={<AdminCategoriesPage />} />
-              <Route path="/admin/edizioni" element={<AdminEdizioniPage />} />
-            </Route>
+            <Route path="/admin" element={<AdminHome />} />
+            <Route path="/admin/canvas" element={<Navigate to="/admin" replace />} />
+            <Route path="/admin/account" element={<AccountPage />} />
+            {ADMIN_NAV.map((item) => (
+              <Route key={item.to} element={<RequireAuth permission={item.permission} />}>
+                <Route path={item.to} element={ADMIN_PAGES[item.to]} />
+              </Route>
+            ))}
           </Route>
         </Route>
 

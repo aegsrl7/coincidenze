@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useArtistsStore } from '@/stores/artistsStore'
-import { useAuthStore } from '@/stores/authStore'
+import { useCan } from '@/stores/authStore'
 import { useCategoryMaps } from '@/stores/categoriesStore'
 import { useEditionsStore, useAdminEditionSlug } from '@/stores/editionsStore'
 import { type Artist } from '@/types'
@@ -37,7 +37,7 @@ function SocialIcon({ url, className }: { url: string; className?: string }) {
 
 export function ArtistsPage() {
   const { artists, fetchArtists } = useArtistsStore()
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const canEdit = useCan('artisti.edit')
   const { labels, colors } = useCategoryMaps('artist')
   const [showForm, setShowForm] = useState(false)
   const [editingItem, setEditingItem] = useState<Artist | null>(null)
@@ -119,7 +119,7 @@ export function ArtistsPage() {
       )}
       {/* Filtri */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
-        {isAuthenticated && (
+        {canEdit && (
           <Button onClick={() => { setEditingItem(null); setShowForm(true) }}>
             <Plus className="h-4 w-4" /> Aggiungi Artista
           </Button>
@@ -172,7 +172,7 @@ export function ArtistsPage() {
               <Card
                 key={artist.id}
                 className="overflow-hidden transition-shadow hover:shadow-md cursor-pointer"
-                onClick={() => { if (isAuthenticated) { setEditingItem(artist); setShowForm(true) } }}
+                onClick={() => { if (canEdit) { setEditingItem(artist); setShowForm(true) } }}
               >
                 {/* Avatar / placeholder */}
                 <div className="relative aspect-square sm:h-[244px] bg-beige-dark flex items-center justify-center">
@@ -181,7 +181,7 @@ export function ArtistsPage() {
                   ) : (
                     <User className="h-10 w-10 text-navy/20" />
                   )}
-                  {isAuthenticated && (
+                  {canEdit && (
                     <button
                       onClick={(e) => { e.stopPropagation(); downloadArtistQR(artist) }}
                       className="absolute top-2 right-2 inline-flex items-center justify-center h-8 w-8 rounded-full bg-white/90 hover:bg-white text-navy shadow"
@@ -222,7 +222,7 @@ export function ArtistsPage() {
         </div>
       )}
 
-      {isAuthenticated && showForm && (
+      {canEdit && showForm && (
         <ArtistFormDialog
           open={showForm}
           onClose={() => { setShowForm(false); setEditingItem(null) }}

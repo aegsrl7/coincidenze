@@ -15,6 +15,9 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/menu': 'Menù',
   '/admin/categorie': 'Categorie',
   '/admin/edizioni': 'Edizioni',
+  '/admin/utenti': 'Utenti',
+  '/admin/ruoli': 'Ruoli e permessi',
+  '/admin/account': 'Il mio account',
 }
 
 // Pagine che operano su una specifica edizione → mostro il selettore.

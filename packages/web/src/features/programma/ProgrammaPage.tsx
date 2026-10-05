@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useEventsStore } from '@/stores/eventsStore'
 import { useArtistsStore } from '@/stores/artistsStore'
-import { useAuthStore } from '@/stores/authStore'
+import { useCan } from '@/stores/authStore'
 import { useCategoryMaps } from '@/stores/categoriesStore'
 import { useEditionsStore, useAdminEditionSlug } from '@/stores/editionsStore'
 import { type Event } from '@/types'
@@ -16,7 +16,7 @@ import { EventFormDialog } from './EventFormDialog'
 export function ProgrammaPage() {
   const { events, fetchEvents } = useEventsStore()
   const { artists, fetchArtists } = useArtistsStore()
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const canEdit = useCan('programma.edit')
   const { labels, colors, list: artistCats } = useCategoryMaps('artist')
   const adminSlug = useAdminEditionSlug()
   const editions = useEditionsStore((s) => s.editions)
@@ -68,7 +68,7 @@ export function ProgrammaPage() {
             </p>
           )}
         </div>
-        {isAuthenticated && (
+        {canEdit && (
           <Button onClick={() => { setEditingEvent(undefined); setShowForm(true) }}>+ Nuovo Evento</Button>
         )}
       </div>
@@ -111,7 +111,7 @@ export function ProgrammaPage() {
                 key={event.id}
                 className="overflow-hidden transition-shadow hover:shadow-md cursor-pointer"
                 onClick={() => {
-                  if (isAuthenticated) {
+                  if (canEdit) {
                     setEditingEvent(event)
                     setShowForm(true)
                   }
@@ -163,7 +163,7 @@ export function ProgrammaPage() {
         )}
       </div>
 
-      {isAuthenticated && showForm && (
+      {canEdit && showForm && (
         <EventFormDialog
           open={showForm}
           onClose={() => { setShowForm(false); setEditingEvent(undefined) }}

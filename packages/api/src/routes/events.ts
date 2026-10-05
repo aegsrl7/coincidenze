@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import type { Env } from '../index'
 import { resolveEdition } from '../lib/edition'
-import { canSeeNotes, withoutNotes } from '../lib/session'
+import { can, withoutNotes } from '../lib/session'
 
 export const eventsRoutes = new Hono<Env>()
 
@@ -33,7 +33,7 @@ eventsRoutes.get('/', async (c) => {
     ...r,
     artist_ids: parseArtistIds(r.artist_ids),
   }))
-  return c.json(canSeeNotes(c.get('role')) ? mapped : mapped.map(withoutNotes))
+  return c.json(can(c, 'note.view') ? mapped : mapped.map(withoutNotes))
 })
 
 eventsRoutes.get('/:id', async (c) => {
@@ -42,7 +42,7 @@ eventsRoutes.get('/:id', async (c) => {
   const result = await db.prepare('SELECT * FROM events WHERE id = ?').bind(id).first<Record<string, unknown>>()
   if (!result) return c.json({ error: 'Not found' }, 404)
   const event = { ...result, artist_ids: parseArtistIds(result.artist_ids) }
-  return c.json(canSeeNotes(c.get('role')) ? event : withoutNotes(event))
+  return c.json(can(c, 'note.view') ? event : withoutNotes(event))
 })
 
 eventsRoutes.post('/', async (c) => {
@@ -52,7 +52,7 @@ eventsRoutes.post('/', async (c) => {
   const artistIdsJson = body.artist_ids?.length ? JSON.stringify(body.artist_ids) : '[]'
   const edition = await resolveEdition(c)
   const editionId = body.edition_id || edition?.id || null
-  const adminNotes = canSeeNotes(c.get('role'))
+  const withNotes = can(c, 'note.view')
   await db.prepare(
     'INSERT INTO events (id, edition_id, title, description, date, start_time, end_time, location, category, artist_ids, exhibitor_id, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
@@ -67,10 +67,10 @@ eventsRoutes.post('/', async (c) => {
     body.category,
     artistIdsJson,
     body.exhibitor_id || body.exhibitorId || null,
-    adminNotes ? body.notes || '' : ''
+    withNotes ? body.notes || '' : ''
   ).run()
   const created = { id, edition_id: editionId, ...body, artist_ids: body.artist_ids || [] }
-  return c.json(adminNotes ? created : withoutNotes(created), 201)
+  return c.json(withNotes ? created : withoutNotes(created), 201)
 })
 
 eventsRoutes.put('/:id', async (c) => {
@@ -85,10 +85,10 @@ eventsRoutes.put('/:id', async (c) => {
       .bind(body.edition_id || null, id)
       .run()
   }
-  // Le note le scrive solo l'admin: per gli altri restano quelle già salvate
-  const adminNotes = canSeeNotes(c.get('role'))
+  // Le note le scrive solo chi ha note.view: per gli altri restano quelle già salvate
+  const withNotes = can(c, 'note.view')
   await db.prepare(
-    `UPDATE events SET title = ?, description = ?, date = ?, start_time = ?, end_time = ?, location = ?, category = ?, artist_ids = ?, exhibitor_id = ?${adminNotes ? ', notes = ?' : ''}, updated_at = datetime('now') WHERE id = ?`
+    `UPDATE events SET title = ?, description = ?, date = ?, start_time = ?, end_time = ?, location = ?, category = ?, artist_ids = ?, exhibitor_id = ?${withNotes ? ', notes = ?' : ''}, updated_at = datetime('now') WHERE id = ?`
   ).bind(
     body.title,
     body.description || '',
@@ -99,11 +99,11 @@ eventsRoutes.put('/:id', async (c) => {
     body.category,
     artistIdsJson,
     body.exhibitor_id || body.exhibitorId || null,
-    ...(adminNotes ? [body.notes || ''] : []),
+    ...(withNotes ? [body.notes || ''] : []),
     id
   ).run()
   const updated = { id, ...body, artist_ids: body.artist_ids || [] }
-  return c.json(adminNotes ? updated : withoutNotes(updated))
+  return c.json(withNotes ? updated : withoutNotes(updated))
 })
 
 eventsRoutes.delete('/:id', async (c) => {

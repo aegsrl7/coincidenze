@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import type { Env } from '../index'
-import { isAdmin, deny } from '../middleware/auth'
+import { deny } from '../middleware/auth'
+import { can } from '../lib/session'
 import { sendEmail, buildTicketEmail, buildAdminNotificationEmail } from '../lib/email'
 import { resolveEdition, getCurrentEdition } from '../lib/edition'
 
@@ -161,7 +162,7 @@ accreditationsRoutes.get('/by-code/:code', async (c) => {
 
 // GET / — admin: lista (filtrata per edizione, default = corrente o ?edition=slug)
 accreditationsRoutes.get('/', async (c) => {
-  if (!isAdmin(c)) return deny(c)
+  if (!can(c, 'accrediti.view')) return deny(c)
   const edition = await resolveEdition(c)
   const editionId = edition?.id ?? null
   const { results } = editionId
@@ -212,7 +213,7 @@ accreditationsRoutes.post('/:code/check-in', async (c) => {
 
 // POST /:code/uncheck-in — admin
 accreditationsRoutes.post('/:code/uncheck-in', async (c) => {
-  if (!isAdmin(c)) return deny(c)
+  if (!can(c, 'accrediti.checkin')) return deny(c)
 
   const code = c.req.param('code')
   const row = await c.env.DB
@@ -239,7 +240,7 @@ accreditationsRoutes.post('/:code/uncheck-in', async (c) => {
 
 // DELETE /:id — admin
 accreditationsRoutes.delete('/:id', async (c) => {
-  if (!isAdmin(c)) return deny(c)
+  if (!can(c, 'accrediti.delete')) return deny(c)
 
   const id = c.req.param('id')
   await c.env.DB.prepare('DELETE FROM accreditations WHERE id = ?').bind(id).run()

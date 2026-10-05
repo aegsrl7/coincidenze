@@ -16,14 +16,20 @@ import type {
   Category,
   GalleryImage,
   ContentSection,
-  UserRole,
+  SessionUser,
+  AdminUser,
+  Role,
+  PermissionCatalog,
 } from '@/types'
 
 const API_BASE = import.meta.env.DEV ? '/api' : 'https://api.coincidenze.org/api'
 
 type JsonRecord = Record<string, unknown>
 
-type AuthResponse = { authenticated: boolean; role: UserRole | null }
+export type MeResponse = { authenticated: boolean; user: SessionUser | null; permissions: string[] }
+type Ok = { ok: true }
+/** Se l'email non parte, l'API restituisce il link da inoltrare a mano */
+export type AccessLinkResult = { email_sent: boolean; link?: string }
 
 /** Il server risponde agli errori con {"error": "..."}: usiamo quel testo come messaggio. */
 async function errorFromResponse(res: Response, fallback: string): Promise<Error> {
@@ -77,9 +83,35 @@ export const api = {
   uploadFile: (file: File) => uploadRequest(file),
 
   // Auth
-  login: (password: string) => request<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ password }) }),
-  logout: () => request<AuthResponse>('/auth/logout', { method: 'POST' }),
-  authMe: () => request<AuthResponse>('/auth/me'),
+  login: (email: string, password: string) => request<Ok>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  logout: () => request<MeResponse>('/auth/logout', { method: 'POST' }),
+  authMe: () => request<MeResponse>('/auth/me'),
+  setupStatus: () => request<{ needsSetup: boolean }>('/auth/setup-status'),
+  setup: (data: { secret: string; name: string; email: string; password: string }) =>
+    request<Ok>('/auth/setup', { method: 'POST', body: JSON.stringify(data) }),
+  forgotPassword: (email: string) => request<Ok>('/auth/forgot', { method: 'POST', body: JSON.stringify({ email }) }),
+  getAccessToken: (token: string) =>
+    request<{ purpose: 'invite' | 'reset'; email: string; name: string }>(`/auth/token/${encodeURIComponent(token)}`),
+  setPassword: (token: string, password: string) =>
+    request<Ok>('/auth/set-password', { method: 'POST', body: JSON.stringify({ token, password }) }),
+  changePassword: (current: string, password: string) =>
+    request<Ok>('/auth/password', { method: 'POST', body: JSON.stringify({ current, password }) }),
+
+  // Utenti e ruoli (permesso utenti.manage)
+  getUsers: () => request<AdminUser[]>('/users'),
+  inviteUser: (data: { name: string; email: string; role_id: string }) =>
+    request<AccessLinkResult & { user: AdminUser }>('/users', { method: 'POST', body: JSON.stringify(data) }),
+  updateUser: (id: string, data: { name?: string; role_id?: string; active?: boolean }) =>
+    request<AdminUser>(`/users/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }),
+  sendUserLink: (id: string) => request<AccessLinkResult>(`/users/${encodeURIComponent(id)}/link`, { method: 'POST' }),
+  deleteUser: (id: string) => request<Ok>(`/users/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  getRoles: () => request<Role[]>('/roles'),
+  getPermissionCatalog: () => request<PermissionCatalog>('/roles/catalog'),
+  createRole: (data: { name: string; description: string; permissions: string[] }) =>
+    request<Role>('/roles', { method: 'POST', body: JSON.stringify(data) }),
+  updateRole: (id: string, data: { name: string; description: string; permissions: string[] }) =>
+    request<Role>(`/roles/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteRole: (id: string) => request<Ok>(`/roles/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
   // Editions
   getEditions: () => request<Edition[]>('/editions'),

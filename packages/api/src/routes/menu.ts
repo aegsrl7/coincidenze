@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import type { Env } from '../index'
 import { resolveEdition } from '../lib/edition'
-import { canSeeNotes, withoutNotes } from '../lib/session'
+import { can, withoutNotes } from '../lib/session'
 
 export const menuRoutes = new Hono<Env>()
 
@@ -45,7 +45,7 @@ menuRoutes.get('/', async (c) => {
         .all()
     : await c.env.DB.prepare('SELECT * FROM menu_items ORDER BY sort_order, name').all()
   const rows = results as Record<string, unknown>[]
-  return c.json(canSeeNotes(c.get('role')) ? rows : rows.map(withoutNotes))
+  return c.json(can(c, 'note.view') ? rows : rows.map(withoutNotes))
 })
 
 menuRoutes.post('/', async (c) => {

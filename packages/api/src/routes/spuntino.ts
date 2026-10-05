@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import type { Env } from '../index'
-import { isAdmin, deny } from '../middleware/auth'
+import { deny } from '../middleware/auth'
+import { can } from '../lib/session'
 import { sendEmail, buildSpuntinoEmail, buildSpuntinoAdminNotificationEmail } from '../lib/email'
 import { resolveEdition, getCurrentEdition } from '../lib/edition'
 
@@ -43,7 +44,7 @@ spuntinoRoutes.get('/status', async (c) => {
 // PUT /status — admin: cambia spuntino_open dell'edizione corrente
 // (workflow legacy; oggi consigliamo PATCH /editions/:id)
 spuntinoRoutes.put('/status', async (c) => {
-  if (!isAdmin(c)) return deny(c)
+  if (!can(c, 'spuntino.edit')) return deny(c)
   const edition = await getCurrentEdition(c.env.DB)
   if (!edition) return c.json({ error: 'Nessuna edizione attiva' }, 503)
   const body = (await c.req.json().catch(() => ({}))) as { open?: unknown }
@@ -133,7 +134,7 @@ spuntinoRoutes.post('/', async (c) => {
 
 // GET / — admin: lista (filtrata per edizione, default = corrente o ?edition=slug)
 spuntinoRoutes.get('/', async (c) => {
-  if (!isAdmin(c)) return deny(c)
+  if (!can(c, 'spuntino.view')) return deny(c)
   const edition = await resolveEdition(c)
   const { results } = edition
     ? await c.env.DB
@@ -145,7 +146,7 @@ spuntinoRoutes.get('/', async (c) => {
 })
 
 spuntinoRoutes.put('/:id', async (c) => {
-  if (!isAdmin(c)) return deny(c)
+  if (!can(c, 'spuntino.edit')) return deny(c)
   const id = c.req.param('id')
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>
 
@@ -183,7 +184,7 @@ spuntinoRoutes.put('/:id', async (c) => {
 })
 
 spuntinoRoutes.delete('/:id', async (c) => {
-  if (!isAdmin(c)) return deny(c)
+  if (!can(c, 'spuntino.delete')) return deny(c)
   const id = c.req.param('id')
   await c.env.DB.prepare('DELETE FROM spuntino_bookings WHERE id = ?').bind(id).run()
   return c.json({ ok: true })

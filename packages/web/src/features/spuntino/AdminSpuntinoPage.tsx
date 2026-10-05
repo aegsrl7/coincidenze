@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { api } from '@/lib/api'
+import { useCan } from '@/stores/authStore'
 import { useAdminEditionSlug, useEditionsStore } from '@/stores/editionsStore'
 import type { SpuntinoBooking } from '@/types'
 
@@ -28,6 +29,8 @@ function toCsv(rows: SpuntinoBooking[]): string {
 }
 
 export function AdminSpuntinoPage() {
+  const canEdit = useCan('spuntino.edit')
+  const canDelete = useCan('spuntino.delete')
   const [items, setItems] = useState<SpuntinoBooking[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
@@ -165,7 +168,7 @@ export function AdminSpuntinoPage() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          <Button
+          {canEdit && <Button
             variant={open ? 'outline' : 'default'}
             size="sm"
             onClick={toggleOpen}
@@ -181,7 +184,7 @@ export function AdminSpuntinoPage() {
               <Unlock className="h-4 w-4" />
             )}
             {open ? 'Chiudi' : 'Riapri'}
-          </Button>
+          </Button>}
           <Button variant="outline" size="sm" onClick={load} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Ricarica
@@ -303,20 +306,24 @@ export function AdminSpuntinoPage() {
                     <td className="px-3 py-2 text-ink-muted hidden sm:table-cell whitespace-nowrap">{fmtDateTime(b.created_at)}</td>
                     <td className="px-3 py-2 text-right">
                       <div className="inline-flex items-center gap-1">
-                        <button
-                          onClick={() => startEdit(b)}
-                          className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-navy/5 text-ink-muted hover:text-navy"
-                          title="Modifica prenotazione"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteTarget(b)}
-                          className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-bordeaux/10 text-ink-muted hover:text-bordeaux"
-                          title="Elimina prenotazione"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        {canEdit && (
+                          <button
+                            onClick={() => startEdit(b)}
+                            className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-navy/5 text-ink-muted hover:text-navy"
+                            title="Modifica prenotazione"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            onClick={() => setDeleteTarget(b)}
+                            className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-bordeaux/10 text-ink-muted hover:text-bordeaux"
+                            title="Elimina prenotazione"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

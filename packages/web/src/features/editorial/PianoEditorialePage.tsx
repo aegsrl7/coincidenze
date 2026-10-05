@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useEditorialStore } from '@/stores/editorialStore'
-import { useAuthStore } from '@/stores/authStore'
+import { useCan } from '@/stores/authStore'
 import { useAdminEditionSlug, useEditionsStore } from '@/stores/editionsStore'
 import { FASE_LABELS, FASE_COLORS, STATO_COLORS, type EditorialPost } from '@/types'
 import { PostFormDialog } from './PostFormDialog'
@@ -101,7 +101,7 @@ function buildCalendarGrid(year: number, month: number): CalendarDay[][] {
 
 export function PianoEditorialePage() {
   const { posts, fetchPosts } = useEditorialStore()
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const canEdit = useCan('editoriale.edit')
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear())
   const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth()) // 0-indexed
   const [showForm, setShowForm] = useState(false)
@@ -166,7 +166,7 @@ export function PianoEditorialePage() {
   }
 
   function handleEmptyCellClick(dateStr: string) {
-    if (!isAuthenticated) return
+    if (!canEdit) return
     setEditingPost(null)
     setSelectedDate(dateStr)
     setShowForm(true)
@@ -203,7 +203,7 @@ export function PianoEditorialePage() {
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        {isAuthenticated && (
+        {canEdit && (
           <Button
             onClick={() => {
               setEditingPost(null)
@@ -257,7 +257,7 @@ export function PianoEditorialePage() {
                       calDay.isCurrentMonth
                         ? 'hover:bg-cream/50'
                         : 'bg-cream/30'
-                    } ${isAuthenticated && dayPosts.length === 0 ? 'cursor-pointer' : ''}`}
+                    } ${canEdit && dayPosts.length === 0 ? 'cursor-pointer' : ''}`}
                     onClick={(e) => {
                       // Only trigger on the cell background, not on post cards
                       if (e.target === e.currentTarget || (e.target as HTMLElement).dataset.cellBg) {
@@ -363,7 +363,7 @@ export function PianoEditorialePage() {
         )}
 
         {/* Mobile: tap empty area to add */}
-        {isAuthenticated && (
+        {canEdit && (
           <Button
             variant="outline"
             className="w-full mt-4"
@@ -385,12 +385,12 @@ export function PianoEditorialePage() {
           post={viewingPost}
           onClose={() => setViewingPost(null)}
           onEdit={handleEditFromDetail}
-          isAuthenticated={isAuthenticated}
+          isAuthenticated={canEdit}
         />
       )}
 
       {/* Post form dialog */}
-      {isAuthenticated && showForm && (
+      {canEdit && showForm && (
         <PostFormDialog
           open={showForm}
           onClose={handleCloseForm}

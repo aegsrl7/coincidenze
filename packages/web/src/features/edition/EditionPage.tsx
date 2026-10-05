@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { useEditionsStore } from '@/stores/editionsStore'
-import { useAuthStore } from '@/stores/authStore'
+import { useAuthStore, useCan } from '@/stores/authStore'
 import { CurrentEdition } from './CurrentEdition'
 import { PastEdition } from './PastEdition'
 
@@ -16,8 +16,8 @@ export function EditionPage({ slug }: { slug: string }) {
   const editions = useEditionsStore((s) => s.editions)
   const editionsLoaded = useEditionsStore((s) => s.loaded)
   const fetchEditions = useEditionsStore((s) => s.fetch)
-  // Testi e galleria delle pagine pubbliche li modifica solo l'admin
-  const isAdmin = useAuthStore((s) => s.role === 'admin')
+  // Testi e galleria delle pagine pubbliche: permesso edizioni.edit
+  const isAdmin = useCan('edizioni.edit')
   const checkAuth = useAuthStore((s) => s.checkAuth)
 
   useEffect(() => {

@@ -1,39 +1,10 @@
 import { NavLink } from 'react-router-dom'
-import {
-  Calendar,
-  Users,
-  User,
-  Music,
-  LogOut,
-  ExternalLink,
-  X,
-  FileText,
-  Ticket,
-  ScanLine,
-  Utensils,
-  UtensilsCrossed,
-  Tag,
-  Layers,
-} from 'lucide-react'
+import { LogOut, ExternalLink, X, KeyRound } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/authStore'
 import { useEditionsStore } from '@/stores/editionsStore'
-
-// adminOnly: nascosto all'agenzia (le stesse rotte sono protette in App.tsx e nell'API)
-const navItems = [
-  { to: '/admin/programma', icon: Calendar, label: 'Programma' },
-  { to: '/admin/artisti', icon: User, label: 'Artisti' },
-  { to: '/admin/accrediti', icon: Ticket, label: 'Accrediti', adminOnly: true },
-  { to: '/admin/check-in', icon: ScanLine, label: 'Check-in', adminOnly: true },
-  { to: '/admin/spuntino', icon: UtensilsCrossed, label: 'Spuntino 18', adminOnly: true },
-  { to: '/admin/menu', icon: Utensils, label: 'Menù', adminOnly: true },
-  { to: '/admin/categorie', icon: Tag, label: 'Categorie', adminOnly: true },
-  { to: '/admin/team', icon: Users, label: 'Team', adminOnly: true },
-  { to: '/admin/media', icon: Music, label: 'Media' },
-  { to: '/admin/piano-editoriale', icon: FileText, label: 'Piano Editoriale' },
-  { to: '/admin/edizioni', icon: Layers, label: 'Edizioni', adminOnly: true },
-]
+import { ADMIN_NAV } from '@/lib/adminNav'
 
 interface SidebarProps {
   open: boolean
@@ -42,8 +13,10 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const logout = useAuthStore((s) => s.logout)
-  const isAdmin = useAuthStore((s) => s.role === 'admin')
-  const visibleItems = navItems.filter((item) => isAdmin || !item.adminOnly)
+  const user = useAuthStore((s) => s.user)
+  const permissions = useAuthStore((s) => s.permissions)
+  // Solo le sezioni permesse dal ruolo (le stesse rotte sono protette in App.tsx e nell'API)
+  const visibleItems = ADMIN_NAV.filter((item) => permissions.includes(item.permission))
 
   return (
     <>
@@ -95,6 +68,25 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </nav>
 
         <div className="border-t border-navy/10 p-4 space-y-3">
+          {user && (
+            <NavLink
+              to="/admin/account"
+              onClick={onClose}
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-3 rounded-md px-3 py-2 transition-colors',
+                  isActive ? 'bg-navy text-white' : 'text-ink-light hover:bg-beige-dark hover:text-navy'
+                )
+              }
+              title="Il mio account"
+            >
+              <KeyRound className="h-4 w-4 shrink-0" />
+              <span className="min-w-0">
+                <span className="block text-sm font-medium truncate">{user.name}</span>
+                <span className="block text-xs opacity-75 truncate">{user.role.name}</span>
+              </span>
+            </NavLink>
+          )}
           <Button
             variant="ghost"
             size="sm"
