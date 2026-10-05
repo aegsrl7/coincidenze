@@ -4,6 +4,7 @@ import { ArrowLeft, Clock, MapPin, ExternalLink, Loader2, AlertCircle, Music, In
 import ReactPlayer from 'react-player'
 import { PublicFooter } from '@/components/PublicFooter'
 import { useCategoryMaps } from '@/stores/categoriesStore'
+import { useEditionsStore } from '@/stores/editionsStore'
 import { api } from '@/lib/api'
 import {
   type Artist,
@@ -28,6 +29,7 @@ export function ArtistDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { labels, colors } = useCategoryMaps('artist')
+  const fetchEditions = useEditionsStore((s) => s.fetch)
 
   const goBack = () => {
     // Se la history contiene la pagina di arrivo, usa il back vero (trigger scroll restore)
@@ -37,7 +39,9 @@ export function ArtistDetailPage() {
     if (sameOrigin && window.history.length > 1) {
       navigate(-1)
     } else {
-      navigate('/edizione-1?tab=artisti', { replace: true })
+      // Fallback: tab artisti dell'edizione a cui appartiene l'artista
+      const slug = useEditionsStore.getState().editions.find((e) => e.id === artist?.edition_id)?.slug
+      navigate(slug ? `/${slug}?tab=artisti` : '/', { replace: true })
     }
   }
 
@@ -50,15 +54,19 @@ export function ArtistDetailPage() {
   useEffect(() => {
     if (!id) return
     setLoading(true)
-    Promise.all([api.getArtist(id), api.getEvents(), api.getMedia()])
-      .then(([a, evs, mds]) => {
-        setArtist(a as Artist)
+    Promise.all([api.getArtist(id), fetchEditions()])
+      .then(async ([a]) => {
+        // Eventi e media dell'edizione dell'artista, non di quella corrente
+        const found = a as Artist
+        const slug = useEditionsStore.getState().editions.find((e) => e.id === found.edition_id)?.slug
+        const [evs, mds] = await Promise.all([api.getEvents(slug), api.getMedia(slug)])
+        setArtist(found)
         setEvents((evs as Event[]).filter((e) => Array.isArray(e.artist_ids) && e.artist_ids.includes(id)))
         setMedia((mds as MediaItem[]).filter((m) => m.artist_id === id))
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Errore'))
       .finally(() => setLoading(false))
-  }, [id])
+  }, [id, fetchEditions])
 
   if (loading) {
     return (

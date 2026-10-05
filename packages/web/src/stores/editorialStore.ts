@@ -27,7 +27,8 @@ export const useEditorialStore = create<EditorialStore>((set, get) => ({
     set({ posts })
   },
   createPost: async (data) => {
-    await api.createEditorialPost(data)
+    // Il post va nell'edizione selezionata in alto, non in quella corrente
+    await api.createEditorialPost(data, get().editionSlug)
     await get().fetchPosts()
   },
   updatePost: async (id, data) => {

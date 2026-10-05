@@ -16,11 +16,26 @@ import type {
   Category,
   GalleryImage,
   ContentSection,
+  UserRole,
 } from '@/types'
 
 const API_BASE = import.meta.env.DEV ? '/api' : 'https://api.coincidenze.org/api'
 
 type JsonRecord = Record<string, unknown>
+
+type AuthResponse = { authenticated: boolean; role: UserRole | null }
+
+/** Il server risponde agli errori con {"error": "..."}: usiamo quel testo come messaggio. */
+async function errorFromResponse(res: Response, fallback: string): Promise<Error> {
+  const body = await res.text()
+  try {
+    const parsed = JSON.parse(body) as { error?: unknown }
+    if (typeof parsed.error === 'string' && parsed.error) return new Error(parsed.error)
+  } catch {
+    // risposta non JSON (es. pagina di errore di Cloudflare)
+  }
+  return new Error(body && body.length < 200 ? body : fallback)
+}
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -32,8 +47,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     ...options,
   })
   if (!res.ok) {
-    const error = await res.text()
-    throw new Error(error || `API error: ${res.status}`)
+    throw await errorFromResponse(res, `Errore API (${res.status})`)
   }
   return res.json()
 }
@@ -47,8 +61,7 @@ async function uploadRequest(file: File): Promise<{ url: string; key: string }> 
     body: formData,
   })
   if (!res.ok) {
-    const error = await res.text()
-    throw new Error(error || `Upload error: ${res.status}`)
+    throw await errorFromResponse(res, `Errore upload (${res.status})`)
   }
   return res.json()
 }
@@ -64,9 +77,9 @@ export const api = {
   uploadFile: (file: File) => uploadRequest(file),
 
   // Auth
-  login: (password: string) => request<{ authenticated: boolean }>('/auth/login', { method: 'POST', body: JSON.stringify({ password }) }),
-  logout: () => request<{ authenticated: boolean }>('/auth/logout', { method: 'POST' }),
-  authMe: () => request<{ authenticated: boolean }>('/auth/me'),
+  login: (password: string) => request<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ password }) }),
+  logout: () => request<AuthResponse>('/auth/logout', { method: 'POST' }),
+  authMe: () => request<AuthResponse>('/auth/me'),
 
   // Editions
   getEditions: () => request<Edition[]>('/editions'),
@@ -110,9 +123,9 @@ export const api = {
   updateMedia: (id: string, data: JsonRecord) => request<MediaItem>(`/media/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteMedia: (id: string) => request<void>(`/media/${id}`, { method: 'DELETE' }),
 
-  // Tasks
-  getTasks: () => request<Task[]>('/tasks'),
-  createTask: (data: JsonRecord) => request<Task>('/tasks', { method: 'POST', body: JSON.stringify(data) }),
+  // Tasks (scoped per edizione)
+  getTasks: (editionSlug?: string | null) => request<Task[]>(withEdition('/tasks', editionSlug)),
+  createTask: (data: JsonRecord, editionSlug?: string | null) => request<Task>(withEdition('/tasks', editionSlug), { method: 'POST', body: JSON.stringify(data) }),
   updateTask: (id: string, data: JsonRecord) => request<Task>(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteTask: (id: string) => request<void>(`/tasks/${id}`, { method: 'DELETE' }),
 
@@ -129,7 +142,7 @@ export const api = {
 
   // Editorial (scoped per edizione)
   getEditorialPosts: (editionSlug?: string | null) => request<EditorialPost[]>(withEdition('/editorial', editionSlug)),
-  createEditorialPost: (data: JsonRecord) => request<EditorialPost>('/editorial', { method: 'POST', body: JSON.stringify(data) }),
+  createEditorialPost: (data: JsonRecord, editionSlug?: string | null) => request<EditorialPost>(withEdition('/editorial', editionSlug), { method: 'POST', body: JSON.stringify(data) }),
   updateEditorialPost: (id: string, data: JsonRecord) => request<EditorialPost>(`/editorial/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteEditorialPost: (id: string) => request<void>(`/editorial/${id}`, { method: 'DELETE' }),
 

@@ -1,4 +1,11 @@
--- COINCIDENZE Seed Data (Edizione 0 - reference/demo)
+-- COINCIDENZE Seed Data (solo sviluppo locale)
+
+-- Edizioni: la 1 è corrente, la 2 è quella in preparazione
+INSERT OR IGNORE INTO editions (id, slug, year, name, event_date, is_current, accrediti_open, spuntino_open, hero_subtitle, sort_order)
+VALUES
+  ('ed-0', 'edizione-0', 2025, 'Edizione 0', '2025-04-25', 0, 0, 0, '', 0),
+  ('ed-1', 'edizione-1', 2026, 'Edizione 1', '2026-04-25', 1, 0, 0, '', 1),
+  ('ed-2', 'edizione-2', 2027, 'Edizione 2', '2027-04-25', 0, 0, 0, '', 2);
 
 -- Artisti
 INSERT OR IGNORE INTO artists (id, name, bio, category) VALUES
@@ -39,3 +46,8 @@ INSERT OR IGNORE INTO tasks (id, title, description, status, priority, assignee_
   ('t2', 'Allestimento sala principale', 'Predisporre sedie, tavoli, impianto audio', 'todo', 'high', 'tm2', NULL),
   ('t3', 'Preparare materiale comunicazione', 'Poster, flyer, social media', 'in_progress', 'medium', 'tm3', NULL),
   ('t4', 'Catering vino e cucina', 'Coordinare con Marsam per menu degustazione', 'todo', 'medium', 'tm2', 'cucina');
+
+-- I dati demo appartengono all'Edizione 1
+UPDATE artists SET edition_id = 'ed-1' WHERE edition_id IS NULL;
+UPDATE events SET edition_id = 'ed-1' WHERE edition_id IS NULL;
+UPDATE tasks SET edition_id = 'ed-1' WHERE edition_id IS NULL;

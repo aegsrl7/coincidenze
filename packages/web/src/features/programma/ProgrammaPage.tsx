@@ -164,7 +164,12 @@ export function ProgrammaPage() {
       </div>
 
       {isAuthenticated && showForm && (
-        <EventFormDialog open={showForm} onClose={() => { setShowForm(false); setEditingEvent(undefined) }} event={editingEvent} />
+        <EventFormDialog
+          open={showForm}
+          onClose={() => { setShowForm(false); setEditingEvent(undefined) }}
+          event={editingEvent}
+          defaultDate={activeEdition?.event_date}
+        />
       )}
     </div>
   )

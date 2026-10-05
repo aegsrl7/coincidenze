@@ -14,7 +14,9 @@ export function LoginPage() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const from = new URLSearchParams(location.search).get('from') || '/admin/programma'
+  // Solo percorsi interni all'area riservata: niente redirect verso siti esterni
+  const requested = new URLSearchParams(location.search).get('from') || ''
+  const from = /^\/admin(\/|$)/.test(requested) ? requested : '/admin/programma'
 
   if (!loading && isAuthenticated) {
     return <Navigate to={from} replace />
@@ -24,12 +26,12 @@ export function LoginPage() {
     e.preventDefault()
     setError('')
     setSubmitting(true)
-    const success = await login(password)
+    const result = await login(password)
     setSubmitting(false)
-    if (success) {
+    if (result.ok) {
       navigate(from, { replace: true })
     } else {
-      setError('Password errata')
+      setError(result.error)
     }
   }
 
@@ -49,8 +51,8 @@ export function LoginPage() {
             <div className="h-12 w-12 rounded-full bg-navy/8 flex items-center justify-center mb-3">
               <Lock className="h-5 w-5 text-navy" />
             </div>
-            <h1 className="font-display text-2xl font-semibold text-navy">Accesso Admin</h1>
-            <p className="text-sm text-ink-muted mt-1">COINCIDENZE &middot; Edizione 1</p>
+            <h1 className="font-display text-2xl font-semibold text-navy">Area riservata</h1>
+            <p className="text-sm text-ink-muted mt-1">COINCIDENZE</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

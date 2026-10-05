@@ -39,18 +39,41 @@ export async function sendEmail(env: Bindings, args: SendArgs): Promise<{ ok: bo
   return { ok: true }
 }
 
+/** Dati dell'edizione usati nelle email (sottoinsieme di EditionRow). */
+export interface EmailEdition {
+  name: string
+  event_date: string
+  hero_location: string
+}
+
+function formatEventDate(iso: string, opts: Intl.DateTimeFormatOptions): string {
+  return new Intl.DateTimeFormat('it-IT', { ...opts, timeZone: 'UTC' }).format(new Date(`${iso}T00:00:00Z`))
+}
+
+/** "domenica 25 aprile 2027" */
+function longDate(iso: string): string {
+  return formatEventDate(iso, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
 export function buildTicketEmail(opts: {
   name: string
   ticketUrl: string
   qrUrl: string
+  edition: EmailEdition
 }): { subject: string; html: string; text: string } {
-  const subject = 'Il tuo accredito · COINCIDENZE · 25 aprile'
+  const { edition } = opts
+  const dateLine = capitalize(longDate(edition.event_date))
+  const subject = `Il tuo accredito · COINCIDENZE · ${formatEventDate(edition.event_date, { day: 'numeric', month: 'long' })}`
   const text = [
     `Ciao ${opts.name},`,
     '',
-    'grazie per esserti accreditato a COINCIDENZE · Edizione 1.',
+    `grazie per esserti accreditato a COINCIDENZE · ${edition.name}.`,
     '',
-    'Sabato 25 aprile 2026, Marsam Locanda, Bene Vagienna.',
+    `${dateLine}, ${edition.hero_location}.`,
     '',
     'All\'arrivo apri questo link e tappa "Sono arrivato" per il check-in:',
     opts.ticketUrl,
@@ -68,7 +91,7 @@ export function buildTicketEmail(opts: {
           <tr>
             <td style="background:#2C3E6B;color:#ffffff;padding:24px;text-align:center;">
               <div style="font-family:Georgia,'Playfair Display',serif;font-size:26px;font-weight:600;letter-spacing:0.5px;">COINCIDENZE</div>
-              <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.8;margin-top:4px;">Edizione 1 · Biglietto di accredito</div>
+              <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.8;margin-top:4px;">${escapeHtml(edition.name)} · Biglietto di accredito</div>
             </td>
           </tr>
           <tr>
@@ -95,8 +118,8 @@ export function buildTicketEmail(opts: {
           </tr>
           <tr>
             <td style="padding:20px 28px;border-top:1px solid #eee;font-size:14px;color:#555;">
-              <p style="margin:0 0 6px;"><strong style="color:#2C3E6B;">Sabato 25 aprile 2026</strong></p>
-              <p style="margin:0;color:#777;">Marsam Locanda, Bene Vagienna</p>
+              <p style="margin:0 0 6px;"><strong style="color:#2C3E6B;">${escapeHtml(dateLine)}</strong></p>
+              <p style="margin:0;color:#777;">${escapeHtml(edition.hero_location)}</p>
             </td>
           </tr>
           <tr>
@@ -188,7 +211,9 @@ const SPUNTINO_DISHES = [
 export function buildSpuntinoEmail(opts: {
   name: string
   seats: number
+  edition: EmailEdition
 }): { subject: string; html: string; text: string } {
+  const { edition } = opts
   const subject = `Spuntino delle 18 · prenotazione confermata`
   const text = [
     `Ciao ${opts.name},`,
@@ -196,8 +221,8 @@ export function buildSpuntinoEmail(opts: {
     `la tua prenotazione per "Lo spuntino delle 18" è confermata.`,
     ``,
     `Posti: ${opts.seats}`,
-    `Quando: sabato 25 aprile 2026, ore 18:00`,
-    `Dove: Marsam Locanda, Bene Vagienna — sotto il portico`,
+    `Quando: ${longDate(edition.event_date)}, ore 18:00`,
+    `Dove: ${edition.hero_location}, sotto il portico`,
     ``,
     `Il men\u00f9:`,
     ...SPUNTINO_DISHES.map((d) => `\u2022 ${d}`),
@@ -219,15 +244,15 @@ export function buildSpuntinoEmail(opts: {
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
         <tr><td style="background:#2C3E6B;color:#ffffff;padding:24px;text-align:center;">
           <div style="font-family:Georgia,'Playfair Display',serif;font-size:24px;font-weight:600;">Lo spuntino delle 18</div>
-          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.8;margin-top:4px;">COINCIDENZE \u00b7 Edizione 1</div>
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.8;margin-top:4px;">COINCIDENZE \u00b7 ${escapeHtml(edition.name)}</div>
         </td></tr>
         <tr><td style="padding:24px 28px 8px;">
           <p style="margin:0 0 12px;color:#2C3E6B;font-weight:600;">Ciao ${escapeHtml(opts.name)},</p>
           <p style="margin:0 0 8px;font-size:14px;color:#444;">la tua prenotazione \u00e8 confermata.</p>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:14px;font-size:14px;">
             <tr><td style="padding:4px 0;color:#888;width:130px;">Posti</td><td style="padding:4px 0;font-weight:500;color:#2C3E6B;">${opts.seats}</td></tr>
-            <tr><td style="padding:4px 0;color:#888;">Quando</td><td style="padding:4px 0;">sabato 25 aprile, ore 18:00</td></tr>
-            <tr><td style="padding:4px 0;color:#888;">Dove</td><td style="padding:4px 0;">Marsam Locanda, sotto il portico</td></tr>
+            <tr><td style="padding:4px 0;color:#888;">Quando</td><td style="padding:4px 0;">${escapeHtml(formatEventDate(edition.event_date, { weekday: 'long', day: 'numeric', month: 'long' }))}, ore 18:00</td></tr>
+            <tr><td style="padding:4px 0;color:#888;">Dove</td><td style="padding:4px 0;">${escapeHtml(edition.hero_location)}, sotto il portico</td></tr>
           </table>
         </td></tr>
         <tr><td style="padding:8px 28px 20px;">

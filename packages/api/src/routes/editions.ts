@@ -1,19 +1,9 @@
 import { Hono } from 'hono'
-import { getCookie } from 'hono/cookie'
-import type { Context } from 'hono'
 import type { Env } from '../index'
-import { verifyToken } from './auth'
+import { isAdmin, deny } from '../middleware/auth'
 import { getCurrentEdition, getEditionBySlug, type EditionRow } from '../lib/edition'
 
 export const editionsRoutes = new Hono<Env>()
-
-async function isAuthed(c: Context<Env>): Promise<boolean> {
-  const token = getCookie(c, 'auth_token')
-  if (!token) return false
-  const secret = c.env.AUTH_SECRET
-  if (!secret) return false
-  return verifyToken(token, secret)
-}
 
 function sanitize(s: unknown, max = 500): string {
   if (typeof s !== 'string') return ''
@@ -49,7 +39,7 @@ editionsRoutes.get('/:slug', async (c) => {
 
 // POST /editions — admin: crea
 editionsRoutes.post('/', async (c) => {
-  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+  if (!isAdmin(c)) return deny(c)
   const body = await c.req.json().catch(() => ({})) as Record<string, unknown>
 
   const slug = sanitize(body.slug, 64)
@@ -96,7 +86,7 @@ editionsRoutes.post('/', async (c) => {
 
 // PATCH /editions/:id — admin: aggiorna campi liberamente
 editionsRoutes.patch('/:id', async (c) => {
-  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+  if (!isAdmin(c)) return deny(c)
   const id = c.req.param('id')
   const body = await c.req.json().catch(() => ({})) as Record<string, unknown>
 
@@ -143,7 +133,7 @@ editionsRoutes.patch('/:id', async (c) => {
 
 // POST /editions/:id/set-current — admin: imposta come edizione corrente
 editionsRoutes.post('/:id/set-current', async (c) => {
-  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+  if (!isAdmin(c)) return deny(c)
   const id = c.req.param('id')
   const exists = await c.env.DB.prepare('SELECT id FROM editions WHERE id = ?').bind(id).first()
   if (!exists) return c.json({ error: 'Edizione non trovata' }, 404)
@@ -159,7 +149,7 @@ editionsRoutes.post('/:id/set-current', async (c) => {
 
 // DELETE /editions/:id — admin: elimina (cascade su gallery/content; eventi/accrediti scoped restano orfani)
 editionsRoutes.delete('/:id', async (c) => {
-  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+  if (!isAdmin(c)) return deny(c)
   const id = c.req.param('id')
   const row = await c.env.DB.prepare('SELECT is_current FROM editions WHERE id = ?').bind(id).first<{ is_current: number }>()
   if (!row) return c.json({ error: 'Edizione non trovata' }, 404)
@@ -183,7 +173,7 @@ editionsRoutes.get('/:slug/gallery', async (c) => {
 })
 
 editionsRoutes.post('/:slug/gallery', async (c) => {
-  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+  if (!isAdmin(c)) return deny(c)
   const slug = c.req.param('slug')
   const edition = await getEditionBySlug(c.env.DB, slug)
   if (!edition) return c.json({ error: 'Edizione non trovata' }, 404)
@@ -198,7 +188,7 @@ editionsRoutes.post('/:slug/gallery', async (c) => {
 })
 
 editionsRoutes.put('/:slug/gallery/reorder', async (c) => {
-  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+  if (!isAdmin(c)) return deny(c)
   const body = await c.req.json<{ order: string[] }>()
   const stmts = body.order.map((id, i) =>
     c.env.DB.prepare('UPDATE editions_gallery SET sort_order = ? WHERE id = ?').bind(i, id)
@@ -208,7 +198,7 @@ editionsRoutes.put('/:slug/gallery/reorder', async (c) => {
 })
 
 editionsRoutes.delete('/:slug/gallery/:id', async (c) => {
-  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+  if (!isAdmin(c)) return deny(c)
   const id = c.req.param('id')
   await c.env.DB.prepare('DELETE FROM editions_gallery WHERE id = ?').bind(id).run()
   return c.json({ ok: true })
@@ -228,7 +218,7 @@ editionsRoutes.get('/:slug/content', async (c) => {
 })
 
 editionsRoutes.put('/:slug/content/:section', async (c) => {
-  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+  if (!isAdmin(c)) return deny(c)
   const slug = c.req.param('slug')
   const section = c.req.param('section')
   const edition = await getEditionBySlug(c.env.DB, slug)

@@ -1,13 +1,26 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { PublicFooter } from '@/components/PublicFooter'
+import { useEditionsStore } from '@/stores/editionsStore'
+
+function formatLegalDate(iso: string): string {
+  return new Date(iso + 'T00:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })
+}
 
 export function PrivacyPage() {
+  const current = useEditionsStore((s) => s.current)
+  const fetchEditions = useEditionsStore((s) => s.fetch)
+  useEffect(() => { fetchEditions() }, [fetchEditions])
+
+  // Data dell'edizione corrente, es. " (25 aprile 2027)"
+  const eventDate = current ? ` (${formatLegalDate(current.event_date)})` : ''
+
   return (
     <div className="min-h-screen bg-beige">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <Link
-          to="/edizione-1"
+          to="/"
           className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-navy transition-colors mb-6"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -23,7 +36,7 @@ export function PrivacyPage() {
             ai sensi degli artt. 13 e 14 del Regolamento (UE) 2016/679 (GDPR)
           </p>
           <p className="text-xs text-ink-muted mt-1">
-            Ultimo aggiornamento: 17 aprile 2026
+            Ultimo aggiornamento: 5 ottobre 2026
           </p>
         </header>
 
@@ -56,13 +69,21 @@ export function PrivacyPage() {
               <li>Data di nascita (facoltativa)</li>
               <li>Consensi espressi (privacy, newsletter, riprese foto/video)</li>
             </ul>
+            <p className="mt-3">Attraverso il modulo di prenotazione dello spuntino su <code>/spuntino</code> raccogliamo:</p>
+            <ul className="list-disc list-inside space-y-1 mt-2">
+              <li>Nome e cognome (obbligatori)</li>
+              <li>Indirizzo email e numero di telefono (obbligatori)</li>
+              <li>Numero di posti e note (facoltative)</li>
+              <li>Consenso all'informativa privacy</li>
+            </ul>
           </section>
 
           <section>
             <h2 className="font-display text-xl font-semibold text-navy mb-2">3 · Finalità del trattamento</h2>
             <ul className="list-disc list-inside space-y-1">
-              <li>Gestione dell'accredito e del check-in il giorno dell'evento (25 aprile 2026).</li>
+              <li>Gestione dell'accredito e del check-in il giorno dell'evento{eventDate}.</li>
               <li>Invio dell'email di conferma con il biglietto digitale e il codice QR.</li>
+              <li>Gestione della prenotazione dello spuntino e invio dell'email di riepilogo.</li>
               <li>Comunicazioni di servizio relative all'evento (es. variazioni di programma).</li>
               <li>
                 Se hai prestato il relativo consenso: invio di aggiornamenti
@@ -80,7 +101,7 @@ export function PrivacyPage() {
             <h2 className="font-display text-xl font-semibold text-navy mb-2">4 · Base giuridica</h2>
             <ul className="list-disc list-inside space-y-1">
               <li>Consenso dell'interessato (art. 6.1.a GDPR), per newsletter e riprese foto/video.</li>
-              <li>Esecuzione di misure precontrattuali e contrattuali (art. 6.1.b GDPR), per la gestione dell'accredito.</li>
+              <li>Esecuzione di misure precontrattuali e contrattuali (art. 6.1.b GDPR), per la gestione dell'accredito e della prenotazione.</li>
               <li>Legittimo interesse dell'organizzazione (art. 6.1.f GDPR), per le comunicazioni di servizio.</li>
             </ul>
           </section>
@@ -102,8 +123,8 @@ export function PrivacyPage() {
                 </a>.
               </li>
               <li>
-                <strong>Resend (Inc.)</strong> (invio dell'email di conferma
-                con il biglietto). Privacy policy:{' '}
+                <strong>Resend (Inc.)</strong> (invio delle email di
+                conferma). Privacy policy:{' '}
                 <a
                   href="https://resend.com/legal/privacy-policy"
                   target="_blank"
@@ -115,6 +136,20 @@ export function PrivacyPage() {
               </li>
             </ul>
             <p className="mt-2">
+              Le notifiche di nuovi accrediti e prenotazioni (nome, email,
+              telefono e CAP oppure note) arrivano anche alla casella email
+              dell'organizzazione, gestita con Gmail di Google. Privacy
+              policy:{' '}
+              <a
+                href="https://policies.google.com/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-viola underline"
+              >
+                policies.google.com/privacy
+              </a>.
+            </p>
+            <p className="mt-2">
               I dati non sono ceduti né venduti a terzi per finalità di
               marketing di soggetti diversi dall'organizzazione di Coincidenze.
             </p>
@@ -123,7 +158,7 @@ export function PrivacyPage() {
           <section>
             <h2 className="font-display text-xl font-semibold text-navy mb-2">6 · Trasferimenti extra-UE</h2>
             <p>
-              Alcuni fornitori (Cloudflare, Resend) possono trattare dati
+              Alcuni fornitori (Cloudflare, Resend, Google) possono trattare dati
               anche al di fuori dello Spazio Economico Europeo. I
               trasferimenti avvengono sulla base delle Clausole Contrattuali
               Standard approvate dalla Commissione europea oppure di decisioni
@@ -137,7 +172,16 @@ export function PrivacyPage() {
               <li>
                 Dati di accredito (nome, cognome, email, telefono, CAP, data
                 di nascita): conservati fino a 30 giorni dopo la data
-                dell'evento (25 aprile 2026), salvo obblighi di legge.
+                dell'evento{eventDate}, salvo obblighi di legge.
+              </li>
+              <li>
+                Dati di prenotazione dello spuntino (nome, cognome, email,
+                telefono, note): conservati fino a 30 giorni dopo la data
+                dell'evento, salvo obblighi di legge.
+              </li>
+              <li>
+                Copie degli stessi dati nelle email di notifica
+                all'organizzazione: cancellate negli stessi tempi.
               </li>
               <li>
                 Email per newsletter (se hai prestato consenso): conservate
@@ -199,6 +243,11 @@ export function PrivacyPage() {
               al funzionamento (es. sessione di accesso all'area
               amministrativa), per cui non è richiesto alcun consenso
               specifico.
+            </p>
+            <p className="mt-2">
+              Per le statistiche di visita usiamo Cloudflare Web Analytics,
+              che conta le visite in forma aggregata, senza cookie e senza
+              identificare i singoli visitatori.
             </p>
           </section>
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useIsAdmin } from '@/stores/authStore'
 import {
   Dialog,
   DialogContent,
@@ -12,26 +13,27 @@ import { useEventsStore } from '@/stores/eventsStore'
 import { useArtistsStore } from '@/stores/artistsStore'
 import { useCategoryMaps } from '@/stores/categoriesStore'
 import { type EventCategory, type Event } from '@/types'
-import { EVENT_DATE } from '@/lib/constants'
-
 interface Props {
   open: boolean
   onClose: () => void
   event?: Event
+  /** Data proposta per i nuovi eventi: la data dell'edizione su cui si sta lavorando */
+  defaultDate?: string
 }
 
-export function EventFormDialog({ open, onClose, event }: Props) {
+export function EventFormDialog({ open, onClose, event, defaultDate = '' }: Props) {
   const { createEvent, updateEvent, deleteEvent } = useEventsStore()
   const { artists } = useArtistsStore()
   const { list: artistCats } = useCategoryMaps('artist')
   const isEditing = !!event
+  const isAdmin = useIsAdmin()
   const [saving, setSaving] = useState(false)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [form, setForm] = useState({
     title: '',
     description: '',
-    date: EVENT_DATE,
+    date: defaultDate,
     startTime: '',
     endTime: '',
     location: '',
@@ -44,7 +46,7 @@ export function EventFormDialog({ open, onClose, event }: Props) {
     setForm({
       title: event?.title || '',
       description: event?.description || '',
-      date: event?.date || EVENT_DATE,
+      date: event?.date || defaultDate,
       startTime: event?.start_time || '',
       endTime: event?.end_time || '',
       location: event?.location || '',
@@ -52,7 +54,7 @@ export function EventFormDialog({ open, onClose, event }: Props) {
       artistIds: event?.artist_ids || [],
       notes: event?.notes || '',
     })
-  }, [event])
+  }, [event, defaultDate])
 
   const handleDelete = async () => {
     if (!event) return
@@ -199,7 +201,8 @@ export function EventFormDialog({ open, onClose, event }: Props) {
           </div>
 
           <div className="flex items-center justify-between pt-4">
-            {isEditing ? (
+            {/* Eliminare è solo dell'admin: l'agenzia crea e modifica */}
+            {isEditing && isAdmin ? (
               <Button
                 variant="outline"
                 className="text-red-600 hover:bg-red-50 hover:text-red-700"

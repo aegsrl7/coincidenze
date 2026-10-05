@@ -6,7 +6,9 @@ interface TasksState {
   tasks: Task[]
   loading: boolean
   error: string | null
-  fetchTasks: () => Promise<void>
+  /** slug attivo dell'edizione (per refetch quando cambia) */
+  editionSlug: string | null
+  fetchTasks: (editionSlug?: string | null) => Promise<void>
   createTask: (data: Partial<Task>) => Promise<Task>
   updateTask: (id: string, data: Partial<Task>) => Promise<void>
   deleteTask: (id: string) => Promise<void>
@@ -16,11 +18,12 @@ export const useTasksStore = create<TasksState>((set, get) => ({
   tasks: [],
   loading: false,
   error: null,
+  editionSlug: null,
 
-  fetchTasks: async () => {
-    set({ loading: true, error: null })
+  fetchTasks: async (editionSlug) => {
+    set({ loading: true, error: null, editionSlug: editionSlug ?? get().editionSlug })
     try {
-      const tasks = await api.getTasks()
+      const tasks = await api.getTasks(editionSlug ?? get().editionSlug ?? undefined)
       set({ tasks, loading: false })
     } catch (e: any) {
       set({ error: e.message, loading: false })
@@ -28,7 +31,7 @@ export const useTasksStore = create<TasksState>((set, get) => ({
   },
 
   createTask: async (data) => {
-    const task = await api.createTask(data)
+    const task = await api.createTask(data, get().editionSlug)
     set({ tasks: [...get().tasks, task] })
     return task
   },

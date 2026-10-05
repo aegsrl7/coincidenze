@@ -209,6 +209,9 @@ export const STATO_COLORS: Record<string, string> = {
 }
 
 // Edizioni
+/** Ruolo dell'area riservata: admin (tutto) o agency (agenzia social/marketing) */
+export type UserRole = 'admin' | 'agency'
+
 export interface Edition {
   id: string
   slug: string

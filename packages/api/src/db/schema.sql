@@ -75,6 +75,7 @@ CREATE TABLE IF NOT EXISTS team_members (
 
 CREATE TABLE IF NOT EXISTS tasks (
   id TEXT PRIMARY KEY,
+  edition_id TEXT REFERENCES editions(id),
   title TEXT NOT NULL,
   description TEXT DEFAULT '',
   status TEXT DEFAULT 'todo' CHECK(status IN ('todo', 'in_progress', 'done')),
@@ -240,6 +241,7 @@ CREATE INDEX IF NOT EXISTS idx_events_edition ON events(edition_id);
 CREATE INDEX IF NOT EXISTS idx_artists_edition ON artists(edition_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
 CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON tasks(assignee_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_edition ON tasks(edition_id);
 CREATE INDEX IF NOT EXISTS idx_media_artist ON media_items(artist_id);
 CREATE INDEX IF NOT EXISTS idx_canvas_nodes_type ON canvas_nodes(type);
 CREATE INDEX IF NOT EXISTS idx_editorial_posts_data ON editorial_posts(data);

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Clock, MapPin } from 'lucide-react'
 import { useCategoryMaps } from '@/stores/categoriesStore'
+import { useEditionsStore } from '@/stores/editionsStore'
 import { api } from '@/lib/api'
+import { formatItalianDate } from '@/lib/utils'
 import type { Event } from '@/types'
 
 function isAllDay(event: Event): boolean {
@@ -13,10 +15,13 @@ function isAllDay(event: Event): boolean {
 
 export function ProgrammaInstagramPage() {
   const [events, setEvents] = useState<Event[]>([])
+  const current = useEditionsStore((s) => s.current)
+  const fetchEditions = useEditionsStore((s) => s.fetch)
 
   useEffect(() => {
+    fetchEditions()
     api.getEvents().then(setEvents)
-  }, [])
+  }, [fetchEditions])
 
   const scheduled = events
     .filter((e) => !isAllDay(e))
@@ -28,14 +33,16 @@ export function ProgrammaInstagramPage() {
       <div className="max-w-lg mx-auto px-6">
         <header className="text-center mb-8">
           <p className="text-[11px] tracking-[0.3em] uppercase text-ink-muted mb-2">
-            Edizione 1 · Programma
+            {current ? `${current.name} · ` : ''}Programma
           </p>
           <h1 className="font-display text-4xl font-semibold text-navy leading-tight">
             COINCIDENZE
           </h1>
-          <p className="text-sm text-ink-light italic mt-1">
-            sabato 25 aprile · Marsam Locanda, Bene Vagienna
-          </p>
+          {current && (
+            <p className="text-sm text-ink-light italic mt-1">
+              {formatItalianDate(current.event_date, { withYear: false })} · {current.hero_location}
+            </p>
+          )}
         </header>
 
         <div className="space-y-2">

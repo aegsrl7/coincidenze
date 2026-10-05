@@ -3,8 +3,7 @@ import { CheckCircle2, AlertCircle, Clock, Camera, Loader2, RefreshCw } from 'lu
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
-
-const QR_LIB_URL = 'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js'
+import type { Html5Qrcode } from 'html5-qrcode'
 
 type ScanStatus = 'success' | 'already' | 'error'
 interface ScanEntry {
@@ -43,7 +42,7 @@ export function CheckInPage() {
   const [manualCode, setManualCode] = useState('')
   const [submittingManual, setSubmittingManual] = useState(false)
   const lastScanRef = useRef<{ code: string; at: number } | null>(null)
-  const scannerRef = useRef<any>(null)
+  const scannerRef = useRef<Html5Qrcode | null>(null)
 
   const handleScan = async (rawText: string) => {
     const code = extractTicketCode(rawText)
@@ -88,11 +87,12 @@ export function CheckInPage() {
       } catch {
         // ignore
       }
-    } catch {
+    } catch (err) {
+      // Es. "Biglietto non trovato" o "Biglietto non valido per Edizione 2"
       const entry: ScanEntry = {
         id: `${code}-${now}`,
         code,
-        name: 'Biglietto non trovato',
+        name: err instanceof Error && err.message ? err.message : 'Biglietto non trovato',
         detail: code,
         status: 'error',
         at: now,
@@ -116,32 +116,11 @@ export function CheckInPage() {
   useEffect(() => {
     let cancelled = false
 
-    const loadLib = (): Promise<void> => {
-      const w = window as any
-      if (w.Html5Qrcode) return Promise.resolve()
-      const existing = document.querySelector(`script[src="${QR_LIB_URL}"]`) as HTMLScriptElement | null
-      if (existing) {
-        return new Promise<void>((resolve, reject) => {
-          existing.addEventListener('load', () => resolve())
-          existing.addEventListener('error', () => reject(new Error('Caricamento libreria fallito')))
-        })
-      }
-      return new Promise<void>((resolve, reject) => {
-        const script = document.createElement('script')
-        script.src = QR_LIB_URL
-        script.async = true
-        script.onload = () => resolve()
-        script.onerror = () => reject(new Error('Caricamento libreria fallito'))
-        document.body.appendChild(script)
-      })
-    }
-
     const start = async () => {
       try {
-        await loadLib()
+        // Libreria nel bundle (caricata solo su questa pagina): niente CDN esterni
+        const { Html5Qrcode } = await import('html5-qrcode')
         if (cancelled) return
-        const Html5Qrcode = (window as any).Html5Qrcode
-        if (!Html5Qrcode) throw new Error('Libreria non disponibile')
         const scanner = new Html5Qrcode('qr-reader-area')
         scannerRef.current = scanner
         await scanner.start(
@@ -162,8 +141,8 @@ export function CheckInPage() {
           return
         }
         setScannerReady(true)
-      } catch (e: any) {
-        if (!cancelled) setBootError(e?.message || 'Impossibile avviare la fotocamera')
+      } catch (e) {
+        if (!cancelled) setBootError(e instanceof Error && e.message ? e.message : 'Impossibile avviare la fotocamera')
       }
     }
 

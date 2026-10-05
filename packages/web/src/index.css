@@ -12,8 +12,8 @@
   --color-ink-light: #4a4a4a;
   --color-ink-muted: #8a8a8a;
 
-  --font-display: "Playfair Display", Georgia, serif;
-  --font-body: "Inter", system-ui, sans-serif;
+  --font-display: "Playfair Display Variable", "Playfair Display", Georgia, serif;
+  --font-body: "Inter Variable", "Inter", system-ui, sans-serif;
 
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;

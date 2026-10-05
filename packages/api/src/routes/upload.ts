@@ -1,7 +1,5 @@
 import { Hono } from 'hono'
-import { getCookie } from 'hono/cookie'
 import type { Env } from '../index'
-import { verifyToken } from './auth'
 
 export const uploadRoutes = new Hono<Env>()
 
@@ -44,14 +42,13 @@ function sniffMime(bytes: Uint8Array): string | null {
   return null
 }
 
-// POST /api/upload — upload file to R2 (auth required)
+// POST /api/upload — upload file to R2 (admin e agenzia)
 uploadRoutes.post('/upload', async (c) => {
-  const token = getCookie(c, 'auth_token')
-  if (!token) return c.json({ error: 'Non autenticato' }, 401)
-  const valid = await verifyToken(token, c.env.AUTH_SECRET)
-  if (!valid) return c.json({ error: 'Sessione scaduta' }, 401)
+  if (!c.get('role')) return c.json({ error: 'Non autenticato' }, 401)
 
-  const formData = await c.req.formData()
+  // Un corpo che non è multipart/form-data fa lanciare formData(): rispondiamo 400, non 500
+  const formData = await c.req.formData().catch(() => null)
+  if (!formData) return c.json({ error: 'Richiesta non valida: serve un file' }, 400)
   const entry = formData.get('file')
   // formData.get può restituire File | string | null. Vogliamo solo File con
   // arrayBuffer funzionante (workers File API).

@@ -4,7 +4,9 @@ import { Loader2, ArrowLeft, CheckCircle2, Clock, MapPin, Wine } from 'lucide-re
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PublicFooter } from '@/components/PublicFooter'
+import { useEditionsStore } from '@/stores/editionsStore'
 import { api } from '@/lib/api'
+import { capitalize, formatItalianDate } from '@/lib/utils'
 
 const DISHES = [
   'Gambero e lardo',
@@ -18,6 +20,8 @@ const DISHES = [
 const PRICE_PER_SEAT = 25
 
 export function SpuntinoPage() {
+  // SpuntinoGate mostra la pagina solo se l'edizione corrente ha lo spuntino aperto
+  const current = useEditionsStore((s) => s.current)
   const [name, setName] = useState('')
   const [surname, setSurname] = useState('')
   const [email, setEmail] = useState('')
@@ -94,7 +98,7 @@ export function SpuntinoPage() {
               <p className="text-xs text-amber-700 mt-4">L'invio email è fallito, ma la prenotazione è registrata.</p>
             )}
             <Link
-              to="/edizione-1"
+              to="/"
               className="inline-flex items-center gap-1.5 text-sm text-viola hover:underline mt-6"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -111,7 +115,7 @@ export function SpuntinoPage() {
     <div className="min-h-screen bg-beige">
       <div className="max-w-xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <Link
-          to="/edizione-1"
+          to="/"
           className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-navy transition-colors mb-6"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -119,7 +123,7 @@ export function SpuntinoPage() {
         </Link>
 
         <header className="text-center mb-8">
-          <p className="text-[11px] tracking-[0.3em] uppercase text-viola mb-2">COINCIDENZE · Edizione 1</p>
+          <p className="text-[11px] tracking-[0.3em] uppercase text-viola mb-2">COINCIDENZE{current ? ` · ${current.name}` : ''}</p>
           <h1 className="font-display text-3xl sm:text-4xl font-semibold text-navy leading-tight">Lo spuntino delle 18</h1>
           <p className="text-sm text-ink-light italic mt-2">
             Sei piatti in sequenza, dove il calore diventa linguaggio e ogni boccone si prende il suo tempo.
@@ -128,7 +132,7 @@ export function SpuntinoPage() {
 
         <div className="bg-white/70 rounded-2xl border border-navy/10 p-6 mb-6 shadow-sm">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mb-5">
-            <Info icon={Clock} label="Sabato 25 aprile" value="ore 18:00" />
+            <Info icon={Clock} label={current ? capitalize(formatItalianDate(current.event_date, { withYear: false })) : ''} value="ore 18:00" />
             <Info icon={MapPin} label="Marsam Locanda" value="sotto il portico" />
             <Info icon={Wine} label="Posti limitati" value={`${PRICE_PER_SEAT}€ a persona`} />
           </div>

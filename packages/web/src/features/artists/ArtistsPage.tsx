@@ -65,26 +65,8 @@ export function ArtistsPage() {
   const downloadArtistQR = async (artist: Artist) => {
     const target = `${window.location.origin}/artisti/${artist.id}`
     try {
-      // qrcode-generator caricato via CDN (no npm install richiesto)
-      const w = window as any
-      if (typeof w.qrcode !== 'function') {
-        await new Promise<void>((resolve, reject) => {
-          const existing = document.querySelector('script[data-qrlib="1"]') as HTMLScriptElement | null
-          if (existing) {
-            existing.addEventListener('load', () => resolve())
-            existing.addEventListener('error', () => reject(new Error('Caricamento libreria QR fallito')))
-            return
-          }
-          const script = document.createElement('script')
-          script.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js'
-          script.async = true
-          script.dataset.qrlib = '1'
-          script.onload = () => resolve()
-          script.onerror = () => reject(new Error('Caricamento libreria QR fallito'))
-          document.body.appendChild(script)
-        })
-      }
-      const qrcode = (window as any).qrcode
+      // qrcode-generator nel bundle, caricato solo quando serve: niente CDN esterni
+      const { default: qrcode } = await import('qrcode-generator')
       const qr = qrcode(0, 'H') // type=auto, error correction High
       qr.addData(target)
       qr.make()

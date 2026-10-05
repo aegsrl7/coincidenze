@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useEditorialStore } from '@/stores/editorialStore'
 import { useAuthStore } from '@/stores/authStore'
-import { useAdminEditionSlug } from '@/stores/editionsStore'
+import { useAdminEditionSlug, useEditionsStore } from '@/stores/editionsStore'
 import { FASE_LABELS, FASE_COLORS, STATO_COLORS, type EditorialPost } from '@/types'
 import { PostFormDialog } from './PostFormDialog'
 import { PostDetailPanel } from './PostDetailPanel'
@@ -102,8 +102,8 @@ function buildCalendarGrid(year: number, month: number): CalendarDay[][] {
 export function PianoEditorialePage() {
   const { posts, fetchPosts } = useEditorialStore()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const [currentYear, setCurrentYear] = useState(2026)
-  const [currentMonth, setCurrentMonth] = useState(3) // April (0-indexed)
+  const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear())
+  const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth()) // 0-indexed
   const [showForm, setShowForm] = useState(false)
   const [editingPost, setEditingPost] = useState<EditorialPost | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -113,6 +113,17 @@ export function PianoEditorialePage() {
   useEffect(() => {
     fetchPosts(adminSlug)
   }, [fetchPosts, adminSlug])
+
+  // Mese di partenza: oggi se l'edizione selezionata è ancora da fare, altrimenti il mese del suo evento
+  const activeEdition = useEditionsStore((s) => s.editions.find((e) => e.slug === adminSlug))
+  useEffect(() => {
+    if (!activeEdition) return
+    const today = new Date()
+    const eventDay = new Date(activeEdition.event_date + 'T00:00:00')
+    const ref = eventDay >= today ? today : eventDay
+    setCurrentYear(ref.getFullYear())
+    setCurrentMonth(ref.getMonth())
+  }, [activeEdition?.id, activeEdition?.event_date])
 
   const weeks = buildCalendarGrid(currentYear, currentMonth)
 

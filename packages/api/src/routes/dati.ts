@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import type { Env } from '../index'
+import { resolveEdition } from '../lib/edition'
 
 const CATEGORY_LABELS: Record<string, string> = {
   scrittura: 'Scrittura', teatro: 'Teatro', fotografia: 'Fotografia',
@@ -24,13 +25,20 @@ function esc(str: string | null | undefined): string {
 
 export const datiRoutes = new Hono<Env>()
 
+// GET /dati — dati pubblici dell'edizione (?edition=slug, default corrente)
 datiRoutes.get('/', async (c) => {
   const db = c.env.DB
+  const edition = await resolveEdition(c)
+  if (!edition) return c.text('Nessuna edizione configurata', 404)
 
   const [artistsRes, eventsRes] = await Promise.all([
-    db.prepare('SELECT * FROM artists ORDER BY category, name').all(),
-    db.prepare('SELECT * FROM events ORDER BY start_time').all()
+    db.prepare('SELECT * FROM artists WHERE edition_id = ? ORDER BY category, name').bind(edition.id).all(),
+    db.prepare('SELECT * FROM events WHERE edition_id = ? ORDER BY start_time').bind(edition.id).all()
   ])
+
+  const dateLabel = new Intl.DateTimeFormat('it-IT', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
+  }).format(new Date(`${edition.event_date}T00:00:00Z`))
 
   const artists = artistsRes.results as any[]
   const events = eventsRes.results as any[]
@@ -91,7 +99,7 @@ hr{border:none;border-top:1px solid #d4cfc7;margin:3rem 0}
 <body>
 <h1>COINCIDENZE</h1>
 <p class="subtitle">raffinate casualit&agrave;, occhi attenti</p>
-<p class="meta">Edizione 1 — Sabato 25 aprile 2026 — Marsam Locanda, Bene Vagienna</p>
+<p class="meta">${esc(edition.name)} · ${esc(dateLabel)} · ${esc(edition.hero_location)}</p>
 `
 
   // Riepilogo
@@ -126,7 +134,7 @@ hr{border:none;border-top:1px solid #d4cfc7;margin:3rem 0}
 
   // Programma
   html += '<hr>'
-  html += '<h2>Programma — 25 aprile 2026</h2>'
+  html += `<h2>Programma · ${esc(dateLabel)}</h2>`
   for (const ev of events) {
     const cat = ev.category || ''
     const label = CATEGORY_LABELS[cat] || cat

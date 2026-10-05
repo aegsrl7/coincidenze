@@ -33,11 +33,7 @@ export function isPast(eventDate: string): boolean {
   return ev < today
 }
 
-export function formatItalianDate(iso: string): string {
-  if (!iso) return ''
-  const d = new Date(iso + 'T00:00:00')
-  return d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-}
+export { formatItalianDate } from '@/lib/utils'
 
 export function Ornament() {
   return (

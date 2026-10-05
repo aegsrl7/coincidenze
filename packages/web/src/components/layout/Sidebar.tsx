@@ -20,18 +20,19 @@ import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/authStore'
 import { useEditionsStore } from '@/stores/editionsStore'
 
+// adminOnly: nascosto all'agenzia (le stesse rotte sono protette in App.tsx e nell'API)
 const navItems = [
   { to: '/admin/programma', icon: Calendar, label: 'Programma' },
   { to: '/admin/artisti', icon: User, label: 'Artisti' },
-  { to: '/admin/accrediti', icon: Ticket, label: 'Accrediti' },
-  { to: '/admin/check-in', icon: ScanLine, label: 'Check-in' },
-  { to: '/admin/spuntino', icon: UtensilsCrossed, label: 'Spuntino 18' },
-  { to: '/admin/menu', icon: Utensils, label: 'Menù' },
-  { to: '/admin/categorie', icon: Tag, label: 'Categorie' },
-  { to: '/admin/team', icon: Users, label: 'Team' },
+  { to: '/admin/accrediti', icon: Ticket, label: 'Accrediti', adminOnly: true },
+  { to: '/admin/check-in', icon: ScanLine, label: 'Check-in', adminOnly: true },
+  { to: '/admin/spuntino', icon: UtensilsCrossed, label: 'Spuntino 18', adminOnly: true },
+  { to: '/admin/menu', icon: Utensils, label: 'Menù', adminOnly: true },
+  { to: '/admin/categorie', icon: Tag, label: 'Categorie', adminOnly: true },
+  { to: '/admin/team', icon: Users, label: 'Team', adminOnly: true },
   { to: '/admin/media', icon: Music, label: 'Media' },
   { to: '/admin/piano-editoriale', icon: FileText, label: 'Piano Editoriale' },
-  { to: '/admin/edizioni', icon: Layers, label: 'Edizioni' },
+  { to: '/admin/edizioni', icon: Layers, label: 'Edizioni', adminOnly: true },
 ]
 
 interface SidebarProps {
@@ -41,6 +42,8 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const logout = useAuthStore((s) => s.logout)
+  const isAdmin = useAuthStore((s) => s.role === 'admin')
+  const visibleItems = navItems.filter((item) => isAdmin || !item.adminOnly)
 
   return (
     <>
@@ -69,7 +72,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </div>
 
         <nav className="flex-1 space-y-1 px-3">
-          {navItems.map((item) => (
+          {visibleItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}

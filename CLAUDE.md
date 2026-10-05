@@ -4,7 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Progetto
 Dashboard organizzativa per COINCIDENZE — "raffinate casualità, occhi attenti".
-Evento misto convegno/festival, Edizione 1, 25 aprile 2026, Marsam Locanda, Bene Vagienna.
+Evento misto convegno/festival, una giornata l'anno (25 aprile) a Marsam Locanda, Bene Vagienna.
+Edizione 0 (2025) ed Edizione 1 (2026) archiviate; Edizione 2 (`ed-2`, 2027-04-25) in preparazione.
 
 ## Tech Stack
 - **Frontend**: React 18 + Vite + TypeScript, shadcn/ui + Tailwind CSS v4, React Flow (`@xyflow/react`), Zustand, React Router v7
@@ -21,7 +22,7 @@ npm run build:api                        # type-check Worker
 
 # Database (locale)
 npm run db:migrate --workspace=packages/api   # applica schema.sql al D1 locale
-npm run db:seed --workspace=packages/api      # carica seed.sql
+npm run db:seed --workspace=packages/api      # dati demo + edizioni 0/1/2 (la 1 corrente)
 
 # Deploy manuale (di solito non serve, vedi sotto)
 npm run deploy --workspace=packages/api       # deploy Worker
@@ -29,20 +30,24 @@ npm run deploy --workspace=packages/api       # deploy Worker
 
 In dev il frontend chiama `/api` e Vite fa proxy verso `http://localhost:8787` (`vite.config.ts`). In produzione il client usa direttamente `https://api.coincidenze.org/api` (`packages/web/src/lib/api.ts`).
 
+Per il login in locale serve `packages/api/.dev.vars` (non committato) con `AUTH_SECRET=...` e `AGENCY_PASSWORD=...`. Senza `RESEND_API_KEY` le email non partono (l'errore finisce solo nel log). `wrangler dev` presenta l'host di produzione, quindi il cookie di sessione arriva `Secure`: il browser lo accetta su localhost, client come curl o Python no.
+
 ## Deploy
 Push su `main` → GitHub Actions (`.github/workflows/deploy.yml`) deploya in parallelo:
 - Pages (`coincidenze.org`) da `packages/web/dist`
 - Worker (`api.coincidenze.org`) da `packages/api`
 
-**Le migration D1 di produzione sono manuali**: applicare i file in `packages/api/src/db/migrations/NNNN_*.sql` con `wrangler d1 execute coincidenze-db --remote --file=...`.
+**Le migration D1 di produzione sono manuali**: applicare i file in `packages/api/src/db/migrations/NNNN_*.sql` con `wrangler d1 execute coincidenze-db --remote --file=...`, **prima** del push che porta il codice che le usa. Il 12 maggio 2026 il codice di 0004/0005 è andato online senza migration e il login ha risposto 500 fino al 5 ottobre. Prima di scrivere in prod prendere il punto di ripristino con `wrangler d1 time-travel info coincidenze-db` (con la wrangler 3 del progetto dà errore di autenticazione, usare la wrangler 4 globale).
 
 ## Architettura
 
 ### Routing & auth
 - `packages/api/src/index.ts` monta tutte le route Hono sotto `/api/*`, più `/dati` (HTML statico).
-- Il middleware `requireAuth` (`packages/api/src/middleware/auth.ts`) **lascia passare i GET** e blocca solo POST/PUT/DELETE: questo permette letture pubbliche su risorse altrimenti admin. Le route pubbliche di mutazione (es. `/api/accrediti` POST, `/api/spuntino` POST) montano l'auth selettivamente al loro interno invece che a livello router.
-- Frontend: rotte pubbliche in `App.tsx` (es. `/biglietto/:code`, `/accrediti`, `/spuntino`, `/:editionSlug`), tutto `/admin/*` è dietro `<RequireAuth>` + `<AppShell>`. Esistono redirect legacy da `/canvas`, `/programma`, ecc. verso `/admin/*`.
-- React Router v7 **non supporta param parziali** (es. `/edizione-:slug`): le edizioni usano un full-segment param `/:editionSlug` validato in `EditionRoute` (vedi commento in `App.tsx:88`).
+- Ruoli: `admin` (password = secret `AUTH_SECRET`) e `agency` (secret `AGENCY_PASSWORD`, agenzia social/marketing). Il token di sessione (`lib/session.ts`) contiene il ruolo ed è firmato con una chiave per ruolo: cambiare `AGENCY_PASSWORD` chiude solo le sessioni dell'agenzia. Senza `AGENCY_PASSWORD` il ruolo agency è disattivato.
+- `index.ts` mette il ruolo in `c.get('role')` per ogni `/api/*`. Ogni gruppo di rotte dichiara chi legge e chi scrive con `requireRole({ read, write })` (`middleware/auth.ts`): letture pubbliche solo per quello che serve alle pagine pubbliche (eventi, artisti, media, menu, categorie, edizioni); l'agenzia scrive su eventi, artisti, media e piano editoriale; team, task, espositori, canvas solo admin. Il campo `notes` arriva solo a chi ha fatto login (`withoutNotes`).
+- Le route miste (edizioni, accrediti, spuntino) controllano l'admin al loro interno con `isAdmin(c)` / `deny(c)`; restano pubblici POST accrediti/spuntino, il biglietto by-code e il self check-in.
+- Frontend: rotte pubbliche in `App.tsx` (es. `/biglietto/:code`, `/accrediti`, `/spuntino`, `/:editionSlug`), tutto `/admin/*` è dietro `<RequireAuth>` + `<AppShell>`; le pagine solo admin stanno dentro `<RequireAuth roles={['admin']}>` e la sidebar nasconde le voci `adminOnly`. Esistono redirect legacy da `/canvas`, `/programma`, ecc. verso `/admin/*`.
+- React Router v7 **non supporta param parziali** (es. `/edizione-:slug`): le edizioni usano un full-segment param `/:editionSlug` validato in `EditionRoute` (vedi commento in `App.tsx:92`).
 
 ### Multi-edizione (concetto centrale)
 La tabella `editions` è il punto di scoping per quasi tutti i contenuti (`artists`, `events`, `media`, `menu_items`, accrediti, spuntino). I flag `is_current`, `accrediti_open`, `spuntino_open` sull'edizione corrente guidano la home pubblica e l'apertura dei form.
@@ -50,6 +55,8 @@ La tabella `editions` è il punto di scoping per quasi tutti i contenuti (`artis
 Sul backend `packages/api/src/lib/edition.ts` espone `resolveEdition(c)` che legge `?edition=<slug>` dalla query e ricade sull'edizione corrente. Le route che servono dati pubblici scoped per edizione devono usarlo.
 
 Sul frontend l'helper `withEdition(path, slug)` in `packages/web/src/lib/api.ts` aggiunge `?edition=...` alle chiamate. Lo store `editionsStore` mantiene la lista, `editionStore` l'edizione attiva nella UI.
+
+Niente testi fissi sull'edizione: le pagine pubbliche e `/dati` leggono l'edizione corrente; biglietto, email e check-in usano l'edizione del biglietto (un biglietto di un'altra edizione non fa check-in). I meta di `index.html` sono neutri perché i social non eseguono JavaScript. Anche i task sono per edizione (migration 0007); team, canvas (non più raggiungibile dalla UI), espositori e categorie restano globali.
 
 ### Stato e dati
 - Stores Zustand in `packages/web/src/stores/` (uno per dominio: `eventsStore`, `artistsStore`, `mediaStore`, ...). Ogni feature legge/scrive il proprio store, non chiama direttamente `api.ts` da un componente.
@@ -63,6 +70,9 @@ Sul frontend l'helper `withEdition(path, slug)` in `packages/web/src/lib/api.ts`
 
 ### Quirk noto
 `packages/api/src/index.ts` ha un middleware che riscrive al volo nelle response JSON i vecchi URL `coincidenze-api.lamaz7.workers.dev` → `api.coincidenze.org`, perché alcuni `image_url` salvati in DB prima dello switch al custom domain puntano ancora lì. Da rimuovere quando il DB sarà ripulito.
+
+### Header di sicurezza
+CSP e Permissions-Policy del sito stanno in `packages/web/public/_headers`. Librerie e font sono nel bundle (html5-qrcode, qrcode-generator, Fontsource): niente CDN per gli script. Esterni ammessi: Cloudflare Web Analytics, player YouTube/Vimeo/SoundCloud (react-player), iframe di Google Maps, immagini QR da api.qrserver.com. Una nuova risorsa esterna va aggiunta alla CSP, altrimenti il browser la blocca senza errori visibili.
 
 ## Convenzioni
 - Lingua UI: italiano. Identificatori in inglese (camelCase variabili, PascalCase componenti).

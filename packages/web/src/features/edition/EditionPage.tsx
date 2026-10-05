@@ -16,7 +16,8 @@ export function EditionPage({ slug }: { slug: string }) {
   const editions = useEditionsStore((s) => s.editions)
   const editionsLoaded = useEditionsStore((s) => s.loaded)
   const fetchEditions = useEditionsStore((s) => s.fetch)
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  // Testi e galleria delle pagine pubbliche li modifica solo l'admin
+  const isAdmin = useAuthStore((s) => s.role === 'admin')
   const checkAuth = useAuthStore((s) => s.checkAuth)
 
   useEffect(() => {
@@ -25,6 +26,11 @@ export function EditionPage({ slug }: { slug: string }) {
   }, [checkAuth, fetchEditions])
 
   const edition = editions.find((e) => e.slug === slug) || null
+
+  // Titolo della scheda del browser con l'edizione mostrata
+  useEffect(() => {
+    if (edition) document.title = `COINCIDENZE ${edition.year} · ${edition.name}`
+  }, [edition])
 
   if (!editionsLoaded) {
     return (
@@ -39,6 +45,6 @@ export function EditionPage({ slug }: { slug: string }) {
   }
 
   return edition.is_current === 1
-    ? <CurrentEdition edition={edition} isAuthenticated={isAuthenticated} />
-    : <PastEdition edition={edition} isAuthenticated={isAuthenticated} />
+    ? <CurrentEdition edition={edition} isAuthenticated={isAdmin} />
+    : <PastEdition edition={edition} isAuthenticated={isAdmin} />
 }

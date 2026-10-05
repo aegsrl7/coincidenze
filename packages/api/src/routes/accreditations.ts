@@ -1,8 +1,6 @@
 import { Hono } from 'hono'
-import { getCookie } from 'hono/cookie'
-import type { Context } from 'hono'
 import type { Env } from '../index'
-import { verifyToken } from './auth'
+import { isAdmin, deny } from '../middleware/auth'
 import { sendEmail, buildTicketEmail, buildAdminNotificationEmail } from '../lib/email'
 import { resolveEdition, getCurrentEdition } from '../lib/edition'
 
@@ -10,13 +8,6 @@ const ADMIN_NOTIFICATION_TO = 'coincidenze.arte@gmail.com'
 
 export const accreditationsRoutes = new Hono<Env>()
 
-async function isAuthed(c: Context<Env>): Promise<boolean> {
-  const token = getCookie(c, 'auth_token')
-  if (!token) return false
-  const secret = c.env.AUTH_SECRET
-  if (!secret) return false
-  return verifyToken(token, secret)
-}
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -106,7 +97,7 @@ accreditationsRoutes.post('/', async (c) => {
   const base = c.env.PUBLIC_BASE_URL?.replace(/\/$/, '') || 'https://coincidenze.org'
   const ticketUrl = `${base}/biglietto/${ticketCode}`
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=440x440&margin=10&data=${encodeURIComponent(ticketUrl)}`
-  const ticketEmail = buildTicketEmail({ name: `${name} ${surname}`, ticketUrl, qrUrl })
+  const ticketEmail = buildTicketEmail({ name: `${name} ${surname}`, ticketUrl, qrUrl, edition })
 
   const totalRow = await db
     .prepare('SELECT COUNT(*) as c FROM accreditations WHERE edition_id = ?')
@@ -170,7 +161,7 @@ accreditationsRoutes.get('/by-code/:code', async (c) => {
 
 // GET / — admin: lista (filtrata per edizione, default = corrente o ?edition=slug)
 accreditationsRoutes.get('/', async (c) => {
-  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+  if (!isAdmin(c)) return deny(c)
   const edition = await resolveEdition(c)
   const editionId = edition?.id ?? null
   const { results } = editionId
@@ -182,15 +173,20 @@ accreditationsRoutes.get('/', async (c) => {
   return c.json(results)
 })
 
-// POST /:code/check-in — pubblico
+// POST /:code/check-in — pubblico, valido solo per l'edizione corrente
 accreditationsRoutes.post('/:code/check-in', async (c) => {
   const code = c.req.param('code')
   const row = await c.env.DB
-    .prepare('SELECT id, checked_in_at FROM accreditations WHERE ticket_code = ?')
+    .prepare('SELECT id, edition_id, checked_in_at FROM accreditations WHERE ticket_code = ?')
     .bind(code)
-    .first<{ id: string; checked_in_at: string | null }>()
+    .first<{ id: string; edition_id: string | null; checked_in_at: string | null }>()
 
   if (!row) return c.json({ error: 'Biglietto non trovato' }, 404)
+
+  const current = await getCurrentEdition(c.env.DB)
+  if (current && row.edition_id && row.edition_id !== current.id) {
+    return c.json({ error: `Biglietto non valido per ${current.name}` }, 409)
+  }
 
   const alreadyCheckedIn = row.checked_in_at !== null
   const now = new Date().toISOString()
@@ -216,7 +212,7 @@ accreditationsRoutes.post('/:code/check-in', async (c) => {
 
 // POST /:code/uncheck-in — admin
 accreditationsRoutes.post('/:code/uncheck-in', async (c) => {
-  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+  if (!isAdmin(c)) return deny(c)
 
   const code = c.req.param('code')
   const row = await c.env.DB
@@ -243,7 +239,7 @@ accreditationsRoutes.post('/:code/uncheck-in', async (c) => {
 
 // DELETE /:id — admin
 accreditationsRoutes.delete('/:id', async (c) => {
-  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+  if (!isAdmin(c)) return deny(c)
 
   const id = c.req.param('id')
   await c.env.DB.prepare('DELETE FROM accreditations WHERE id = ?').bind(id).run()

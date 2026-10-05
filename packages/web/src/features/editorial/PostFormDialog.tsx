@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useIsAdmin } from '@/stores/authStore'
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,7 @@ interface PostFormDialogProps {
 export function PostFormDialog({ open, onClose, editPost, defaultDate }: PostFormDialogProps) {
   const { createPost, updatePost, deletePost } = useEditorialStore()
   const isEditing = !!editPost
+  const isAdmin = useIsAdmin()
   const [saving, setSaving] = useState(false)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -230,7 +232,8 @@ export function PostFormDialog({ open, onClose, editPost, defaultDate }: PostFor
           </div>
 
           <div className="flex items-center justify-between pt-4">
-            {isEditing ? (
+            {/* Eliminare è solo dell'admin: l'agenzia crea e modifica */}
+            {isEditing && isAdmin ? (
               <Button
                 variant="outline"
                 className="text-red-600 hover:bg-red-50 hover:text-red-700"

@@ -8,6 +8,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useTasksStore } from '@/stores/tasksStore'
 import { useTeamStore } from '@/stores/teamStore'
 import { useAuthStore } from '@/stores/authStore'
+import { useAdminEditionSlug } from '@/stores/editionsStore'
 import { useCategoryMaps } from '@/stores/categoriesStore'
 import { type Task, type TeamMember } from '@/types'
 import { TaskFormDialog } from './TaskFormDialog'
@@ -37,10 +38,15 @@ export function TeamPage() {
   const [deleting, setDeleting] = useState(false)
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null)
 
+  // I task sono per edizione (selettore in alto), il team è unico
+  const adminSlug = useAdminEditionSlug()
   useEffect(() => {
-    fetchTasks()
+    fetchTasks(adminSlug)
+  }, [fetchTasks, adminSlug])
+
+  useEffect(() => {
     fetchMembers()
-  }, [fetchTasks, fetchMembers])
+  }, [fetchMembers])
 
   const getColumnTasks = (status: ColumnId) =>
     tasks.filter((t) => t.status === status)

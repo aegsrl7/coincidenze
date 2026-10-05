@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
+    "build": "tsc --noEmit",
     "deploy": "wrangler deploy",
     "db:migrate": "wrangler d1 execute coincidenze-db --local --file=src/db/schema.sql",
     "db:seed": "wrangler d1 execute coincidenze-db --local --file=src/db/seed.sql"

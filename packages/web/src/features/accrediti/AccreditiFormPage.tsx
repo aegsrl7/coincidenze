@@ -4,10 +4,14 @@ import { Loader2, CheckCircle2, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PublicFooter } from '@/components/PublicFooter'
+import { useEditionsStore } from '@/stores/editionsStore'
 import { api } from '@/lib/api'
+import { editionDateLine } from '@/lib/utils'
 
 export function AccreditiFormPage() {
   const navigate = useNavigate()
+  // AccreditiGate mostra la form solo se l'edizione corrente ha gli accrediti aperti
+  const current = useEditionsStore((s) => s.current)
 
   const [name, setName] = useState('')
   const [surname, setSurname] = useState('')
@@ -67,7 +71,7 @@ export function AccreditiFormPage() {
     <div className="min-h-screen bg-beige">
       <div className="max-w-xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <Link
-          to="/edizione-1"
+          to="/"
           className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-navy transition-colors mb-6"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -80,10 +84,12 @@ export function AccreditiFormPage() {
             alt="COINCIDENZE — raffinate casualità, occhi attenti"
             className="w-full max-w-[280px] mx-auto mb-4"
           />
-          <p className="text-viola italic">Edizione 1 &middot; Accrediti</p>
-          <p className="text-sm text-ink-muted mt-2">
-            25 aprile 2026 &middot; Marsam Locanda, Bene Vagienna
-          </p>
+          <p className="text-viola italic">{current ? `${current.name} · ` : ''}Accrediti</p>
+          {current && (
+            <p className="text-sm text-ink-muted mt-2">
+              {editionDateLine(current)} &middot; {current.hero_location}
+            </p>
+          )}
           <p className="text-sm text-ink-light mt-4 leading-relaxed">
             L'ingresso è gratuito. Registrati per ricevere il tuo biglietto:
             all'arrivo lo riapri dal link nell'email e tappi <strong>Sono arrivato</strong>.

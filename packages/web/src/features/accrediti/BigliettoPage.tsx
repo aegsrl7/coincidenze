@@ -3,11 +3,14 @@ import { useParams, useLocation, Link } from 'react-router-dom'
 import { Loader2, CheckCircle2, AlertCircle, ArrowLeft, Calendar, MapPin, Clock, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PublicFooter } from '@/components/PublicFooter'
-import { useAuthStore } from '@/stores/authStore'
+import { useAuthStore, useIsAdmin } from '@/stores/authStore'
+import { useEditionsStore } from '@/stores/editionsStore'
 import { api } from '@/lib/api'
+import { editionDateLine } from '@/lib/utils'
 
 interface Ticket {
   id: string
+  edition_id?: string | null
   ticket_code: string
   name: string
   surname: string
@@ -42,8 +45,11 @@ export function BigliettoPage() {
   const location = useLocation()
   const stateTicket = (location.state as { ticket?: Ticket } | null)?.ticket ?? null
 
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const isAdmin = useIsAdmin()
   const checkAuth = useAuthStore((s) => s.checkAuth)
+  const editions = useEditionsStore((s) => s.editions)
+  const editionsLoaded = useEditionsStore((s) => s.loaded)
+  const fetchEditions = useEditionsStore((s) => s.fetch)
 
   // Se arriviamo dalla form (POST appena fatta), il record è già nello state
   // → niente GET, niente race con D1.
@@ -52,10 +58,12 @@ export function BigliettoPage() {
   const [error, setError] = useState('')
   const [checkingIn, setCheckingIn] = useState(false)
   const [checkInFlash, setCheckInFlash] = useState<'none' | 'now' | 'already'>('none')
+  const [actionError, setActionError] = useState('')
 
   useEffect(() => {
     checkAuth()
-  }, [checkAuth])
+    fetchEditions()
+  }, [checkAuth, fetchEditions])
 
   useEffect(() => {
     if (!code) return
@@ -71,10 +79,13 @@ export function BigliettoPage() {
   const handleCheckIn = async () => {
     if (!code) return
     setCheckingIn(true)
+    setActionError('')
     try {
       const res = await api.checkInAccreditation(code)
       setCheckInFlash(res.already_checked_in ? 'already' : 'now')
       if (res.accreditation) setTicket(res.accreditation)
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Check-in non riuscito')
     } finally {
       setCheckingIn(false)
     }
@@ -83,10 +94,13 @@ export function BigliettoPage() {
   const handleUncheckIn = async () => {
     if (!code) return
     setCheckingIn(true)
+    setActionError('')
     try {
       const res = await api.uncheckInAccreditation(code)
       setCheckInFlash('none')
       if (res.accreditation) setTicket(res.accreditation)
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Operazione non riuscita')
     } finally {
       setCheckingIn(false)
     }
@@ -110,7 +124,7 @@ export function BigliettoPage() {
             Controlla il link o contatta l'organizzazione.
           </p>
           <Link
-            to="/edizione-1"
+            to="/"
             className="inline-flex items-center gap-1.5 text-sm text-viola hover:underline mt-6"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -128,11 +142,17 @@ export function BigliettoPage() {
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=420x420&margin=10&data=${encodeURIComponent(ticketUrl)}`
   const isCheckedIn = ticket.checked_in_at !== null
 
+  // Il biglietto mostra la sua edizione, non quella corrente: un biglietto 2026
+  // riaperto nel 2027 deve dire 2026 e non permettere il check-in.
+  const edition = editions.find((e) => e.id === ticket.edition_id) ?? null
+  const isOtherEdition = edition !== null && edition.is_current !== 1
+  const canSelfCheckIn = editionsLoaded && !isOtherEdition
+
   return (
     <div className="min-h-screen bg-beige">
       <div className="max-w-md mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <Link
-          to="/edizione-1"
+          to={edition ? `/${edition.slug}` : '/'}
           className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-navy transition-colors mb-6"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -144,7 +164,7 @@ export function BigliettoPage() {
           <div className="bg-navy text-white px-6 py-5 text-center">
             <p className="font-display text-2xl font-semibold">COINCIDENZE</p>
             <p className="text-xs opacity-80 tracking-wider uppercase mt-0.5">
-              Edizione 1 · Biglietto di accredito
+              {edition ? `${edition.name} · ` : ''}Biglietto di accredito
             </p>
           </div>
 
@@ -182,13 +202,21 @@ export function BigliettoPage() {
             </div>
           </div>
 
-          <p className="text-center text-xs text-ink-muted px-6 mb-2">
-            All'arrivo, conferma il check-in qui sotto.
-          </p>
+          {canSelfCheckIn && !isCheckedIn && (
+            <p className="text-center text-xs text-ink-muted px-6 mb-2">
+              All'arrivo, conferma il check-in qui sotto.
+            </p>
+          )}
 
-          {/* Self check-in pubblico */}
+          {/* Self check-in pubblico, solo per l'edizione corrente */}
           <div className="px-6 pb-6">
-            {!isCheckedIn ? (
+            {isOtherEdition && !isCheckedIn ? (
+              <div className="bg-navy/5 border border-navy/10 rounded-xl px-4 py-3 text-center">
+                <p className="text-sm text-ink-light">
+                  Questo biglietto era per {edition?.name}.
+                </p>
+              </div>
+            ) : !isCheckedIn ? (
               <Button
                 onClick={handleCheckIn}
                 disabled={checkingIn}
@@ -211,17 +239,23 @@ export function BigliettoPage() {
             )}
           </div>
 
+          {actionError && (
+            <p className="px-6 pb-4 -mt-2 text-sm text-bordeaux text-center">{actionError}</p>
+          )}
+
           {/* Info evento */}
-          <div className="border-t border-navy/10 px-6 py-5 space-y-2 text-sm">
-            <div className="flex items-center gap-2 text-ink-light">
-              <Calendar className="h-4 w-4 text-navy/60 shrink-0" />
-              <span>Sabato 25 aprile 2026</span>
+          {edition && (
+            <div className="border-t border-navy/10 px-6 py-5 space-y-2 text-sm">
+              <div className="flex items-center gap-2 text-ink-light">
+                <Calendar className="h-4 w-4 text-navy/60 shrink-0" />
+                <span>{editionDateLine(edition)}</span>
+              </div>
+              <div className="flex items-center gap-2 text-ink-light">
+                <MapPin className="h-4 w-4 text-navy/60 shrink-0" />
+                <span>{edition.hero_location}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-ink-light">
-              <MapPin className="h-4 w-4 text-navy/60 shrink-0" />
-              <span>Marsam Locanda, Bene Vagienna</span>
-            </div>
-          </div>
+          )}
 
           {/* Codice */}
           <div className="bg-beige/60 border-t border-navy/10 px-6 py-4 text-center">
@@ -233,8 +267,8 @@ export function BigliettoPage() {
             </p>
           </div>
 
-          {/* Azioni admin (solo per staff loggato): annulla check-in */}
-          {isAuthenticated && isCheckedIn && (
+          {/* Azioni admin: annulla check-in */}
+          {isAdmin && isCheckedIn && (
             <div className="border-t border-navy/10 px-6 py-4 space-y-2 bg-navy/3">
               <p className="text-[10px] uppercase tracking-wider text-ink-muted text-center">
                 Gestione staff
@@ -253,10 +287,12 @@ export function BigliettoPage() {
           )}
         </div>
 
-        <p className="text-xs text-ink-muted text-center mt-6 leading-relaxed">
-          Salva questa pagina nei preferiti o tienila aperta sull'email.
-          All'arrivo a Marsam, riaprila e tappa <strong>Sono arrivato</strong>.
-        </p>
+        {!isOtherEdition && (
+          <p className="text-xs text-ink-muted text-center mt-6 leading-relaxed">
+            Salva questa pagina nei preferiti o tienila aperta sull'email.
+            All'arrivo riaprila e tappa <strong>Sono arrivato</strong>.
+          </p>
+        )}
       </div>
       <PublicFooter />
     </div>

@@ -10,7 +10,7 @@ import { ArtistsPage } from '@/features/artists/ArtistsPage'
 import { PianoEditorialePage } from '@/features/editorial/PianoEditorialePage'
 import { EditionPage } from '@/features/edition/EditionPage'
 import { HomeRedirect } from '@/features/edition/HomeRedirect'
-import { ProgrammaInstagramPage } from '@/features/edizione1/ProgrammaInstagramPage'
+import { ProgrammaInstagramPage } from '@/features/programma/ProgrammaInstagramPage'
 import { BigliettoPage } from '@/features/accrediti/BigliettoPage'
 import { AccreditiGate } from '@/features/accrediti/AccreditiGate'
 import { AdminAccreditiPage } from '@/features/accrediti/AdminAccreditiPage'
@@ -59,22 +59,26 @@ export default function App() {
         <Route path="/media" element={<Navigate to="/admin/media" replace />} />
         <Route path="/piano-editoriale" element={<Navigate to="/admin/piano-editoriale" replace />} />
 
-        {/* Admin (protetto) */}
+        {/* Area riservata (protetta) */}
         <Route element={<RequireAuth />}>
           <Route element={<AppShell />}>
             <Route path="/admin" element={<Navigate to="/admin/programma" replace />} />
             <Route path="/admin/canvas" element={<Navigate to="/admin/programma" replace />} />
+            {/* Admin e agenzia */}
             <Route path="/admin/programma" element={<ProgrammaPage />} />
-            <Route path="/admin/team" element={<TeamPage />} />
             <Route path="/admin/artisti" element={<ArtistsPage />} />
             <Route path="/admin/media" element={<MediaPage />} />
             <Route path="/admin/piano-editoriale" element={<PianoEditorialePage />} />
-            <Route path="/admin/accrediti" element={<AdminAccreditiPage />} />
-            <Route path="/admin/check-in" element={<CheckInPage />} />
-            <Route path="/admin/spuntino" element={<AdminSpuntinoPage />} />
-            <Route path="/admin/menu" element={<AdminMenuPage />} />
-            <Route path="/admin/categorie" element={<AdminCategoriesPage />} />
-            <Route path="/admin/edizioni" element={<AdminEdizioniPage />} />
+            {/* Solo admin: dati personali e impostazioni */}
+            <Route element={<RequireAuth roles={['admin']} />}>
+              <Route path="/admin/team" element={<TeamPage />} />
+              <Route path="/admin/accrediti" element={<AdminAccreditiPage />} />
+              <Route path="/admin/check-in" element={<CheckInPage />} />
+              <Route path="/admin/spuntino" element={<AdminSpuntinoPage />} />
+              <Route path="/admin/menu" element={<AdminMenuPage />} />
+              <Route path="/admin/categorie" element={<AdminCategoriesPage />} />
+              <Route path="/admin/edizioni" element={<AdminEdizioniPage />} />
+            </Route>
           </Route>
         </Route>
 

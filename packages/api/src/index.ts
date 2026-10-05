@@ -16,7 +16,8 @@ import { accreditationsRoutes } from './routes/accreditations'
 import { spuntinoRoutes } from './routes/spuntino'
 import { menuRoutes } from './routes/menu'
 import { categoriesRoutes } from './routes/categories'
-import { requireAuth } from './middleware/auth'
+import { requireRole, ADMIN, STAFF } from './middleware/auth'
+import { getRequestRole, type Role } from './lib/session'
 import { sendEmail, buildReminderEmail } from './lib/email'
 
 const REMINDER_TO = 'coincidenze.arte@gmail.com'
@@ -24,11 +25,18 @@ const REMINDER_TO = 'coincidenze.arte@gmail.com'
 export type Env = {
   Bindings: {
     DB: D1Database
+    /** Password admin e chiave di firma delle sessioni */
     AUTH_SECRET: string
+    /** Password dell'agenzia social/marketing. Se assente, il ruolo agency è disattivato. */
+    AGENCY_PASSWORD?: string
     MEDIA_BUCKET: R2Bucket
     RESEND_API_KEY?: string
     RESEND_FROM?: string
     PUBLIC_BASE_URL?: string
+  }
+  Variables: {
+    /** Ruolo della sessione, null se la richiesta è anonima */
+    role: Role | null
   }
 }
 
@@ -47,7 +55,8 @@ app.use('/api/*', cors({
     ) return origin
     return 'https://coincidenze.org'
   },
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  // PATCH serve a /api/editions/:id (modifica edizione, apri/chiudi accrediti e spuntino)
+  allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type'],
   credentials: true,
 }))
@@ -68,6 +77,12 @@ app.use('/api/*', async (c, next) => {
     status: c.res.status,
     headers: c.res.headers,
   })
+})
+
+// Ruolo della sessione per tutte le rotte /api/* (null = anonimo)
+app.use('/api/*', async (c, next) => {
+  c.set('role', await getRequestRole(c))
+  await next()
 })
 
 // Health check
@@ -91,17 +106,19 @@ app.route('/api/accrediti', accreditationsRoutes)
 // Spuntino delle 18 (auth per-route: POST e GET /capacity pubblici, resto admin)
 app.route('/api/spuntino', spuntinoRoutes)
 
-// Protected routes (requireAuth only blocks POST/PUT/DELETE)
-app.use('/api/events/*', requireAuth)
-app.use('/api/artists/*', requireAuth)
-app.use('/api/exhibitors/*', requireAuth)
-app.use('/api/tasks/*', requireAuth)
-app.use('/api/team/*', requireAuth)
-app.use('/api/media/*', requireAuth)
-app.use('/api/canvas/*', requireAuth)
-app.use('/api/editorial/*', requireAuth)
-app.use('/api/menu/*', requireAuth)
-app.use('/api/categories/*', requireAuth)
+// Permessi per gruppo. Lettura 'public' solo per quello che serve alle pagine
+// pubbliche; l'agenzia (STAFF) crea e modifica programma, artisti, media e piano
+// editoriale, ma non cancella.
+app.use('/api/events/*', requireRole({ read: 'public', write: STAFF, remove: ADMIN }))
+app.use('/api/artists/*', requireRole({ read: 'public', write: STAFF, remove: ADMIN }))
+app.use('/api/media/*', requireRole({ read: 'public', write: STAFF, remove: ADMIN }))
+app.use('/api/editorial/*', requireRole({ read: STAFF, write: STAFF, remove: ADMIN }))
+app.use('/api/menu/*', requireRole({ read: 'public', write: ADMIN }))
+app.use('/api/categories/*', requireRole({ read: 'public', write: ADMIN }))
+app.use('/api/exhibitors/*', requireRole({ read: ADMIN, write: ADMIN }))
+app.use('/api/tasks/*', requireRole({ read: ADMIN, write: ADMIN }))
+app.use('/api/team/*', requireRole({ read: ADMIN, write: ADMIN }))
+app.use('/api/canvas/*', requireRole({ read: ADMIN, write: ADMIN }))
 
 // Routes
 app.route('/api/events', eventsRoutes)

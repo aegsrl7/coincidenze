@@ -1,28 +1,48 @@
+import type { Context } from 'hono'
 import { createMiddleware } from 'hono/factory'
-import { getCookie } from 'hono/cookie'
 import type { Env } from '../index'
-import { verifyToken } from '../routes/auth'
+import type { Role } from '../lib/session'
 
-export const requireAuth = createMiddleware<Env>(async (c, next) => {
-  // Only protect write operations
-  if (c.req.method === 'GET') {
+export const ADMIN: Role[] = ['admin']
+/** Admin più agenzia social/marketing. */
+export const STAFF: Role[] = ['admin', 'agency']
+
+interface Access {
+  /** Chi può leggere (GET). 'public' = anche senza login. */
+  read: Role[] | 'public'
+  /** Chi può scrivere (POST/PUT/PATCH, e DELETE se `remove` non è indicato). */
+  write: Role[]
+  /** Chi può cancellare (DELETE). Se assente vale `write`. */
+  remove?: Role[]
+}
+
+/**
+ * Controllo d'accesso per gruppo di rotte. Il ruolo arriva da `c.get('role')`,
+ * impostato in index.ts per tutte le richieste /api/*.
+ * Le OPTIONS di preflight le chiude prima il middleware CORS.
+ */
+export function requireRole(access: Access) {
+  return createMiddleware<Env>(async (c, next) => {
+    const isRead = c.req.method === 'GET' || c.req.method === 'HEAD'
+    const allowed = isRead
+      ? access.read
+      : c.req.method === 'DELETE' && access.remove ? access.remove : access.write
+    if (allowed === 'public') return next()
+
+    const role = c.get('role')
+    if (!role) return c.json({ error: 'Non autenticato' }, 401)
+    if (!allowed.includes(role)) return c.json({ error: 'Non autorizzato' }, 403)
     return next()
-  }
+  })
+}
 
-  const token = getCookie(c, 'auth_token')
-  if (!token) {
-    return c.json({ error: 'Non autenticato' }, 401)
-  }
+export function isAdmin(c: Context<Env>): boolean {
+  return c.get('role') === 'admin'
+}
 
-  const secret = c.env.AUTH_SECRET
-  if (!secret) {
-    return c.json({ error: 'AUTH_SECRET non configurato' }, 500)
-  }
-
-  const valid = await verifyToken(token, secret)
-  if (!valid) {
-    return c.json({ error: 'Sessione scaduta' }, 401)
-  }
-
-  return next()
-})
+/** Risposta per chi non può: 401 se anonimo, 403 se loggato con un ruolo insufficiente. */
+export function deny(c: Context<Env>) {
+  return c.get('role')
+    ? c.json({ error: 'Non autorizzato' }, 403)
+    : c.json({ error: 'Non autenticato' }, 401)
+}

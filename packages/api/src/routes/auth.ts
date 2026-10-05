@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
-import { setCookie, getCookie, deleteCookie } from 'hono/cookie'
+import { setCookie, deleteCookie } from 'hono/cookie'
 import type { Env } from '../index'
+import { createToken, getRequestRole, safeEqual, type Role } from '../lib/session'
 
 export const authRoutes = new Hono<Env>()
 
@@ -15,12 +16,12 @@ function clientIp(c: { req: { header: (n: string) => string | undefined } }): st
   )
 }
 
-// POST /auth/login
+// POST /auth/login — la password decide il ruolo: AUTH_SECRET = admin, AGENCY_PASSWORD = agenzia
 authRoutes.post('/login', async (c) => {
-  const { password } = await c.req.json().catch(() => ({}))
-  const secret = c.env.AUTH_SECRET
+  const body = (await c.req.json().catch(() => ({}))) as { password?: unknown }
+  const password = typeof body.password === 'string' ? body.password : ''
 
-  if (!secret) {
+  if (!c.env.AUTH_SECRET) {
     return c.json({ error: 'AUTH_SECRET non configurato' }, 500)
   }
 
@@ -38,7 +39,11 @@ authRoutes.post('/login', async (c) => {
     )
   }
 
-  if (password !== secret) {
+  let role: Role | null = null
+  if (password && safeEqual(password, c.env.AUTH_SECRET)) role = 'admin'
+  else if (password && c.env.AGENCY_PASSWORD && safeEqual(password, c.env.AGENCY_PASSWORD)) role = 'agency'
+
+  if (!role) {
     await c.env.DB
       .prepare("INSERT INTO login_attempts (ip, failed_at) VALUES (?, datetime('now'))")
       .bind(ip)
@@ -49,18 +54,8 @@ authRoutes.post('/login', async (c) => {
   // Login OK: pulisci i fallimenti pregressi per questo IP.
   await c.env.DB.prepare('DELETE FROM login_attempts WHERE ip = ?').bind(ip).run()
 
-  // Create a session token (HMAC-based)
-  const encoder = new TextEncoder()
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  )
-  const timestamp = Date.now().toString()
-  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(timestamp))
-  const token = `${timestamp}.${btoa(String.fromCharCode(...new Uint8Array(signature)))}`
+  const token = await createToken(c.env, role)
+  if (!token) return c.json({ error: 'Configurazione sessione mancante' }, 500)
 
   const isLocal = new URL(c.req.url).hostname === 'localhost'
   setCookie(c, 'auth_token', token, {
@@ -71,7 +66,7 @@ authRoutes.post('/login', async (c) => {
     maxAge: 60 * 60 * 24 * 7, // 7 days
   })
 
-  return c.json({ authenticated: true })
+  return c.json({ authenticated: true, role })
 })
 
 // POST /auth/logout
@@ -82,46 +77,11 @@ authRoutes.post('/logout', async (c) => {
     secure: !isLocal,
     sameSite: isLocal ? 'Lax' : 'None',
   })
-  return c.json({ authenticated: false })
+  return c.json({ authenticated: false, role: null })
 })
 
 // GET /auth/me
 authRoutes.get('/me', async (c) => {
-  const token = getCookie(c, 'auth_token')
-  if (!token) {
-    return c.json({ authenticated: false })
-  }
-
-  const secret = c.env.AUTH_SECRET
-  if (!secret) {
-    return c.json({ authenticated: false })
-  }
-
-  const valid = await verifyToken(token, secret)
-  return c.json({ authenticated: valid })
+  const role = await getRequestRole(c)
+  return c.json({ authenticated: role !== null, role })
 })
-
-export async function verifyToken(token: string, secret: string): Promise<boolean> {
-  try {
-    const [timestamp, sig] = token.split('.')
-    if (!timestamp || !sig) return false
-
-    // Token expires after 7 days
-    const age = Date.now() - parseInt(timestamp)
-    if (age > 7 * 24 * 60 * 60 * 1000) return false
-
-    const encoder = new TextEncoder()
-    const key = await crypto.subtle.importKey(
-      'raw',
-      encoder.encode(secret),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['verify']
-    )
-
-    const sigBytes = Uint8Array.from(atob(sig), (c) => c.charCodeAt(0))
-    return await crypto.subtle.verify('HMAC', key, sigBytes, encoder.encode(timestamp))
-  } catch {
-    return false
-  }
-}

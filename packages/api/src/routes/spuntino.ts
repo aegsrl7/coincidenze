@@ -1,8 +1,6 @@
 import { Hono } from 'hono'
-import { getCookie } from 'hono/cookie'
-import type { Context } from 'hono'
 import type { Env } from '../index'
-import { verifyToken } from './auth'
+import { isAdmin, deny } from '../middleware/auth'
 import { sendEmail, buildSpuntinoEmail, buildSpuntinoAdminNotificationEmail } from '../lib/email'
 import { resolveEdition, getCurrentEdition } from '../lib/edition'
 
@@ -10,13 +8,6 @@ export const spuntinoRoutes = new Hono<Env>()
 
 const ADMIN_NOTIFICATION_TO = 'coincidenze.arte@gmail.com'
 
-async function isAuthed(c: Context<Env>): Promise<boolean> {
-  const token = getCookie(c, 'auth_token')
-  if (!token) return false
-  const secret = c.env.AUTH_SECRET
-  if (!secret) return false
-  return verifyToken(token, secret)
-}
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -52,7 +43,7 @@ spuntinoRoutes.get('/status', async (c) => {
 // PUT /status — admin: cambia spuntino_open dell'edizione corrente
 // (workflow legacy; oggi consigliamo PATCH /editions/:id)
 spuntinoRoutes.put('/status', async (c) => {
-  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+  if (!isAdmin(c)) return deny(c)
   const edition = await getCurrentEdition(c.env.DB)
   if (!edition) return c.json({ error: 'Nessuna edizione attiva' }, 503)
   const body = (await c.req.json().catch(() => ({}))) as { open?: unknown }
@@ -115,7 +106,7 @@ spuntinoRoutes.post('/', async (c) => {
 
   const totalBookedSeats = await sumSeats(c.env.DB, edition.id)
 
-  const participantEmail = buildSpuntinoEmail({ name: `${name} ${surname}`, seats })
+  const participantEmail = buildSpuntinoEmail({ name: `${name} ${surname}`, seats, edition })
   const adminEmail = buildSpuntinoAdminNotificationEmail({
     name, surname, email, phone, seats, notes, totalBookedSeats,
   })
@@ -142,7 +133,7 @@ spuntinoRoutes.post('/', async (c) => {
 
 // GET / — admin: lista (filtrata per edizione, default = corrente o ?edition=slug)
 spuntinoRoutes.get('/', async (c) => {
-  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+  if (!isAdmin(c)) return deny(c)
   const edition = await resolveEdition(c)
   const { results } = edition
     ? await c.env.DB
@@ -154,7 +145,7 @@ spuntinoRoutes.get('/', async (c) => {
 })
 
 spuntinoRoutes.put('/:id', async (c) => {
-  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+  if (!isAdmin(c)) return deny(c)
   const id = c.req.param('id')
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>
 
@@ -192,7 +183,7 @@ spuntinoRoutes.put('/:id', async (c) => {
 })
 
 spuntinoRoutes.delete('/:id', async (c) => {
-  if (!(await isAuthed(c))) return c.json({ error: 'Non autenticato' }, 401)
+  if (!isAdmin(c)) return deny(c)
   const id = c.req.param('id')
   await c.env.DB.prepare('DELETE FROM spuntino_bookings WHERE id = ?').bind(id).run()
   return c.json({ ok: true })
