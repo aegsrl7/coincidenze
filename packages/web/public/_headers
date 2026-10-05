@@ -5,3 +5,10 @@
   Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com https://www.youtube.com https://player.vimeo.com https://w.soundcloud.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://api.coincidenze.org https://api.qrserver.com https://i.ytimg.com https://img.youtube.com; media-src 'self' blob: https://api.coincidenze.org; font-src 'self' data:; connect-src 'self' https://api.coincidenze.org https://cloudflareinsights.com; frame-src https://www.google.com https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://w.soundcloud.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'
+
+# Service worker e manifest dell'app: sempre freschi, altrimenti la cache di Cloudflare
+# può trattenere una versione vecchia (o la pagina HTML servita prima che il file esistesse)
+/sw.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache
