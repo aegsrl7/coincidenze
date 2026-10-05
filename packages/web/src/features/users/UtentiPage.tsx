@@ -98,7 +98,7 @@ export function UtentiPage() {
             <thead>
               <tr className="text-left text-xs uppercase tracking-wider text-ink-muted border-b border-navy/10">
                 <th className="px-3 py-2 font-medium">Utente</th>
-                <th className="px-3 py-2 font-medium">Ruolo</th>
+                <th className="px-3 py-2 font-medium hidden sm:table-cell">Ruolo</th>
                 <th className="px-3 py-2 font-medium">Stato</th>
                 <th className="px-3 py-2 font-medium hidden md:table-cell">Ultimo accesso</th>
                 <th className="px-3 py-2" />
@@ -109,9 +109,10 @@ export function UtentiPage() {
                 <tr key={u.id} className="border-b border-navy/5 last:border-0">
                   <td className="px-3 py-2.5">
                     <p className="font-medium text-navy">{u.name}{u.id === me?.id && <span className="ml-1.5 text-xs text-viola">(tu)</span>}</p>
-                    <p className="text-xs text-ink-muted">{u.email}</p>
+                    <p className="text-xs text-ink-muted break-all">{u.email}</p>
+                    <p className="text-xs text-ink-light sm:hidden">{u.role.name}</p>
                   </td>
-                  <td className="px-3 py-2.5 text-ink-light">{u.role.name}</td>
+                  <td className="px-3 py-2.5 text-ink-light hidden sm:table-cell">{u.role.name}</td>
                   <td className="px-3 py-2.5">
                     <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs ${STATUS_STYLE[u.status]}`}>{u.status}</span>
                   </td>

@@ -4,6 +4,7 @@ import { deny } from '../middleware/auth'
 import { can } from '../lib/session'
 import { sendEmail, buildSpuntinoEmail, buildSpuntinoAdminNotificationEmail } from '../lib/email'
 import { resolveEdition, getCurrentEdition } from '../lib/edition'
+import { notifyPermission, inBackground } from '../lib/push'
 
 export const spuntinoRoutes = new Hono<Env>()
 
@@ -106,6 +107,14 @@ spuntinoRoutes.post('/', async (c) => {
     .run()
 
   const totalBookedSeats = await sumSeats(c.env.DB, edition.id)
+
+  // Notifica sul telefono di chi segue lo spuntino
+  inBackground(c, notifyPermission(c.env, 'spuntino.view', {
+    title: 'Prenotazione spuntino',
+    body: `${name} ${surname}: ${seats} ${seats === 1 ? 'posto' : 'posti'} · ${totalBookedSeats} prenotati`,
+    url: '/admin/spuntino',
+    tag: 'spuntino',
+  }))
 
   const participantEmail = buildSpuntinoEmail({ name: `${name} ${surname}`, seats, edition })
   const adminEmail = buildSpuntinoAdminNotificationEmail({

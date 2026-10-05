@@ -18,6 +18,8 @@ import { menuRoutes } from './routes/menu'
 import { categoriesRoutes } from './routes/categories'
 import { usersRoutes } from './routes/users'
 import { rolesRoutes } from './routes/roles'
+import { pushRoutes } from './routes/push'
+import { notifyPermission } from './lib/push'
 import { requirePermission } from './middleware/auth'
 import { loadSessionUser, type SessionUser } from './lib/session'
 import { sendEmail, buildReminderEmail } from './lib/email'
@@ -31,6 +33,9 @@ export type Env = {
     AUTH_SECRET: string
     /** Chiave casuale che firma le sessioni. Non è una password: non la conosce nessuno. */
     SESSION_SECRET?: string
+    /** Chiavi VAPID per le notifiche push sul telefono (senza, le push tacciono) */
+    VAPID_PUBLIC_KEY?: string
+    VAPID_PRIVATE_KEY?: string
     MEDIA_BUCKET: R2Bucket
     RESEND_API_KEY?: string
     RESEND_FROM?: string
@@ -136,6 +141,8 @@ app.route('/api/menu', menuRoutes)
 app.route('/api/categories', categoriesRoutes)
 app.route('/api/users', usersRoutes)
 app.route('/api/roles', rolesRoutes)
+// Notifiche sul telefono: ogni utente loggato gestisce i propri dispositivi
+app.route('/api/push', pushRoutes)
 
 // Reminder giornaliero piano editoriale: cron fires alle 16 e 17 UTC,
 // qui filtriamo per ora locale Europe/Rome così copriamo CEST e CET.
@@ -164,6 +171,15 @@ async function scheduled(_event: ScheduledController, env: Env['Bindings']): Pro
 
   const { subject, html, text } = buildReminderEmail({ dateLabel, posts: results })
   await sendEmail(env, { to: REMINDER_TO, subject, html, text })
+
+  // Lo stesso promemoria sul telefono di chi vede il piano editoriale
+  const titles = results.map((p) => p.titolo).join(', ')
+  await notifyPermission(env, 'editoriale.view', {
+    title: results.length === 1 ? '1 post da pubblicare oggi' : `${results.length} post da pubblicare oggi`,
+    body: titles.length > 140 ? titles.slice(0, 137) + '...' : titles,
+    url: '/admin/piano-editoriale',
+    tag: `editoriale-${today}`,
+  })
 }
 
 export default {

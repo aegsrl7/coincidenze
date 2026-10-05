@@ -37,7 +37,7 @@ Push su `main` → GitHub Actions (`.github/workflows/deploy.yml`) deploya in pa
 - Pages (`coincidenze.org`) da `packages/web/dist`
 - Worker (`api.coincidenze.org`) da `packages/api`
 
-Secret del Worker: `AUTH_SECRET` (password condivisa, serve solo al primo amministratore), `SESSION_SECRET` (firma delle sessioni, casuale), `RESEND_API_KEY`.
+Secret del Worker: `AUTH_SECRET` (password condivisa, serve solo al primo amministratore), `SESSION_SECRET` (firma delle sessioni, casuale), `RESEND_API_KEY`, `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` (notifiche push; senza, le push tacciono).
 
 **Le migration D1 di produzione sono manuali**: applicare i file in `packages/api/src/db/migrations/NNNN_*.sql` con `wrangler d1 execute coincidenze-db --remote --file=...`, **prima** del push che porta il codice che le usa. Il 12 maggio 2026 il codice di 0004/0005 è andato online senza migration e il login ha risposto 500 fino al 5 ottobre. Prima di scrivere in prod prendere il punto di ripristino con `wrangler d1 time-travel info coincidenze-db` (con la wrangler 3 del progetto dà errore di autenticazione, usare la wrangler 4 globale).
 
@@ -73,6 +73,9 @@ Niente testi fissi sull'edizione: le pagine pubbliche e `/dati` leggono l'edizio
 
 ### Quirk noto
 `packages/api/src/index.ts` ha un middleware che riscrive al volo nelle response JSON i vecchi URL `coincidenze-api.lamaz7.workers.dev` → `api.coincidenze.org`, perché alcuni `image_url` salvati in DB prima dello switch al custom domain puntano ancora lì. Da rimuovere quando il DB sarà ripulito.
+
+### App installabile e notifiche push
+Stesso impianto di Cadenza (progetto APILATES): l'area riservata è una PWA. `public/manifest.webmanifest` (start `/admin`, icone `icon-192/512`, `icon-512-maskable`, `apple-touch-icon`) e `public/sw.js` (niente cache e niente fetch handler, solo push e tocco sulla notifica). Manifest, meta per iPhone e service worker li aggiunge `enableAppMode()` (`src/lib/pwa.ts`) solo in AppShell, login e `/accesso/:token`: il sito pubblico non è installabile. La scheda "App e notifiche" sta in `/admin/account`. Lato API: tabella `push_subscriptions` (migration 0009), rotte `/api/push/*`, invio cifrato con `@block65/webcrypto-web-push` in `lib/push.ts`; `notifyPermission(env, permesso, nota)` avvisa gli utenti il cui ruolo ha quel permesso (nuovo accredito → `accrediti.view`, prenotazione spuntino → `spuntino.view`, promemoria delle 18 → `editoriale.view`). Su iPhone le push funzionano solo con l'app aggiunta alla Home.
 
 ### Header di sicurezza
 CSP e Permissions-Policy del sito stanno in `packages/web/public/_headers`. Librerie e font sono nel bundle (html5-qrcode, qrcode-generator, Fontsource): niente CDN per gli script. Esterni ammessi: Cloudflare Web Analytics, player YouTube/Vimeo/SoundCloud (react-player), iframe di Google Maps, immagini QR da api.qrserver.com. Una nuova risorsa esterna va aggiunta alla CSP, altrimenti il browser la blocca senza errori visibili.

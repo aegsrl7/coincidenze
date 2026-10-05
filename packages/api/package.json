@@ -11,6 +11,7 @@
     "db:seed": "wrangler d1 execute coincidenze-db --local --file=src/db/seed.sql"
   },
   "dependencies": {
+    "@block65/webcrypto-web-push": "^2.0.0",
     "hono": "^4.7.4"
   },
   "devDependencies": {

@@ -164,7 +164,7 @@ export function AdminAccreditiPage() {
               <thead className="bg-navy/5 text-ink-light">
                 <tr>
                   <th className="text-left px-3 py-2 font-medium">Nome</th>
-                  <th className="text-left px-3 py-2 font-medium">Email</th>
+                  <th className="text-left px-3 py-2 font-medium hidden sm:table-cell">Email</th>
                   <th className="text-left px-3 py-2 font-medium hidden md:table-cell">Telefono</th>
                   <th className="text-left px-3 py-2 font-medium hidden sm:table-cell">Iscrizione</th>
                   <th className="text-left px-3 py-2 font-medium hidden md:table-cell">Consensi</th>
@@ -175,10 +175,12 @@ export function AdminAccreditiPage() {
               <tbody>
                 {filtered.map((a) => (
                   <tr key={a.id} className="border-t border-navy/5 hover:bg-navy/3">
-                    <td className="px-3 py-2 font-medium text-navy whitespace-nowrap">
-                      {a.name} {a.surname}
+                    <td className="px-3 py-2 font-medium text-navy">
+                      <span className="sm:whitespace-nowrap">{a.name} {a.surname}</span>
+                      {/* Su telefono l'email sta qui, la colonna Email è nascosta */}
+                      <span className="block sm:hidden text-xs font-normal text-ink-muted truncate max-w-[150px]">{a.email}</span>
                     </td>
-                    <td className="px-3 py-2 text-ink-light max-w-[180px] sm:max-w-none truncate">{a.email}</td>
+                    <td className="px-3 py-2 text-ink-light hidden sm:table-cell truncate">{a.email}</td>
                     <td className="px-3 py-2 text-ink-light hidden md:table-cell">{a.phone || '—'}</td>
                     <td className="px-3 py-2 text-ink-muted hidden sm:table-cell whitespace-nowrap">
                       {fmtDateTime(a.created_at)}

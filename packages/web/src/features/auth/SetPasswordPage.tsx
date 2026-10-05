@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuthStore } from '@/stores/authStore'
 import { api } from '@/lib/api'
+import { enableAppMode } from '@/lib/pwa'
 import { AuthCard, Field, PASSWORD_MIN } from './AuthCard'
 
 /** Pagina del link di invito o di reset: si sceglie la password e si entra. */
@@ -21,6 +22,7 @@ export function SetPasswordPage() {
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
+    enableAppMode()
     api.getAccessToken(token).then(setInfo).catch(() => setInvalid(true))
   }, [token])
 

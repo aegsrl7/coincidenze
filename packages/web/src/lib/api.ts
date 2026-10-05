@@ -113,6 +113,14 @@ export const api = {
     request<Role>(`/roles/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteRole: (id: string) => request<Ok>(`/roles/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
+  // Notifiche sul telefono (ogni utente i propri dispositivi)
+  getPushKey: () => request<{ key: string | null }>('/push/key'),
+  getPushStatus: (endpoint: string) => request<{ active: boolean }>(`/push/subscribe?endpoint=${encodeURIComponent(endpoint)}`),
+  subscribePush: (data: { endpoint?: string; keys?: Record<string, string>; ua: string }) =>
+    request<Ok>('/push/subscribe', { method: 'POST', body: JSON.stringify(data) }),
+  unsubscribePush: (endpoint: string) => request<Ok>(`/push/subscribe?endpoint=${encodeURIComponent(endpoint)}`, { method: 'DELETE' }),
+  testPush: () => request<{ sent: number; failed: number }>('/push/test', { method: 'POST' }),
+
   // Editions
   getEditions: () => request<Edition[]>('/editions'),
   getCurrentEdition: () => request<Edition>('/editions/current'),

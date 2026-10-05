@@ -4,6 +4,7 @@ import { deny } from '../middleware/auth'
 import { can } from '../lib/session'
 import { sendEmail, buildTicketEmail, buildAdminNotificationEmail } from '../lib/email'
 import { resolveEdition, getCurrentEdition } from '../lib/edition'
+import { notifyPermission, inBackground } from '../lib/push'
 
 const ADMIN_NOTIFICATION_TO = 'coincidenze.arte@gmail.com'
 
@@ -106,6 +107,14 @@ accreditationsRoutes.post('/', async (c) => {
     .first<{ c: number }>()
   const totalCount = totalRow?.c ?? 0
   const adminEmail = buildAdminNotificationEmail({ name, surname, email, phone, cap, totalCount })
+
+  // Notifica sul telefono di chi vede gli accrediti
+  inBackground(c, notifyPermission(c.env, 'accrediti.view', {
+    title: 'Nuovo accredito',
+    body: `${name} ${surname} · ${totalCount} ${totalCount === 1 ? 'iscritto' : 'iscritti'}`,
+    url: '/admin/accrediti',
+    tag: 'accredito',
+  }))
 
   const [emailRes, adminRes] = await Promise.all([
     sendEmail(c.env, { to: email, subject: ticketEmail.subject, html: ticketEmail.html, text: ticketEmail.text }),

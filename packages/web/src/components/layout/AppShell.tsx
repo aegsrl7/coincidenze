@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
+import { enableAppMode } from '@/lib/pwa'
 
 export function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  // Area riservata installabile come app (manifest + service worker)
+  useEffect(() => { enableAppMode() }, [])
 
   return (
     <div className="flex h-[100dvh] overflow-hidden bg-beige">

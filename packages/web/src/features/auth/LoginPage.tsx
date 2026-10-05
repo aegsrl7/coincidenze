@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuthStore } from '@/stores/authStore'
 import { api } from '@/lib/api'
+import { enableAppMode } from '@/lib/pwa'
 import { AuthCard, Field, PASSWORD_MIN } from './AuthCard'
 
 type Mode = 'checking' | 'login' | 'forgot' | 'setup'
@@ -18,6 +19,9 @@ export function LoginPage() {
   // Solo percorsi interni all'area riservata: niente redirect verso siti esterni
   const requested = new URLSearchParams(location.search).get('from') || ''
   const from = /^\/admin(\/|$)/.test(requested) ? requested : '/admin'
+
+  // L'app installata parte dal login: anche qui serve il manifest
+  useEffect(() => { enableAppMode() }, [])
 
   // Senza nessun amministratore attivo si apre il primo accesso
   useEffect(() => {

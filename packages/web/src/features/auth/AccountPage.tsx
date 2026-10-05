@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { useAuthStore } from '@/stores/authStore'
 import { api } from '@/lib/api'
 import { Field, PASSWORD_MIN } from './AuthCard'
+import { AppCard } from './AppCard'
 
 /** Il mio account: dati dell'utente e cambio password. */
 export function AccountPage() {
@@ -35,7 +36,7 @@ export function AccountPage() {
   return (
     <div className="p-4 sm:p-6 max-w-xl space-y-6">
       <section className="bg-white/60 rounded-xl border border-navy/10 p-5">
-        <dl className="grid grid-cols-[auto,1fr] gap-x-4 gap-y-2 text-sm">
+        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
           <dt className="text-ink-muted">Nome</dt>
           <dd className="text-navy font-medium">{user.name}</dd>
           <dt className="text-ink-muted">Email</dt>
@@ -45,6 +46,8 @@ export function AccountPage() {
         </dl>
         <p className="text-xs text-ink-muted mt-3">Nome, email e ruolo li cambia un amministratore dalla pagina Utenti.</p>
       </section>
+
+      <AppCard />
 
       <section className="bg-white/60 rounded-xl border border-navy/10 p-5">
         <h2 className="font-display text-lg font-semibold text-navy mb-3">Cambia password</h2>

@@ -221,7 +221,7 @@ export function AdminSpuntinoPage() {
               <thead className="bg-navy/5 text-ink-light">
                 <tr>
                   <th className="text-left px-3 py-2 font-medium">Nome</th>
-                  <th className="text-left px-3 py-2 font-medium">Email</th>
+                  <th className="text-left px-3 py-2 font-medium hidden sm:table-cell">Email</th>
                   <th className="text-left px-3 py-2 font-medium hidden md:table-cell">Telefono</th>
                   <th className="text-center px-3 py-2 font-medium">Posti</th>
                   <th className="text-left px-3 py-2 font-medium hidden lg:table-cell">Note</th>
@@ -292,8 +292,13 @@ export function AdminSpuntinoPage() {
                   }
                   return (
                   <tr key={b.id} className="border-t border-navy/5 hover:bg-navy/3">
-                    <td className="px-3 py-2 font-medium text-navy whitespace-nowrap">{b.name} {b.surname}</td>
-                    <td className="px-3 py-2 text-ink-light max-w-[180px] sm:max-w-none truncate">{b.email}</td>
+                    <td className="px-3 py-2 font-medium text-navy">
+                      <span className="sm:whitespace-nowrap">{b.name} {b.surname}</span>
+                      {/* Su telefono email e telefono stanno qui, le colonne sono nascoste */}
+                      <span className="block sm:hidden text-xs font-normal text-ink-muted truncate max-w-[150px]">{b.email}</span>
+                      {b.phone && <a href={`tel:${b.phone}`} className="block md:hidden text-xs font-normal text-viola">{b.phone}</a>}
+                    </td>
+                    <td className="px-3 py-2 text-ink-light hidden sm:table-cell truncate">{b.email}</td>
                     <td className="px-3 py-2 text-ink-light hidden md:table-cell">{b.phone || '\u2014'}</td>
                     <td className="px-3 py-2 text-center">
                       <span className="inline-flex items-center justify-center min-w-[28px] h-6 px-2 rounded-full bg-viola/10 text-viola text-xs font-semibold">

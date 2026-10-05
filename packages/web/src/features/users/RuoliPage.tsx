@@ -163,7 +163,7 @@ function RoleDialog({ role, catalog, onClose }: { role: Role | null; catalog: Pe
           {readOnly ? (
             <p className="text-sm text-ink-light">Il ruolo Amministratore ha sempre tutti i permessi e non si modifica.</p>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-[1fr,2fr]">
+            <div className="grid gap-3 sm:grid-cols-[1fr_2fr]">
               <div>
                 <label className="text-xs font-medium text-ink-muted">Nome</label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus required />
