@@ -1,39 +1,38 @@
 /**
  * Markdown essenziale per i testi interni (riunioni): titoli, elenchi puntati e numerati,
- * paragrafi, grassetto, corsivo, link. Tutto il testo viene prima escapato, quindi
- * l'HTML scritto a mano nel markdown non passa.
+ * paragrafi, grassetto, corsivo, link. Un solo parser per la pagina (MarkdownView, elementi
+ * React: l'HTML scritto a mano nel markdown resta testo) e per l'export PDF.
  */
 
-const escape = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+export type MdBlock =
+  | { type: 'heading'; level: number; text: string }
+  | { type: 'paragraph'; text: string }
+  | { type: 'list'; ordered: boolean; items: string[] }
 
-const safeUrl = (url: string) => (/^(https?:|mailto:|tel:|\/)/i.test(url) ? url : '#')
-
-// Riceve testo già escapato
-function inline(s: string): string {
-  return s
-    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, text, url) =>
-      `<a href="${safeUrl(url)}" target="_blank" rel="noopener noreferrer">${text}</a>`
-    )
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/(^|[^*\w])\*([^*\n]+?)\*(?!\w)/g, '$1<em>$2</em>')
+export interface MdSpan {
+  text: string
+  bold?: boolean
+  italic?: boolean
+  href?: string
 }
 
-export function renderMarkdown(src: string): string {
-  const out: string[] = []
+const safeUrl = (url: string) => (/^(https?:|mailto:|tel:|\/)/i.test(url) ? url : null)
+
+export function parseMarkdown(src: string): MdBlock[] {
+  const out: MdBlock[] = []
   let para: string[] = []
-  let list: { tag: 'ul' | 'ol'; items: string[] } | null = null
+  let list: { ordered: boolean; items: string[] } | null = null
 
   const flushPara = () => {
-    if (para.length) out.push(`<p>${inline(para.join('<br>'))}</p>`)
+    if (para.length) out.push({ type: 'paragraph', text: para.join('\n') })
     para = []
   }
   const flushList = () => {
-    if (list) out.push(`<${list.tag}>${list.items.map((i) => `<li>${inline(i)}</li>`).join('')}</${list.tag}>`)
+    if (list) out.push({ type: 'list', ...list })
     list = null
   }
 
-  for (const line of escape(src.replace(/\r\n/g, '\n')).split('\n')) {
+  for (const line of src.replace(/\r\n/g, '\n').split('\n')) {
     if (!line.trim()) {
       flushPara()
       flushList()
@@ -43,17 +42,15 @@ export function renderMarkdown(src: string): string {
     if (heading) {
       flushPara()
       flushList()
-      // # diventa h2: il titolo della pagina resta l'unico h1
-      const level = Math.min(heading[1].length + 1, 5)
-      out.push(`<h${level}>${inline(heading[2])}</h${level}>`)
+      out.push({ type: 'heading', level: heading[1].length, text: heading[2] })
       continue
     }
     const item = /^\s*(?:([-*])|\d+[.)])\s+(.*)$/.exec(line)
     if (item) {
       flushPara()
-      const tag = item[1] ? 'ul' : 'ol'
-      if (list && list.tag !== tag) flushList()
-      if (!list) list = { tag, items: [] }
+      const ordered = !item[1]
+      if (list && list.ordered !== ordered) flushList()
+      if (!list) list = { ordered, items: [] }
       list.items.push(item[2])
       continue
     }
@@ -67,10 +64,30 @@ export function renderMarkdown(src: string): string {
   }
   flushPara()
   flushList()
-  return out.join('\n')
+  return out
 }
 
-/** Classi Tailwind per un blocco di markdown renderizzato con renderMarkdown */
+// [testo](url) | **grassetto** | *corsivo* (l'asterisco non deve toccare lettere: 2*3 resta com'è)
+const INLINE = /\[([^\]]+)\]\(([^)\s]+)\)|\*\*([\s\S]+?)\*\*|(^|[^*\w])\*([^*\n]+?)\*(?!\w)/g
+
+export function parseInline(s: string): MdSpan[] {
+  const out: MdSpan[] = []
+  let last = 0
+  for (const m of s.matchAll(INLINE)) {
+    const start = m.index! + (m[5] !== undefined ? m[4].length : 0)
+    if (start > last) out.push({ text: s.slice(last, start) })
+    if (m[1] !== undefined) {
+      const href = safeUrl(m[2])
+      out.push(href ? { text: m[1], href } : { text: m[1] })
+    } else if (m[3] !== undefined) out.push({ text: m[3], bold: true })
+    else out.push({ text: m[5], italic: true })
+    last = m.index! + m[0].length
+  }
+  if (last < s.length) out.push({ text: s.slice(last) })
+  return out
+}
+
+/** Classi Tailwind per un blocco di markdown (MarkdownView) */
 export const MARKDOWN_CLASS =
   'text-sm text-ink-light leading-relaxed space-y-3 ' +
   // # → h2, ## → h3 (sezioni), ### → h4 (sottosezioni, in sans per staccarle dalle sezioni)

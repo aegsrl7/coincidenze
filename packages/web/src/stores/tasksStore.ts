@@ -9,7 +9,10 @@ interface TasksState {
   /** slug attivo dell'edizione (per refetch quando cambia) */
   editionSlug: string | null
   fetchTasks: (editionSlug?: string | null) => Promise<void>
-  createTask: (data: Partial<Task>) => Promise<Task>
+  /** Senza editionSlug il task va nell'edizione mostrata dal kanban */
+  createTask: (data: Partial<Task>, editionSlug?: string | null) => Promise<Task>
+  /** Task di più edizioni che soddisfano match, senza toccare quelli caricati nel kanban */
+  findTasks: (editionSlugs: string[], match: (t: Task) => boolean) => Promise<{ task: Task; editionSlug: string }[]>
   updateTask: (id: string, data: Partial<Task>) => Promise<void>
   deleteTask: (id: string) => Promise<void>
 }
@@ -30,10 +33,16 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     }
   },
 
-  createTask: async (data) => {
-    const task = await api.createTask(data, get().editionSlug)
-    set({ tasks: [...get().tasks, task] })
+  createTask: async (data, editionSlug) => {
+    const slug = editionSlug ?? get().editionSlug
+    const task = await api.createTask(data, slug)
+    if (slug === get().editionSlug) set({ tasks: [...get().tasks, task] })
     return task
+  },
+
+  findTasks: async (editionSlugs, match) => {
+    const lists = await Promise.all(editionSlugs.map(async (slug) => ({ slug, tasks: await api.getTasks(slug) })))
+    return lists.flatMap(({ slug, tasks }) => tasks.filter(match).map((task) => ({ task, editionSlug: slug })))
   },
 
   updateTask: async (id, data) => {

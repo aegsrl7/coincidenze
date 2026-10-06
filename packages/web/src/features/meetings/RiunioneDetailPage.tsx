@@ -1,36 +1,25 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, ChevronDown, Loader2, Pencil, Search, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, ChevronDown, FileDown, Loader2, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useMeetingsStore } from '@/stores/meetingsStore'
 import { useCan } from '@/stores/authStore'
-import { renderMarkdown, MARKDOWN_CLASS } from '@/lib/markdown'
-import type { Meeting } from '@/types'
+import { useTasksStore } from '@/stores/tasksStore'
+import { useEditionsStore } from '@/stores/editionsStore'
+import { MARKDOWN_CLASS } from '@/lib/markdown'
+import type { Meeting, Task } from '@/types'
 import { MeetingFormDialog } from './MeetingFormDialog'
 import { fmtMeetingDate } from './RiunioniPage'
-
-interface TranscriptBlock {
-  speaker: string
-  time: string
-  text: string
-}
-
-// Un blocco per paragrafo: "**Nome** [hh:mm:ss] testo", anche senza nome o senza orario
-function parseTranscript(src: string): TranscriptBlock[] {
-  return src
-    .replace(/\r\n/g, '\n')
-    .split(/\n{2,}/)
-    .map((p) => p.trim())
-    .filter(Boolean)
-    .map((p) => {
-      const m = /^(?:\*\*(.+?)\*\*\s*)?(?:\[(\d{1,2}:\d{2}(?::\d{2})?)\]\s*)?([\s\S]*)$/.exec(p)!
-      return { speaker: m[1] ?? '', time: m[2] ?? '', text: m[3] }
-    })
-}
+import { parseTranscript, isTurn, speakersOf } from './transcript'
+import { PdfExportDialog } from './PdfExportDialog'
+import { MarkdownView } from './MarkdownView'
+import { AddTaskDialog } from './AddTaskDialog'
+import { isTodoSection, taskMatches, todoDraft, type TodoDraft } from './todo'
 
 const SPEAKER_COLORS = ['text-navy', 'text-viola', 'text-bordeaux', 'text-ink-light']
+const CHIP = 'ml-2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium align-[1px] whitespace-nowrap'
 
 export function RiunioneDetailPage() {
   const { id = '' } = useParams<{ id: string }>()
@@ -42,7 +31,17 @@ export function RiunioneDetailPage() {
   const [error, setError] = useState('')
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const [deleting, setDeleting] = useState(false)
+
+  // "Da fare" → kanban: serve poter leggere e creare i task
+  const canView = useCan('team.view')
+  const canCreate = useCan('team.edit')
+  const canAddTasks = canView && canCreate
+  const { editions, fetch: fetchEditions, setAdminSlug } = useEditionsStore()
+  const findTasks = useTasksStore((s) => s.findTasks)
+  const [linked, setLinked] = useState<{ task: Task; editionSlug: string }[]>([])
+  const [adding, setAdding] = useState<TodoDraft | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -53,6 +52,41 @@ export function RiunioneDetailPage() {
       .catch((e) => alive && setError(e instanceof Error ? e.message : 'Riunione non trovata'))
     return () => { alive = false }
   }, [id, fetchMeeting])
+
+  useEffect(() => { if (canAddTasks) fetchEditions() }, [canAddTasks, fetchEditions])
+
+  // Task già creati da questa riunione, in qualsiasi edizione: la voce mostra "Nel kanban"
+  const meetingId = meeting?.id
+  useEffect(() => {
+    if (!meetingId || !canAddTasks || !editions.length) return
+    let alive = true
+    findTasks(editions.map((e) => e.slug), (t) => (t.description ?? '').includes(`/admin/riunioni/${meetingId}`))
+      .then((found) => alive && setLinked(found))
+      .catch(() => {})
+    return () => { alive = false }
+  }, [meetingId, canAddTasks, editions, findTasks])
+
+  const openKanban = useCallback((slug: string) => {
+    setAdminSlug(slug)
+    navigate('/admin/team')
+  }, [setAdminSlug, navigate])
+
+  const todoAction = (item: string, heading: string | null) => {
+    if (!meeting || !canAddTasks || !isTodoSection(heading)) return null
+    const draft = todoDraft(item, meeting)
+    const hit = linked.find((l) => taskMatches(l.task, draft, meeting))
+    return hit ? (
+      <button type="button" onClick={() => openKanban(hit.editionSlug)} title="Apri il kanban"
+        className={`${CHIP} border-green-300 bg-green-50 text-green-800 hover:bg-green-100`}>
+        <Check className="h-3 w-3" />Nel kanban
+      </button>
+    ) : (
+      <button type="button" onClick={() => setAdding(draft)} title="Crea un task nel kanban"
+        className={`${CHIP} border-viola/30 text-viola hover:bg-viola/5`}>
+        <Plus className="h-3 w-3" />Kanban
+      </button>
+    )
+  }
 
   const handleDelete = async () => {
     setDeleting(true)
@@ -79,30 +113,36 @@ export function RiunioneDetailPage() {
         !error && <div className="py-12 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-navy/40" /></div>
       ) : (
         <>
-          <div className="flex flex-wrap items-start gap-3 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-3 mb-6">
             <div className="flex-1 min-w-0">
               <p className="text-xs text-ink-muted first-letter:uppercase">{fmtMeetingDate(meeting.meeting_date)}</p>
               <h1 className="font-display text-2xl font-semibold text-navy leading-tight">{meeting.title}</h1>
               {meeting.participants && <p className="text-sm text-ink-light mt-1">{meeting.participants}</p>}
             </div>
-            {canEdit && (
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-                  <Pencil className="h-3.5 w-3.5" />
-                  Modifica
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setConfirmDelete(true)} className="hover:text-bordeaux hover:border-bordeaux/40">
-                  <Trash2 className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only">Elimina</span>
-                </Button>
-              </div>
-            )}
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setExporting(true)}>
+                <FileDown className="h-3.5 w-3.5" />
+                PDF
+              </Button>
+              {canEdit && (
+                <>
+                  <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                    <Pencil className="h-3.5 w-3.5" />
+                    Modifica
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setConfirmDelete(true)} className="hover:text-bordeaux hover:border-bordeaux/40">
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only">Elimina</span>
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
 
           <section className="rounded-xl border border-navy/10 bg-white/60 p-4 sm:p-5 mb-4">
             <h2 className="text-xs font-semibold text-navy uppercase tracking-wider mb-3">Punti chiave</h2>
             {meeting.summary ? (
-              <div className={MARKDOWN_CLASS} dangerouslySetInnerHTML={{ __html: renderMarkdown(meeting.summary) }} />
+              <MarkdownView src={meeting.summary} className={MARKDOWN_CLASS} itemAction={todoAction} />
             ) : (
               <p className="text-sm text-ink-muted">Ancora da scrivere.</p>
             )}
@@ -110,7 +150,7 @@ export function RiunioneDetailPage() {
 
           {meeting.prep_notes && (
             <Collapsible title="Materiale preparatorio">
-              <div className={MARKDOWN_CLASS} dangerouslySetInnerHTML={{ __html: renderMarkdown(meeting.prep_notes) }} />
+              <MarkdownView src={meeting.prep_notes} className={MARKDOWN_CLASS} />
             </Collapsible>
           )}
 
@@ -120,6 +160,14 @@ export function RiunioneDetailPage() {
             </Collapsible>
           )}
 
+          {exporting && <PdfExportDialog meeting={meeting} onClose={() => setExporting(false)} />}
+          {adding && (
+            <AddTaskDialog
+              draft={adding}
+              onClose={() => setAdding(null)}
+              onAdded={(task, editionSlug) => { setLinked((l) => [...l, { task, editionSlug }]); setAdding(null) }}
+            />
+          )}
           {editing && (
             <MeetingFormDialog
               meeting={meeting}
@@ -166,13 +214,12 @@ function Transcript({ src }: { src: string }) {
 
   // Colore fisso per parlante, nell'ordine in cui compaiono
   const colorOf = useMemo(() => {
-    const speakers = [...new Set(blocks.map((b) => b.speaker).filter(Boolean))]
+    const speakers = speakersOf(blocks)
     return (s: string) => SPEAKER_COLORS[speakers.indexOf(s) % SPEAKER_COLORS.length] ?? 'text-ink-muted'
   }, [blocks])
 
   const q = query.trim().toLowerCase()
   const shown = q ? blocks.filter((b) => b.text.toLowerCase().includes(q) || b.speaker.toLowerCase().includes(q)) : blocks
-  const isTurn = (b: TranscriptBlock) => Boolean(b.speaker || b.time)
 
   return (
     <div>
