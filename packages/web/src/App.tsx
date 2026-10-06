@@ -26,6 +26,8 @@ import { SetPasswordPage } from '@/features/auth/SetPasswordPage'
 import { AccountPage } from '@/features/auth/AccountPage'
 import { UtentiPage } from '@/features/users/UtentiPage'
 import { RuoliPage } from '@/features/users/RuoliPage'
+import { RiunioniPage } from '@/features/meetings/RiunioniPage'
+import { RiunioneDetailPage } from '@/features/meetings/RiunioneDetailPage'
 import { AdminHome } from '@/components/AdminHome'
 import { ADMIN_NAV } from '@/lib/adminNav'
 import { useAuthStore } from '@/stores/authStore'
@@ -42,6 +44,7 @@ const ADMIN_PAGES: Record<string, ReactNode> = {
   '/admin/team': <TeamPage />,
   '/admin/media': <MediaPage />,
   '/admin/piano-editoriale': <PianoEditorialePage />,
+  '/admin/riunioni': <RiunioniPage />,
   '/admin/edizioni': <AdminEdizioniPage />,
   '/admin/utenti': <UtentiPage />,
   '/admin/ruoli': <RuoliPage />,
@@ -94,6 +97,9 @@ export default function App() {
                 <Route path={item.to} element={ADMIN_PAGES[item.to]} />
               </Route>
             ))}
+            <Route element={<RequireAuth permission="riunioni.view" />}>
+              <Route path="/admin/riunioni/:id" element={<RiunioneDetailPage />} />
+            </Route>
           </Route>
         </Route>
 

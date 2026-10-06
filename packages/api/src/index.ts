@@ -19,6 +19,7 @@ import { categoriesRoutes } from './routes/categories'
 import { usersRoutes } from './routes/users'
 import { rolesRoutes } from './routes/roles'
 import { pushRoutes } from './routes/push'
+import { meetingsRoutes } from './routes/meetings'
 import { notifyPermission } from './lib/push'
 import { requirePermission } from './middleware/auth'
 import { loadSessionUser, type SessionUser } from './lib/session'
@@ -127,6 +128,7 @@ app.use('/api/team/*', requirePermission({ read: 'team.view', write: 'team.edit'
 app.use('/api/canvas/*', requirePermission({ read: 'programma.view', write: 'programma.edit' }))
 app.use('/api/users/*', requirePermission({ read: 'utenti.manage', write: 'utenti.manage' }))
 app.use('/api/roles/*', requirePermission({ read: 'utenti.manage', write: 'utenti.manage' }))
+app.use('/api/meetings/*', requirePermission({ read: 'riunioni.view', write: 'riunioni.edit' }))
 
 // Routes
 app.route('/api/events', eventsRoutes)
@@ -141,6 +143,7 @@ app.route('/api/menu', menuRoutes)
 app.route('/api/categories', categoriesRoutes)
 app.route('/api/users', usersRoutes)
 app.route('/api/roles', rolesRoutes)
+app.route('/api/meetings', meetingsRoutes)
 // Notifiche sul telefono: ogni utente loggato gestisce i propri dispositivi
 app.route('/api/push', pushRoutes)
 

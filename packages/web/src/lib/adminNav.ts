@@ -12,6 +12,7 @@ import {
   Layers,
   UserCog,
   ShieldCheck,
+  MessagesSquare,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -35,6 +36,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { to: '/admin/team', icon: Users, label: 'Team', permission: 'team.view' },
   { to: '/admin/media', icon: Music, label: 'Media', permission: 'media.view' },
   { to: '/admin/piano-editoriale', icon: FileText, label: 'Piano Editoriale', permission: 'editoriale.view' },
+  { to: '/admin/riunioni', icon: MessagesSquare, label: 'Riunioni', permission: 'riunioni.view' },
   { to: '/admin/edizioni', icon: Layers, label: 'Edizioni', permission: 'edizioni.edit' },
   { to: '/admin/utenti', icon: UserCog, label: 'Utenti', permission: 'utenti.manage' },
   { to: '/admin/ruoli', icon: ShieldCheck, label: 'Ruoli e permessi', permission: 'utenti.manage' },

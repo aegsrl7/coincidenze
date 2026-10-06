@@ -280,6 +280,22 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 
 CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions(user_id);
 
+-- Riunioni organizzative (permesso riunioni.view)
+CREATE TABLE IF NOT EXISTS meetings (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  meeting_date TEXT NOT NULL,
+  participants TEXT NOT NULL DEFAULT '',
+  summary TEXT NOT NULL DEFAULT '',
+  prep_notes TEXT NOT NULL DEFAULT '',
+  transcript TEXT NOT NULL DEFAULT '',
+  created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_meetings_date ON meetings(meeting_date);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_editions_current ON editions(is_current);
 CREATE INDEX IF NOT EXISTS idx_editions_slug ON editions(slug);

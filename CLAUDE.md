@@ -77,6 +77,11 @@ Niente testi fissi sull'edizione: le pagine pubbliche e `/dati` leggono l'edizio
 ### App installabile e notifiche push
 Stesso impianto di Cadenza (progetto APILATES): l'area riservata è una PWA. `public/manifest.webmanifest` (start `/admin`, icone `icon-192/512`, `icon-512-maskable`, `apple-touch-icon`) e `public/sw.js` (niente cache e niente fetch handler, solo push e tocco sulla notifica). Manifest, meta per iPhone e service worker li aggiunge `enableAppMode()` (`src/lib/pwa.ts`) solo in AppShell, login e `/accesso/:token`: il sito pubblico non è installabile. La scheda "App e notifiche" sta in `/admin/account`. Lato API: tabella `push_subscriptions` (migration 0009), rotte `/api/push/*`, invio cifrato con `@block65/webcrypto-web-push` in `lib/push.ts`; `notifyPermission(env, permesso, nota)` avvisa gli utenti il cui ruolo ha quel permesso (nuovo accredito → `accrediti.view`, prenotazione spuntino → `spuntino.view`, promemoria delle 18 → `editoriale.view`). Su iPhone le push funzionano solo con l'app aggiunta alla Home.
 
+### Riunioni
+Pagina `/admin/riunioni` con dettaglio `/admin/riunioni/:id` (permessi `riunioni.view` / `riunioni.edit`, di default solo l'Amministratore). Tabella `meetings` (migration 0010), rotte `/api/meetings` (l'elenco non restituisce i testi lunghi). Punti chiave e materiale preparatorio sono markdown resi da `lib/markdown.ts`; la trascrizione ha un blocco per intervento, `**Nome** [hh:mm:ss] testo`, e i blocchi senza nome né orario sono note (per esempio i tagli).
+
+Le registrazioni si trascrivono in locale con `tools/trascrizione/trascrivi.py` (Whisper mlx + pyannote per separare le voci; venv, versioni e token Hugging Face sono descritti nel file, l'audio non esce dal Mac). Poi: dare i nomi ai parlanti con l'utente, tenere solo le parti su Coincidenze, togliere giudizi personali, password e dati sensibili di terzi, segnare i tagli.
+
 ### Header di sicurezza
 CSP e Permissions-Policy del sito stanno in `packages/web/public/_headers`. Librerie e font sono nel bundle (html5-qrcode, qrcode-generator, Fontsource): niente CDN per gli script. Esterni ammessi: Cloudflare Web Analytics, player YouTube/Vimeo/SoundCloud (react-player), iframe di Google Maps, immagini QR da api.qrserver.com. Una nuova risorsa esterna va aggiunta alla CSP, altrimenti il browser la blocca senza errori visibili.
 

@@ -240,6 +240,39 @@ export interface Role {
   users: number
 }
 
+/** Riunione organizzativa (pagina Riunioni, permesso riunioni.view) */
+export interface Meeting {
+  id: string
+  title: string
+  /** AAAA-MM-GG */
+  meeting_date: string
+  participants: string
+  /** Punti chiave in markdown */
+  summary: string
+  /** Materiale preparatorio in markdown (es. il report dell'edizione precedente) */
+  prep_notes: string
+  /** Trascrizione, un blocco per intervento: **Nome** [hh:mm:ss] testo */
+  transcript: string
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+/** Riunione nell'elenco: senza i testi lunghi */
+export interface MeetingListItem {
+  id: string
+  title: string
+  meeting_date: string
+  participants: string
+  summary_preview: string
+  has_transcript: boolean
+  has_prep_notes: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type MeetingInput = Pick<Meeting, 'title' | 'meeting_date' | 'participants' | 'summary' | 'prep_notes' | 'transcript'>
+
 /** Catalogo dei permessi servito dall'API (fonte unica in packages/api/src/lib/permissions.ts) */
 export interface PermissionCatalog {
   areas: { key: string; label: string; actions: string[] }[]

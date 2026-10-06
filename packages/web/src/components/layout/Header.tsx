@@ -17,6 +17,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/edizioni': 'Edizioni',
   '/admin/utenti': 'Utenti',
   '/admin/ruoli': 'Ruoli e permessi',
+  '/admin/riunioni': 'Riunioni',
   '/admin/account': 'Il mio account',
 }
 
@@ -39,7 +40,9 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   const location = useLocation()
-  const title = PAGE_TITLES[location.pathname] || 'COINCIDENZE'
+  // Le pagine di dettaglio (es. /admin/riunioni/:id) prendono il titolo della sezione
+  const section = location.pathname.split('/').slice(0, 3).join('/')
+  const title = PAGE_TITLES[location.pathname] || PAGE_TITLES[section] || 'COINCIDENZE'
   const showSelector = SCOPED_PATHS.has(location.pathname)
 
   return (

@@ -20,6 +20,9 @@ import type {
   AdminUser,
   Role,
   PermissionCatalog,
+  Meeting,
+  MeetingListItem,
+  MeetingInput,
 } from '@/types'
 
 const API_BASE = import.meta.env.DEV ? '/api' : 'https://api.coincidenze.org/api'
@@ -112,6 +115,14 @@ export const api = {
   updateRole: (id: string, data: { name: string; description: string; permissions: string[] }) =>
     request<Role>(`/roles/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteRole: (id: string) => request<Ok>(`/roles/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+
+  // Riunioni (riunioni.view / riunioni.edit)
+  getMeetings: () => request<MeetingListItem[]>('/meetings'),
+  getMeeting: (id: string) => request<Meeting>(`/meetings/${encodeURIComponent(id)}`),
+  createMeeting: (data: MeetingInput) => request<Meeting>('/meetings', { method: 'POST', body: JSON.stringify(data) }),
+  updateMeeting: (id: string, data: MeetingInput) =>
+    request<Meeting>(`/meetings/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteMeeting: (id: string) => request<Ok>(`/meetings/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
   // Notifiche sul telefono (ogni utente i propri dispositivi)
   getPushKey: () => request<{ key: string | null }>('/push/key'),
