@@ -35,6 +35,8 @@ export function TeamPage() {
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined)
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
   const [dragOverCol, setDragOverCol] = useState<ColumnId | null>(null)
+  // Sul telefono le colonne diventano schede: se ne vede una alla volta
+  const [mobileCol, setMobileCol] = useState<ColumnId>('todo')
   const [showAddMember, setShowAddMember] = useState(false)
   const [newMemberName, setNewMemberName] = useState('')
   const [newMemberRole, setNewMemberRole] = useState('')
@@ -209,6 +211,25 @@ export function TeamPage() {
           <h3 className="font-display text-sm font-semibold text-navy">Compiti</h3>
         </div>
 
+        <div className="md:hidden mb-3 grid grid-cols-3 gap-1 rounded-lg bg-beige-dark/50 p-1" role="tablist" aria-label="Stato dei compiti">
+          {COLUMNS.map((col) => (
+            <button
+              key={col.id}
+              type="button"
+              role="tab"
+              aria-selected={mobileCol === col.id}
+              onClick={() => setMobileCol(col.id)}
+              className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium transition-colors ${
+                mobileCol === col.id ? 'bg-crema text-navy shadow-sm' : 'text-ink-muted'
+              }`}
+            >
+              <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: col.color }} />
+              <span className="truncate">{col.label}</span>
+              <span className="text-[10px] text-ink-muted">{getColumnTasks(col.id).length}</span>
+            </button>
+          ))}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {COLUMNS.map((col) => (
           <div
@@ -217,12 +238,12 @@ export function TeamPage() {
               dragOverCol === col.id
                 ? 'border-navy/40 bg-navy/5'
                 : 'border-transparent bg-beige-dark/30'
-            }`}
+            } ${mobileCol === col.id ? '' : 'hidden md:block'}`}
             onDragOver={canEdit ? (e) => handleDragOver(e, col.id) : undefined}
             onDragLeave={canEdit ? handleDragLeave : undefined}
             onDrop={canEdit ? () => handleDrop(col.id) : undefined}
           >
-            <div className="flex items-center gap-2 mb-3">
+            <div className="hidden md:flex items-center gap-2 mb-3">
               <div className="h-2 w-2 rounded-full" style={{ backgroundColor: col.color }} />
               <h3 className="font-display text-sm font-semibold text-navy">{col.label}</h3>
               <Badge variant="secondary" className="text-[10px]">
