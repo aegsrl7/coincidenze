@@ -8,7 +8,8 @@ import { usePagesStore } from '@/stores/pagesStore'
 import { useCan } from '@/stores/authStore'
 import type { Page } from '@/types'
 import { PageEditor, type EditorChange } from './PageEditor'
-import { Comments } from './Comments'
+import { PageComments, TextThreads, ThreadDialog, usePageComments } from './Comments'
+import { locate, type Anchor, type AnchoredThread } from './commentAnchors'
 import { ancestorsOf, childrenOf, countDescendants, fmtWhen, pageTitle } from './tree'
 
 type Status = 'saved' | 'dirty' | 'saving' | 'error'
@@ -36,6 +37,12 @@ function PaginaPage({ id }: { id: string }) {
   const [conflict, setConflict] = useState<Page | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [busy, setBusy] = useState(false)
+
+  // Commenti: in fondo e sul testo (pezzi evidenziati nell'editor)
+  const comments = usePageComments(id)
+  const [openThread, setOpenThread] = useState<string | null>(null)
+  const [newAnchor, setNewAnchor] = useState<Anchor | null>(null)
+  const [docTick, setDocTick] = useState(0)
 
   // Salvataggio automatico: l'ultima bozza, la versione del server su cui si basa, un solo salvataggio alla volta
   const draft = useRef<Draft | null>(null)
@@ -117,8 +124,28 @@ function PaginaPage({ id }: { id: string }) {
     }
   }, [save])
 
-  const onEditorChange = useCallback((c: EditorChange) => change({ json: c.json, text: c.text }), [change])
-  const onEditorReady = useCallback((e: Editor) => { editorRef.current = e }, [])
+  const onEditorChange = useCallback((c: EditorChange) => {
+    change({ json: c.json, text: c.text })
+    setDocTick((t) => t + 1)
+  }, [change])
+  const onEditorReady = useCallback((e: Editor) => {
+    editorRef.current = e
+    setDocTick((t) => t + 1)
+  }, [])
+
+  const anchored = useMemo<(AnchoredThread & { resolved: boolean })[]>(() => (comments.list ?? [])
+    .filter((c) => c.anchor_quote && !c.parent_id)
+    .map((c) => ({ id: c.id, quote: c.anchor_quote!, prefix: c.anchor_prefix ?? '', suffix: c.anchor_suffix ?? '', resolved: !!c.resolved_at })), [comments.list])
+  const openThreads = useMemo(() => anchored.filter((t) => !t.resolved), [anchored])
+  const located = useMemo(() => {
+    void docTick // si ricalcola quando cambia il testo
+    const doc = editorRef.current?.state.doc
+    return doc ? new Set(locate(doc, anchored).keys()) : new Set<string>()
+  }, [anchored, docTick])
+  const goToThread = (threadId: string) => {
+    document.querySelector(`[data-thread="${threadId}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    setOpenThread(threadId)
+  }
 
   const takeTheirs = () => {
     if (!conflict) return
@@ -237,7 +264,16 @@ function PaginaPage({ id }: { id: string }) {
       )}
 
       <div className="mt-4">
-        <PageEditor content={page.content_json} editable={canEdit} onChange={onEditorChange} onReady={onEditorReady} />
+        <PageEditor
+          content={page.content_json}
+          editable={canEdit}
+          onChange={onEditorChange}
+          onReady={onEditorReady}
+          threads={openThreads}
+          activeThread={openThread}
+          onThreadClick={setOpenThread}
+          onCommentRequest={setNewAnchor}
+        />
       </div>
 
       <section className="mt-8">
@@ -266,7 +302,18 @@ function PaginaPage({ id }: { id: string }) {
         )}
       </section>
 
-      <Comments pageId={id} />
+      <TextThreads data={comments} located={located} onOpen={goToThread} />
+      <PageComments data={comments} />
+
+      {(openThread || newAnchor) && (
+        <ThreadDialog
+          data={comments}
+          threadId={openThread}
+          anchor={newAnchor}
+          onClose={() => { setOpenThread(null); setNewAnchor(null) }}
+          onCreated={(threadId) => { setNewAnchor(null); setOpenThread(threadId) }}
+        />
+      )}
 
       <ConfirmDialog
         open={confirmDelete}

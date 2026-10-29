@@ -99,3 +99,11 @@
   height: 0;
   pointer-events: none;
 }
+/* Spunti: pezzi di testo con una discussione aperta */
+.spunti-editor .spunti-comment {
+  background: rgb(251 191 36 / 0.28);
+  border-bottom: 2px solid rgb(245 158 11 / 0.7);
+  border-radius: 2px;
+  cursor: pointer;
+}
+.spunti-editor .spunti-comment.is-active { background: rgb(251 191 36 / 0.55); }

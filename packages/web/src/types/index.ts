@@ -312,13 +312,28 @@ export interface Page {
 
 export type PageInput = Pick<Page, 'title' | 'content_json' | 'content_text' | 'tags' | 'version'>
 
+/** Commento in fondo alla pagina, oppure discussione su un pezzo di testo (anchor_*) con le sue risposte */
 export interface PageComment {
   id: string
   page_id: string
+  /** Risposta a questa discussione */
+  parent_id: string | null
   user_id: string | null
   user_name: string | null
   body: string
   created_at: string
+  /** Pezzo di testo commentato, con il contesto per ritrovarlo */
+  anchor_quote: string | null
+  anchor_prefix: string | null
+  anchor_suffix: string | null
+  resolved_at: string | null
+  resolved_by_name: string | null
+}
+
+export interface CommentAnchorInput {
+  anchor_quote: string
+  anchor_prefix: string
+  anchor_suffix: string
 }
 
 /** Catalogo dei permessi servito dall'API (fonte unica in packages/api/src/lib/permissions.ts) */

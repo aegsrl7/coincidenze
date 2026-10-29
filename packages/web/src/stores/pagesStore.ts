@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { api } from '@/lib/api'
-import type { Page, PageComment, PageInput, PageListItem } from '@/types'
+import type { CommentAnchorInput, Page, PageComment, PageInput, PageListItem } from '@/types'
 
 interface PagesState {
   /** Pagine dell'edizione caricata (albero costruito dalla UI con parent_id) */
@@ -15,7 +15,9 @@ interface PagesState {
   savePage: (id: string, data: PageInput) => Promise<{ page: Page; conflict: boolean }>
   deletePage: (id: string) => Promise<void>
   fetchComments: (pageId: string) => Promise<PageComment[]>
-  addComment: (pageId: string, body: string) => Promise<PageComment>
+  /** Commento in fondo, risposta (parent_id) o nuova discussione su un pezzo di testo (anchor_*) */
+  addComment: (pageId: string, body: string, extra?: { parent_id?: string } & Partial<CommentAnchorInput>) => Promise<PageComment>
+  resolveComment: (id: string, resolved: boolean) => Promise<PageComment>
   deleteComment: (id: string) => Promise<void>
 }
 
@@ -73,11 +75,13 @@ export const usePagesStore = create<PagesState>((set, get) => ({
 
   fetchComments: (pageId) => api.getPageComments(pageId),
 
-  addComment: async (pageId, body) => {
-    const comment = await api.addPageComment(pageId, body)
+  addComment: async (pageId, body, extra) => {
+    const comment = await api.addPageComment(pageId, body, extra)
     set({ pages: get().pages.map((p) => (p.id === pageId ? { ...p, comment_count: p.comment_count + 1 } : p)) })
     return comment
   },
+
+  resolveComment: (id, resolved) => api.resolvePageComment(id, resolved),
 
   deleteComment: async (id) => {
     await api.deletePageComment(id)

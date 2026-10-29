@@ -152,13 +152,18 @@ pagesRoutes.delete('/:id', async (c) => {
 })
 
 /**
- * Commenti. Basta spunti.view per leggerli e scriverli (middleware in index.ts);
- * si cancellano i propri, quelli degli altri solo con spunti.delete.
+ * Commenti. Basta spunti.view per leggerli, scriverli, rispondere e segnarli risolti (middleware in
+ * index.ts); si cancellano i propri, quelli degli altri solo con spunti.delete.
+ * Un commento radice può essere agganciato a un pezzo di testo (anchor_*): la pagina non cambia,
+ * il pezzo lo ritrova la UI cercando la citazione con il contesto prima e dopo.
  */
 export const pageCommentsRoutes = new Hono<Env>()
 
-const SELECT_COMMENT = `SELECT pc.id, pc.page_id, pc.user_id, pc.body, pc.created_at, u.name AS user_name
-  FROM page_comments pc LEFT JOIN users u ON u.id = pc.user_id`
+const SELECT_COMMENT = `SELECT pc.id, pc.page_id, pc.parent_id, pc.user_id, pc.body, pc.created_at,
+    pc.anchor_quote, pc.anchor_prefix, pc.anchor_suffix, pc.resolved_at, u.name AS user_name, ru.name AS resolved_by_name
+  FROM page_comments pc LEFT JOIN users u ON u.id = pc.user_id LEFT JOIN users ru ON ru.id = pc.resolved_by`
+
+const str = (v: unknown, max: number) => (typeof v === 'string' ? v.slice(0, max) : '')
 
 pageCommentsRoutes.get('/', async (c) => {
   const pageId = c.req.query('page') ?? ''
@@ -169,20 +174,54 @@ pageCommentsRoutes.get('/', async (c) => {
 pageCommentsRoutes.post('/', async (c) => {
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>
   const pageId = typeof body.page_id === 'string' ? body.page_id : ''
-  const text = typeof body.body === 'string' ? body.body.trim().slice(0, 5000) : ''
+  const text = str(body.body, 5000).trim()
   if (!text) return c.json({ error: 'Commento vuoto' }, 400)
   const page = await c.env.DB.prepare('SELECT id FROM pages WHERE id = ?').bind(pageId).first()
   if (!page) return c.json({ error: 'Pagina non trovata' }, 404)
+
+  // Risposta: un solo livello, nella stessa pagina
+  let parentId: string | null = null
+  if (typeof body.parent_id === 'string' && body.parent_id) {
+    const parent = await c.env.DB.prepare('SELECT page_id, parent_id FROM page_comments WHERE id = ?').bind(body.parent_id)
+      .first<{ page_id: string; parent_id: string | null }>()
+    if (!parent || parent.page_id !== pageId) return c.json({ error: 'Commento a cui rispondere non trovato' }, 404)
+    parentId = parent.parent_id ?? body.parent_id
+  }
+  // Aggancio al testo solo per un commento radice
+  const quote = parentId ? '' : str(body.anchor_quote, 1000).trim()
   const id = crypto.randomUUID()
-  await c.env.DB.prepare('INSERT INTO page_comments (id, page_id, user_id, body) VALUES (?, ?, ?, ?)')
-    .bind(id, pageId, c.get('user')!.id, text).run()
+  await c.env.DB
+    .prepare('INSERT INTO page_comments (id, page_id, user_id, body, parent_id, anchor_quote, anchor_prefix, anchor_suffix) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(id, pageId, c.get('user')!.id, text, parentId, quote || null,
+      quote ? str(body.anchor_prefix, 64) : null, quote ? str(body.anchor_suffix, 64) : null)
+    .run()
   return c.json(await c.env.DB.prepare(`${SELECT_COMMENT} WHERE pc.id = ?`).bind(id).first(), 201)
 })
 
+// PATCH /:id — { resolved: true | false } su un commento radice
+pageCommentsRoutes.patch('/:id', async (c) => {
+  const id = c.req.param('id')
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>
+  if (typeof body.resolved !== 'boolean') return c.json({ error: 'Indica resolved: true o false' }, 400)
+  const row = await c.env.DB.prepare('SELECT parent_id FROM page_comments WHERE id = ?').bind(id).first<{ parent_id: string | null }>()
+  if (!row) return c.json({ error: 'Commento non trovato' }, 404)
+  if (row.parent_id) return c.json({ error: 'Si risolve la discussione, non la singola risposta' }, 400)
+  await (body.resolved
+    ? c.env.DB.prepare("UPDATE page_comments SET resolved_at = datetime('now'), resolved_by = ? WHERE id = ?").bind(c.get('user')!.id, id)
+    : c.env.DB.prepare('UPDATE page_comments SET resolved_at = NULL, resolved_by = NULL WHERE id = ?').bind(id)
+  ).run()
+  return c.json(await c.env.DB.prepare(`${SELECT_COMMENT} WHERE pc.id = ?`).bind(id).first())
+})
+
+// DELETE /:id — il commento e, se è una discussione, le sue risposte
 pageCommentsRoutes.delete('/:id', async (c) => {
-  const row = await c.env.DB.prepare('SELECT user_id FROM page_comments WHERE id = ?').bind(c.req.param('id')).first<{ user_id: string | null }>()
+  const id = c.req.param('id')
+  const row = await c.env.DB.prepare('SELECT user_id FROM page_comments WHERE id = ?').bind(id).first<{ user_id: string | null }>()
   if (!row) return c.json({ error: 'Commento non trovato' }, 404)
   if (row.user_id !== c.get('user')!.id && !can(c, 'spunti.delete')) return c.json({ error: 'Non autorizzato' }, 403)
-  await c.env.DB.prepare('DELETE FROM page_comments WHERE id = ?').bind(c.req.param('id')).run()
+  await c.env.DB.batch([
+    c.env.DB.prepare('DELETE FROM page_comments WHERE parent_id = ?').bind(id),
+    c.env.DB.prepare('DELETE FROM page_comments WHERE id = ?').bind(id),
+  ])
   return c.json({ ok: true })
 })

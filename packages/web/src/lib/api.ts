@@ -27,6 +27,7 @@ import type {
   PageListItem,
   PageInput,
   PageComment,
+  CommentAnchorInput,
 } from '@/types'
 
 const API_BASE = import.meta.env.DEV ? '/api' : 'https://api.coincidenze.org/api'
@@ -147,8 +148,10 @@ export const api = {
   },
   deletePage: (id: string) => request<Ok & { deleted: number }>(`/pages/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   getPageComments: (pageId: string) => request<PageComment[]>(`/page-comments?page=${encodeURIComponent(pageId)}`),
-  addPageComment: (pageId: string, body: string) =>
-    request<PageComment>('/page-comments', { method: 'POST', body: JSON.stringify({ page_id: pageId, body }) }),
+  addPageComment: (pageId: string, body: string, extra: { parent_id?: string } & Partial<CommentAnchorInput> = {}) =>
+    request<PageComment>('/page-comments', { method: 'POST', body: JSON.stringify({ page_id: pageId, body, ...extra }) }),
+  resolvePageComment: (id: string, resolved: boolean) =>
+    request<PageComment>(`/page-comments/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ resolved }) }),
   deletePageComment: (id: string) => request<Ok>(`/page-comments/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
   // Notifiche sul telefono (ogni utente i propri dispositivi)

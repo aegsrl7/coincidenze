@@ -1,11 +1,12 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { EditorContent, useEditor, useEditorState, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { TaskItem, TaskList } from '@tiptap/extension-list'
 import { Placeholder } from '@tiptap/extensions'
 import {
-  Bold, Italic, Strikethrough, Heading2, Heading3, List, ListOrdered, ListChecks, Quote, Link2, Minus, Undo2, Redo2, Check, X,
+  Bold, Italic, Strikethrough, Heading2, Heading3, List, ListOrdered, ListChecks, Quote, Link2, Minus, Undo2, Redo2, Check, X, MessageSquarePlus,
 } from 'lucide-react'
+import { anchorFromRange, CommentHighlights, setCommentThreads, type Anchor, type AnchoredThread } from './commentAnchors'
 
 export interface EditorChange {
   json: string
@@ -26,12 +27,18 @@ const parse = (json: string) => {
  * Editor degli Spunti (Tiptap). Titoli, grassetto, elenchi, cose da fare, citazioni, link.
  * Chi ha solo il permesso di vedere riceve lo stesso editor in sola lettura, senza barra.
  */
-export function PageEditor({ content, editable, onChange, onReady }: {
+export function PageEditor({ content, editable, onChange, onReady, threads, activeThread, onThreadClick, onCommentRequest }: {
   content: string
   editable: boolean
   onChange: (change: EditorChange) => void
   /** Per sostituire il testo da fuori, per esempio con la versione di un altro dopo un conflitto */
   onReady?: (editor: Editor) => void
+  /** Discussioni aperte sul testo: i pezzi commentati restano evidenziati */
+  threads: AnchoredThread[]
+  activeThread: string | null
+  onThreadClick: (id: string) => void
+  /** Testo selezionato e "Commenta": anche in sola lettura */
+  onCommentRequest: (anchor: Anchor) => void
 }) {
   const editor = useEditor({
     extensions: [
@@ -47,6 +54,7 @@ export function PageEditor({ content, editable, onChange, onReady }: {
         a11y: { checkboxLabel: (node, checked) => `${checked ? 'Fatto' : 'Da fare'}: ${node.textContent || 'voce vuota'}` },
       }),
       Placeholder.configure({ placeholder: 'Scrivi qui. Titoli, elenchi e cose da fare dalla barra sopra.' }),
+      CommentHighlights,
     ],
     content: parse(content),
     editable,
@@ -65,12 +73,97 @@ export function PageEditor({ content, editable, onChange, onReady }: {
     editor?.setEditable(editable)
   }, [editor, editable])
 
+  useEffect(() => {
+    if (editor) setCommentThreads(editor.view, threads, activeThread)
+  }, [editor, threads, activeThread])
+
+  // Tocco su un pezzo evidenziato: apre la sua discussione
+  const onThreadClickRef = useRef(onThreadClick)
+  onThreadClickRef.current = onThreadClick
+  useEffect(() => {
+    if (!editor) return
+    const dom = editor.view.dom
+    const click = (e: MouseEvent) => {
+      const el = (e.target as HTMLElement | null)?.closest('[data-thread]') as HTMLElement | null
+      if (el?.dataset.thread) onThreadClickRef.current(el.dataset.thread)
+    }
+    dom.addEventListener('click', click)
+    return () => dom.removeEventListener('click', click)
+  }, [editor])
+
   if (!editor) return null
   return (
     <div>
       {editable && <Toolbar editor={editor} />}
       <EditorContent editor={editor} />
+      <SelectionComment editor={editor} onComment={onCommentRequest} />
     </div>
+  )
+}
+
+/**
+ * Tasto "Commenta" sotto il testo selezionato (sotto, perché sul telefono sopra c'è il menu del sistema).
+ * Usa la selezione del browser, quindi funziona anche in sola lettura.
+ */
+function SelectionComment({ editor, onComment }: { editor: Editor; onComment: (anchor: Anchor) => void }) {
+  const [pending, setPending] = useState<{ anchor: Anchor; top: number; left: number } | null>(null)
+  const hideTimer = useRef<number | undefined>(undefined)
+
+  useEffect(() => {
+    const dom = editor.view.dom
+    const hideSoon = () => {
+      window.clearTimeout(hideTimer.current)
+      // Un attimo di margine: toccare il tasto può far sparire la selezione prima del clic
+      hideTimer.current = window.setTimeout(() => setPending(null), 250)
+    }
+    const onSelection = () => {
+      const sel = window.getSelection()
+      if (!sel || sel.isCollapsed || !sel.rangeCount || !dom.contains(sel.anchorNode) || !dom.contains(sel.focusNode)) return hideSoon()
+      let anchor: Anchor | null = null
+      try {
+        const a = editor.view.posAtDOM(sel.anchorNode!, sel.anchorOffset)
+        const f = editor.view.posAtDOM(sel.focusNode!, sel.focusOffset)
+        anchor = anchorFromRange(editor.state.doc, Math.min(a, f), Math.max(a, f))
+      } catch {
+        anchor = null
+      }
+      if (!anchor) return hideSoon()
+      window.clearTimeout(hideTimer.current)
+      const rect = sel.getRangeAt(0).getBoundingClientRect()
+      const below = rect.bottom + 10
+      setPending({
+        anchor,
+        top: below + 40 > window.innerHeight ? Math.max(8, rect.top - 46) : below,
+        left: Math.min(Math.max(rect.left + rect.width / 2, 70), window.innerWidth - 70),
+      })
+    }
+    const onScroll = () => setPending(null)
+    document.addEventListener('selectionchange', onSelection)
+    window.addEventListener('scroll', onScroll, true)
+    return () => {
+      document.removeEventListener('selectionchange', onSelection)
+      window.removeEventListener('scroll', onScroll, true)
+      window.clearTimeout(hideTimer.current)
+    }
+  }, [editor])
+
+  if (!pending) return null
+  return (
+    <button
+      type="button"
+      onPointerDown={(e) => e.preventDefault()}
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={() => {
+        onComment(pending.anchor)
+        setPending(null)
+        window.getSelection()?.removeAllRanges()
+      }}
+      style={{ top: pending.top, left: pending.left }}
+      className="fixed z-40 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full bg-navy px-3.5 py-2 text-sm font-medium text-white shadow-lg"
+    >
+      <MessageSquarePlus className="h-4 w-4" />
+      Commenta
+    </button>
   )
 }
 

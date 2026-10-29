@@ -315,14 +315,22 @@ CREATE TABLE IF NOT EXISTS pages (
 CREATE INDEX IF NOT EXISTS idx_pages_edition ON pages(edition_id);
 CREATE INDEX IF NOT EXISTS idx_pages_parent ON pages(parent_id);
 
+-- Commenti: in fondo alla pagina, oppure agganciati a un pezzo di testo (anchor_*) con risposte
 CREATE TABLE IF NOT EXISTS page_comments (
   id TEXT PRIMARY KEY,
   page_id TEXT NOT NULL REFERENCES pages(id) ON DELETE CASCADE,
   user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
   body TEXT NOT NULL,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  parent_id TEXT REFERENCES page_comments(id) ON DELETE CASCADE,
+  anchor_quote TEXT,
+  anchor_prefix TEXT,
+  anchor_suffix TEXT,
+  resolved_at TEXT,
+  resolved_by TEXT REFERENCES users(id) ON DELETE SET NULL
 );
 CREATE INDEX IF NOT EXISTS idx_page_comments_page ON page_comments(page_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_page_comments_parent ON page_comments(parent_id);
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_editions_current ON editions(is_current);
