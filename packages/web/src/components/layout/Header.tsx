@@ -6,7 +6,7 @@ import { EditionSelector } from '@/components/EditionSelector'
 const PAGE_TITLES: Record<string, string> = {
   '/admin/programma': 'Programma',
   '/admin/artisti': 'Artisti',
-  '/admin/team': 'Team & Task',
+  '/admin/organizzazione': 'Organizzazione',
   '/admin/media': 'Libreria Media',
   '/admin/piano-editoriale': 'Piano Editoriale',
   '/admin/accrediti': 'Accrediti',
@@ -34,6 +34,7 @@ const SCOPED_PATHS = new Set([
   '/admin/spuntino',
   '/admin/piano-editoriale',
   '/admin/spunti',
+  '/admin/organizzazione',
 ])
 
 interface HeaderProps {

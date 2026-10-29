@@ -46,8 +46,9 @@ export const useTasksStore = create<TasksState>((set, get) => ({
   },
 
   updateTask: async (id, data) => {
-    await api.updateTask(id, data)
-    set({ tasks: get().tasks.map((t) => (t.id === id ? { ...t, ...data } : t)) })
+    // L'API restituisce il compito salvato: assegnatario e scadenza nel formato giusto
+    const updated = await api.updateTask(id, data)
+    set({ tasks: get().tasks.map((t) => (t.id === id ? { ...t, ...updated } : t)) })
   },
 
   deleteTask: async (id) => {

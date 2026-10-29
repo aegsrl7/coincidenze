@@ -12,6 +12,7 @@ import { useTasksStore } from '@/stores/tasksStore'
 import { useTeamStore } from '@/stores/teamStore'
 import { useCategoryMaps } from '@/stores/categoriesStore'
 import { type EventCategory, type Task } from '@/types'
+import { AssigneeOptions, assigneePayload, assigneeValue } from './assignee'
 
 interface Props {
   open: boolean
@@ -21,7 +22,7 @@ interface Props {
 
 export function TaskFormDialog({ open, onClose, task }: Props) {
   const { createTask, updateTask, deleteTask } = useTasksStore()
-  const { members } = useTeamStore()
+  const { members, users } = useTeamStore()
   const { list: artistCats } = useCategoryMaps('artist')
   const isEditing = !!task
   const [form, setForm] = useState({
@@ -29,7 +30,7 @@ export function TaskFormDialog({ open, onClose, task }: Props) {
     description: '',
     status: 'todo' as Task['status'],
     priority: 'medium' as Task['priority'],
-    assigneeId: '',
+    assignee: '',
     category: '' as EventCategory | '',
     dueDate: '',
   })
@@ -43,7 +44,7 @@ export function TaskFormDialog({ open, onClose, task }: Props) {
       description: task?.description || '',
       status: task?.status || 'todo',
       priority: task?.priority || 'medium',
-      assigneeId: task?.assignee_id || '',
+      assignee: task ? assigneeValue(task) : '',
       category: (task?.category || '') as EventCategory | '',
       dueDate: task?.due_date || '',
     })
@@ -53,10 +54,11 @@ export function TaskFormDialog({ open, onClose, task }: Props) {
     if (!form.title) return
     setSaving(true)
     try {
+      const { assignee, ...rest } = form
       const payload = {
-        ...form,
+        ...rest,
         category: (form.category || undefined) as EventCategory | undefined,
-        assigneeId: form.assigneeId || undefined,
+        ...assigneePayload(assignee),
         dueDate: form.dueDate || undefined,
       } as any
       if (isEditing) {
@@ -151,13 +153,10 @@ export function TaskFormDialog({ open, onClose, task }: Props) {
               <label className="text-xs font-medium text-ink-muted">Assegnatario</label>
               <select
                 className="mt-1 w-full rounded-md border border-navy/20 bg-crema px-3 py-2 text-sm"
-                value={form.assigneeId}
-                onChange={(e) => setForm({ ...form, assigneeId: e.target.value })}
+                value={form.assignee}
+                onChange={(e) => setForm({ ...form, assignee: e.target.value })}
               >
-                <option value="">-- Nessuno --</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
+                <AssigneeOptions users={users} members={members} />
               </select>
             </div>
 

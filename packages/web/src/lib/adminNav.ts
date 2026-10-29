@@ -34,7 +34,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { to: '/admin/spuntino', icon: UtensilsCrossed, label: 'Spuntino 18', permission: 'spuntino.view' },
   { to: '/admin/menu', icon: Utensils, label: 'Menù', permission: 'menu.edit' },
   { to: '/admin/categorie', icon: Tag, label: 'Categorie', permission: 'categorie.edit' },
-  { to: '/admin/team', icon: Users, label: 'Team', permission: 'team.view' },
+  { to: '/admin/organizzazione', icon: Users, label: 'Organizzazione', permission: 'team.view' },
   { to: '/admin/media', icon: Music, label: 'Media', permission: 'media.view' },
   { to: '/admin/piano-editoriale', icon: FileText, label: 'Piano Editoriale', permission: 'editoriale.view' },
   { to: '/admin/riunioni', icon: MessagesSquare, label: 'Riunioni', permission: 'riunioni.view' },

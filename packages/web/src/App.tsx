@@ -45,7 +45,7 @@ const ADMIN_PAGES: Record<string, ReactNode> = {
   '/admin/spuntino': <AdminSpuntinoPage />,
   '/admin/menu': <AdminMenuPage />,
   '/admin/categorie': <AdminCategoriesPage />,
-  '/admin/team': <TeamPage />,
+  '/admin/organizzazione': <TeamPage />,
   '/admin/media': <MediaPage />,
   '/admin/piano-editoriale': <PianoEditorialePage />,
   '/admin/riunioni': <RiunioniPage />,
@@ -86,7 +86,8 @@ export default function App() {
         {/* Redirect legacy → /admin */}
         <Route path="/canvas" element={<Navigate to="/admin/programma" replace />} />
         <Route path="/programma" element={<Navigate to="/admin/programma" replace />} />
-        <Route path="/team" element={<Navigate to="/admin/team" replace />} />
+        <Route path="/team" element={<Navigate to="/admin/organizzazione" replace />} />
+        <Route path="/admin/team" element={<Navigate to="/admin/organizzazione" replace />} />
         <Route path="/artisti" element={<Navigate to="/admin/artisti" replace />} />
         <Route path="/media" element={<Navigate to="/admin/media" replace />} />
         <Route path="/piano-editoriale" element={<Navigate to="/admin/piano-editoriale" replace />} />

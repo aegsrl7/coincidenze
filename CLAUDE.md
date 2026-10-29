@@ -85,6 +85,9 @@ Pagina `/admin/riunioni` con dettaglio `/admin/riunioni/:id` (permessi `riunioni
 
 Le registrazioni si trascrivono in locale con `tools/trascrizione/trascrivi.py` (Whisper mlx + pyannote per separare le voci; venv, versioni e token Hugging Face sono descritti nel file, l'audio non esce dal Mac). Poi: dare i nomi ai parlanti con l'utente, tenere solo le parti su Coincidenze, togliere giudizi personali, password e dati sensibili di terzi, segnare i tagli.
 
+### Organizzazione (ex Team)
+`/admin/organizzazione` (da `/admin/team` c'è il rimando; permessi `team.view` / `team.edit`, chiavi invariate). In alto le persone: gli utenti attivi del sito (`GET /api/team/users`, con ruolo d'accesso e, se collegati, ruolo nel team; niente email) e le persone senza accesso, cioè le righe di `team_members` con `user_id` nullo. Sotto, il kanban dei compiti dell'edizione scelta in alto. Un compito va a un utente (`tasks.assignee_user_id`) oppure a una persona senza accesso (`tasks.assignee_id`), mai a entrambi; nei menu il valore è `u:<id>` o `m:<id>` (`features/team/assignee.tsx`). La migration 0013 ha collegato al loro utente le persone del team con lo stesso nome o nome di battesimo, spostando i loro compiti.
+
 ### Spunti
 Pagine e sottopagine in stile Notion, per edizione: `/admin/spunti` (albero, ricerca, filtro per etichetta; selettore dell'edizione in alto) e `/admin/spunti/:id`. Permessi `spunti.view` (legge e commenta), `spunti.edit` (crea e modifica), `spunti.delete` (elimina pagine e commenti altrui); migration 0011 li dà a Organizzazione (tutti) e Agenzia (view + edit). Tabelle `pages` e `page_comments`, rotte `/api/pages` e `/api/page-comments` (`routes/pages.ts`).
 

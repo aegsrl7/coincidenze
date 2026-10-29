@@ -124,13 +124,17 @@ export interface Task {
   description: string
   status: 'todo' | 'in_progress' | 'done'
   priority: 'low' | 'medium' | 'high'
-  assignee_id?: string
+  /** Persona senza accesso (team_members) */
+  assignee_id?: string | null
+  /** Utente del sito; in alternativa ad assignee_id */
+  assignee_user_id?: string | null
   due_date?: string
   category?: EventCategory
   created_at: string
   updated_at: string
 }
 
+/** Persona del team. Con user_id ha un accesso al sito e la pagina Organizzazione la mostra come utente. */
 export interface TeamMember {
   id: string
   name: string
@@ -138,8 +142,20 @@ export interface TeamMember {
   email: string
   phone: string
   notes: string
+  user_id?: string | null
   created_at: string
   updated_at: string
+}
+
+/** Utente del sito nella pagina Organizzazione (senza email) */
+export interface OrgUser {
+  id: string
+  name: string
+  /** Ruolo d'accesso: Amministratore, Organizzazione, Agenzia... */
+  access_role: string
+  /** Ruolo nel team, se la persona era già nel team prima di avere un accesso */
+  team_role: string | null
+  member_id: string | null
 }
 
 export interface CanvasNode {

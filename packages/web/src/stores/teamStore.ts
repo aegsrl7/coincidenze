@@ -1,9 +1,12 @@
 import { create } from 'zustand'
 import { api } from '@/lib/api'
-import type { TeamMember } from '@/types'
+import type { OrgUser, TeamMember } from '@/types'
 
 interface TeamState {
   members: TeamMember[]
+  /** Utenti attivi del sito, con il ruolo d'accesso */
+  users: OrgUser[]
+  fetchUsers: () => Promise<void>
   loading: boolean
   error: string | null
   fetchMembers: () => Promise<void>
@@ -14,6 +17,15 @@ interface TeamState {
 
 export const useTeamStore = create<TeamState>((set, get) => ({
   members: [],
+  users: [],
+
+  fetchUsers: async () => {
+    try {
+      set({ users: await api.getTeamUsers() })
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : 'Errore' })
+    }
+  },
   loading: false,
   error: null,
 

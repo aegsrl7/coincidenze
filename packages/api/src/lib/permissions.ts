@@ -11,7 +11,7 @@ export const PERMISSION_AREAS = [
   { key: 'spuntino', label: 'Spuntino', actions: ['view', 'edit', 'delete'] },
   { key: 'menu', label: 'Menù', actions: ['edit'] },
   { key: 'categorie', label: 'Categorie', actions: ['edit'] },
-  { key: 'team', label: 'Team e task', actions: ['view', 'edit'] },
+  { key: 'team', label: 'Organizzazione e compiti', actions: ['view', 'edit'] },
   { key: 'edizioni', label: 'Edizioni e pagine pubbliche', actions: ['edit'] },
   { key: 'riunioni', label: 'Riunioni', actions: ['view', 'edit'] },
   { key: 'spunti', label: 'Spunti', actions: ['view', 'edit', 'delete'] },

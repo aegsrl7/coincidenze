@@ -70,7 +70,9 @@ CREATE TABLE IF NOT EXISTS team_members (
   phone TEXT DEFAULT '',
   notes TEXT DEFAULT '',
   created_at TEXT DEFAULT (datetime('now')),
-  updated_at TEXT DEFAULT (datetime('now'))
+  updated_at TEXT DEFAULT (datetime('now')),
+  -- Persona con un accesso al sito: compare come utente, non tra le persone senza accesso
+  user_id TEXT REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS tasks (
@@ -81,6 +83,8 @@ CREATE TABLE IF NOT EXISTS tasks (
   status TEXT DEFAULT 'todo' CHECK(status IN ('todo', 'in_progress', 'done')),
   priority TEXT DEFAULT 'medium' CHECK(priority IN ('low', 'medium', 'high')),
   assignee_id TEXT REFERENCES team_members(id) ON DELETE SET NULL,
+  -- Compito di un utente del sito (assignee_id resta per chi non ha accesso)
+  assignee_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
   due_date TEXT,
   category TEXT,
   created_at TEXT DEFAULT (datetime('now')),

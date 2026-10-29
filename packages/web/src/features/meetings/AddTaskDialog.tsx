@@ -6,7 +6,8 @@ import { useTasksStore } from '@/stores/tasksStore'
 import { useTeamStore } from '@/stores/teamStore'
 import { useEditionsStore } from '@/stores/editionsStore'
 import type { Task } from '@/types'
-import { memberFor, type TodoDraft } from './todo'
+import type { TodoDraft } from './todo'
+import { AssigneeOptions, assigneeFor, assigneePayload } from '@/features/team/assignee'
 
 const fieldCls = 'flex h-9 w-full rounded-md border border-navy/20 bg-crema px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/30'
 const textareaCls = 'w-full rounded-md border border-navy/20 bg-white p-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-viola/40 resize-y'
@@ -18,10 +19,10 @@ export function AddTaskDialog({ draft, onClose, onAdded }: {
   onAdded: (task: Task, editionSlug: string) => void
 }) {
   const createTask = useTasksStore((s) => s.createTask)
-  const { members, fetchMembers } = useTeamStore()
+  const { members, users, fetchMembers, fetchUsers } = useTeamStore()
   const { editions, fetch: fetchEditions } = useEditionsStore()
 
-  useEffect(() => { fetchMembers() }, [fetchMembers])
+  useEffect(() => { fetchMembers(); fetchUsers() }, [fetchMembers, fetchUsers])
   useEffect(() => { fetchEditions() }, [fetchEditions])
 
   // Le riunioni preparano l'edizione che viene: di default la più recente
@@ -29,15 +30,15 @@ export function AddTaskDialog({ draft, onClose, onAdded }: {
   const [form, setForm] = useState({
     title: draft.title,
     description: draft.description,
-    assigneeId: '',
+    assignee: '',
     editionSlug: '',
     dueDate: '',
     priority: 'medium' as Task['priority'],
   })
   // Persona ed edizione si propongono quando arrivano team ed edizioni, senza sovrascrivere una scelta già fatta
   useEffect(() => {
-    setForm((f) => (f.assigneeId ? f : { ...f, assigneeId: memberFor(draft.owner, members) }))
-  }, [members, draft.owner])
+    setForm((f) => (f.assignee ? f : { ...f, assignee: assigneeFor(draft.owner, users, members) }))
+  }, [users, members, draft.owner])
   useEffect(() => {
     setForm((f) => (f.editionSlug || !sortedEditions[0] ? f : { ...f, editionSlug: sortedEditions[0].slug }))
   }, [sortedEditions])
@@ -55,7 +56,7 @@ export function AddTaskDialog({ draft, onClose, onAdded }: {
         description: form.description.trim(),
         status: 'todo',
         priority: form.priority,
-        assigneeId: form.assigneeId || undefined,
+        ...assigneePayload(form.assignee),
         dueDate: form.dueDate || undefined,
       } as Partial<Task>, form.editionSlug)
       onAdded(task, form.editionSlug)
@@ -81,11 +82,10 @@ export function AddTaskDialog({ draft, onClose, onAdded }: {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="text-xs font-medium text-ink-muted">Assegnato a</label>
-              <select className={fieldCls} value={form.assigneeId} onChange={(e) => setForm({ ...form, assigneeId: e.target.value })}>
-                <option value="">Nessuno</option>
-                {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+              <select className={fieldCls} value={form.assignee} onChange={(e) => setForm({ ...form, assignee: e.target.value })}>
+                <AssigneeOptions users={users} members={members} />
               </select>
-              {draft.owner && !form.assigneeId && (
+              {draft.owner && !form.assignee && (
                 <p className="text-[11px] text-ink-muted mt-1">Nella riunione: {draft.owner}</p>
               )}
             </div>

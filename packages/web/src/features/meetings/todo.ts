@@ -1,4 +1,4 @@
-import type { Meeting, Task, TeamMember } from '@/types'
+import type { Meeting, Task } from '@/types'
 import { fmtMeetingDate } from './RiunioniPage'
 
 /** Sezione dei punti chiave le cui voci si possono mandare nel kanban */
@@ -38,12 +38,3 @@ export function todoDraft(item: string, m: Meeting): TodoDraft {
 /** Il task nasce da questa voce se rimanda alla riunione e ha ancora il titolo proposto */
 export const taskMatches = (t: Task, draft: TodoDraft, m: Meeting) =>
   (t.description ?? '').includes(meetingRef(m)) && t.title.trim().toLowerCase() === draft.title.trim().toLowerCase()
-
-/** "Marco" trova "Marco Rossi"; "Tutti" o "Da assegnare" non trovano nessuno */
-export function memberFor(owner: string, members: TeamMember[]): string {
-  const o = owner.trim().toLowerCase()
-  if (!o) return ''
-  const hit = members.find((mb) => mb.name.trim().toLowerCase() === o) ??
-    members.find((mb) => mb.name.trim().toLowerCase().split(/\s+/)[0] === o)
-  return hit?.id ?? ''
-}

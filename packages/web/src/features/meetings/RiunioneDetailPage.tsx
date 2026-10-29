@@ -68,7 +68,7 @@ export function RiunioneDetailPage() {
 
   const openKanban = useCallback((slug: string) => {
     setAdminSlug(slug)
-    navigate('/admin/team')
+    navigate('/admin/organizzazione')
   }, [setAdminSlug, navigate])
 
   const todoAction = (item: string, heading: string | null) => {

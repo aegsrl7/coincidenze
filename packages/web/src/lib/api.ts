@@ -6,6 +6,7 @@ import type {
   MediaItem,
   Task,
   TeamMember,
+  OrgUser,
   CanvasNode,
   CanvasEdge,
   EditorialPost,
@@ -212,6 +213,7 @@ export const api = {
 
   // Team
   getTeamMembers: () => request<TeamMember[]>('/team'),
+  getTeamUsers: () => request<OrgUser[]>('/team/users'),
   createTeamMember: (data: JsonRecord) => request<TeamMember>('/team', { method: 'POST', body: JSON.stringify(data) }),
   updateTeamMember: (id: string, data: JsonRecord) => request<TeamMember>(`/team/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteTeamMember: (id: string) => request<void>(`/team/${id}`, { method: 'DELETE' }),

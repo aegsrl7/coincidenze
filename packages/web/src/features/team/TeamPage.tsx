@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Users, Plus, GripVertical, User, Trash2, UserPlus, X, CalendarDays } from 'lucide-react'
+import { Plus, GripVertical, User, Trash2, UserPlus, X, CalendarDays, KeyRound } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -13,6 +14,7 @@ import { useCategoryMaps } from '@/stores/categoriesStore'
 import { type Task, type TeamMember } from '@/types'
 import { TaskFormDialog } from './TaskFormDialog'
 import { MemberFormDialog } from './MemberFormDialog'
+import { assigneeName, assigneePayload, assigneeValue, withoutAccess } from './assignee'
 
 const COLUMNS = [
   { id: 'todo', label: 'Da Fare', color: '#2C3E6B' },
@@ -22,10 +24,12 @@ const COLUMNS = [
 
 type ColumnId = typeof COLUMNS[number]['id']
 
+/** Organizzazione: chi ha accesso al sito, chi aiuta senza accesso, e il kanban dei compiti dell'edizione. */
 export function TeamPage() {
   const { tasks, fetchTasks, updateTask, deleteTask } = useTasksStore()
-  const { members, fetchMembers, createMember, deleteMember } = useTeamStore()
+  const { members, users, fetchMembers, fetchUsers, createMember, deleteMember } = useTeamStore()
   const canEdit = useCan('team.edit')
+  const canManageUsers = useCan('utenti.manage')
   const { labels, colors } = useCategoryMaps('artist')
   const [showForm, setShowForm] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined)
@@ -38,7 +42,7 @@ export function TeamPage() {
   const [deleting, setDeleting] = useState(false)
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null)
 
-  // I task sono per edizione (selettore in alto), il team è unico
+  // I compiti sono per edizione (selettore in alto), le persone valgono per tutte
   const adminSlug = useAdminEditionSlug()
   useEffect(() => {
     fetchTasks(adminSlug)
@@ -46,15 +50,14 @@ export function TeamPage() {
 
   useEffect(() => {
     fetchMembers()
-  }, [fetchMembers])
+    fetchUsers()
+  }, [fetchMembers, fetchUsers])
+
+  const others = withoutAccess(members)
 
   const getColumnTasks = (status: ColumnId) =>
     tasks.filter((t) => t.status === status)
 
-  const getMemberName = (id: string | null | undefined) => {
-    if (!id) return null
-    return members.find((m) => m.id === id)?.name || null
-  }
 
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
     setDraggedTaskId(taskId)
@@ -76,7 +79,8 @@ export function TeamPage() {
     if (!draggedTaskId) return
     const task = tasks.find((t) => t.id === draggedTaskId)
     if (task && task.status !== status) {
-      await updateTask(draggedTaskId, { ...task, status })
+      // Si rimandano assegnatario e scadenza, altrimenti il salvataggio li azzererebbe
+      await updateTask(draggedTaskId, { ...task, status, ...assigneePayload(assigneeValue(task)), dueDate: task.due_date || undefined } as Partial<Task>)
     }
     setDraggedTaskId(null)
   }
@@ -115,19 +119,38 @@ export function TeamPage() {
 
   return (
     <div className="p-4 sm:p-6 pb-8 space-y-8">
-      {/* Sezione Membri */}
+      {/* Persone: chi ha un accesso al sito e chi aiuta senza */}
       <section>
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex flex-wrap items-center gap-3 mb-3">
+          <h3 className="font-display text-sm font-semibold text-navy">Con accesso al sito</h3>
+          {canManageUsers && (
+            <Link to="/admin/utenti" className="text-xs text-viola underline underline-offset-2">Invita o gestisci gli utenti</Link>
+          )}
+        </div>
+        {users.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {users.map((u) => (
+              <div key={u.id} className="flex items-center gap-2 rounded-full bg-crema border border-navy/10 px-3 py-1.5">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-navy text-white">
+                  <KeyRound className="h-3 w-3" />
+                </div>
+                <span className="text-sm text-navy">{u.name}</span>
+                <span className="text-[10px] text-ink-muted">{[u.access_role, u.team_role].filter(Boolean).join(' · ')}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-ink-muted">Nessun utente attivo.</p>
+        )}
+
+        <div className="flex flex-wrap items-center gap-3 mt-6 mb-3">
+          <h3 className="font-display text-sm font-semibold text-navy">Senza accesso</h3>
           {canEdit && (
-            <Button
-              size="sm"
-              onClick={() => setShowAddMember(!showAddMember)}
-            >
+            <Button size="sm" variant="outline" onClick={() => setShowAddMember(!showAddMember)}>
               {showAddMember ? <X className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-              {showAddMember ? 'Annulla' : 'Aggiungi Membro'}
+              {showAddMember ? 'Annulla' : 'Aggiungi persona'}
             </Button>
           )}
-          <h3 className="font-display text-sm font-semibold text-navy">Membri del Team</h3>
         </div>
 
         {canEdit && showAddMember && (
@@ -140,7 +163,7 @@ export function TeamPage() {
               onKeyDown={(e) => e.key === 'Enter' && handleAddMember()}
             />
             <Input
-              placeholder="Ruolo"
+              placeholder="Cosa fa (es. Sala, Volontario)"
               value={newMemberRole}
               onChange={(e) => setNewMemberRole(e.target.value)}
               className="flex-1 min-w-[150px]"
@@ -152,9 +175,9 @@ export function TeamPage() {
           </div>
         )}
 
-        {members.length > 0 ? (
-          <div className="flex flex-wrap gap-3">
-            {members.map((m) => (
+        {others.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {others.map((m) => (
               <div
                 key={m.id}
                 className={`flex items-center gap-2 rounded-full bg-crema border border-navy/10 px-3 py-1.5 ${
@@ -171,7 +194,7 @@ export function TeamPage() {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-ink-muted">Nessun membro nel team</p>
+          <p className="text-sm text-ink-muted">Nessuno. Qui vanno le persone che aiutano senza entrare nel sito, per assegnare loro dei compiti.</p>
         )}
       </section>
 
@@ -180,10 +203,10 @@ export function TeamPage() {
         <div className="flex items-center gap-3 mb-4">
           {canEdit && (
             <Button size="sm" onClick={() => { setEditingTask(undefined); setShowForm(true) }}>
-              <Plus className="h-4 w-4" /> Nuovo Task
+              <Plus className="h-4 w-4" /> Nuovo compito
             </Button>
           )}
-          <h3 className="font-display text-sm font-semibold text-navy">Task</h3>
+          <h3 className="font-display text-sm font-semibold text-navy">Compiti</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -252,9 +275,9 @@ export function TeamPage() {
                               {new Date(task.due_date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
                             </span>
                           )}
-                          {getMemberName(task.assignee_id) && (
+                          {assigneeName(task, users, members) && (
                             <span className="text-[10px] text-ink-muted">
-                              {getMemberName(task.assignee_id)}
+                              {assigneeName(task, users, members)}
                             </span>
                           )}
                         </div>
@@ -279,7 +302,7 @@ export function TeamPage() {
 
               {getColumnTasks(col.id).length === 0 && (
                 <p className="py-8 text-center text-xs text-ink-muted/50">
-                  {canEdit ? 'Trascina qui un task' : 'Nessun task'}
+                  {canEdit ? 'Trascina qui un compito' : 'Nessun compito'}
                 </p>
               )}
             </div>
