@@ -20,6 +20,7 @@ import { usersRoutes } from './routes/users'
 import { rolesRoutes } from './routes/roles'
 import { pushRoutes } from './routes/push'
 import { meetingsRoutes } from './routes/meetings'
+import { pagesRoutes, pageCommentsRoutes } from './routes/pages'
 import { notifyPermission } from './lib/push'
 import { requirePermission } from './middleware/auth'
 import { loadSessionUser, type SessionUser } from './lib/session'
@@ -129,6 +130,9 @@ app.use('/api/canvas/*', requirePermission({ read: 'programma.view', write: 'pro
 app.use('/api/users/*', requirePermission({ read: 'utenti.manage', write: 'utenti.manage' }))
 app.use('/api/roles/*', requirePermission({ read: 'utenti.manage', write: 'utenti.manage' }))
 app.use('/api/meetings/*', requirePermission({ read: 'riunioni.view', write: 'riunioni.edit' }))
+app.use('/api/pages/*', requirePermission({ read: 'spunti.view', write: 'spunti.edit', remove: 'spunti.delete' }))
+// Commentare chiede solo di vedere le pagine; chi cancella cosa lo decide la rotta
+app.use('/api/page-comments/*', requirePermission({ read: 'spunti.view', write: 'spunti.view' }))
 
 // Routes
 app.route('/api/events', eventsRoutes)
@@ -144,6 +148,8 @@ app.route('/api/categories', categoriesRoutes)
 app.route('/api/users', usersRoutes)
 app.route('/api/roles', rolesRoutes)
 app.route('/api/meetings', meetingsRoutes)
+app.route('/api/pages', pagesRoutes)
+app.route('/api/page-comments', pageCommentsRoutes)
 // Notifiche sul telefono: ogni utente loggato gestisce i propri dispositivi
 app.route('/api/push', pushRoutes)
 

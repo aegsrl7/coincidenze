@@ -273,6 +273,54 @@ export interface MeetingListItem {
 
 export type MeetingInput = Pick<Meeting, 'title' | 'meeting_date' | 'participants' | 'summary' | 'prep_notes' | 'transcript'>
 
+/** Spunti: pagina nell'elenco dell'edizione (senza il JSON del testo) */
+export interface PageListItem {
+  id: string
+  parent_id: string | null
+  title: string
+  tags: string[]
+  sort_order: number
+  /** Inizio del testo semplice, per ricerca e anteprima */
+  text: string
+  created_by_name: string | null
+  updated_by_name: string | null
+  comment_count: number
+  created_at: string
+  updated_at: string
+}
+
+/** Spunti: pagina completa. content_json è il documento dell'editor ('' se vuota). */
+export interface Page {
+  id: string
+  edition_id: string | null
+  edition_slug: string | null
+  parent_id: string | null
+  title: string
+  content_json: string
+  content_text: string
+  tags: string[]
+  sort_order: number
+  /** Sale a ogni salvataggio: si rimanda al server per non sovrascrivere modifiche altrui */
+  version: number
+  created_by: string | null
+  updated_by: string | null
+  created_by_name: string | null
+  updated_by_name: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type PageInput = Pick<Page, 'title' | 'content_json' | 'content_text' | 'tags' | 'version'>
+
+export interface PageComment {
+  id: string
+  page_id: string
+  user_id: string | null
+  user_name: string | null
+  body: string
+  created_at: string
+}
+
 /** Catalogo dei permessi servito dall'API (fonte unica in packages/api/src/lib/permissions.ts) */
 export interface PermissionCatalog {
   areas: { key: string; label: string; actions: string[] }[]

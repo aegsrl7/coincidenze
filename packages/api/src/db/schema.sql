@@ -296,6 +296,34 @@ CREATE TABLE IF NOT EXISTS meetings (
 
 CREATE INDEX IF NOT EXISTS idx_meetings_date ON meetings(meeting_date);
 
+-- Spunti: pagine e sottopagine per edizione (permesso spunti.view), testo come JSON dell'editor
+CREATE TABLE IF NOT EXISTS pages (
+  id TEXT PRIMARY KEY,
+  edition_id TEXT REFERENCES editions(id) ON DELETE SET NULL,
+  parent_id TEXT REFERENCES pages(id) ON DELETE CASCADE,
+  title TEXT NOT NULL DEFAULT '',
+  content_json TEXT NOT NULL DEFAULT '',
+  content_text TEXT NOT NULL DEFAULT '',
+  tags TEXT NOT NULL DEFAULT '[]',
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  version INTEGER NOT NULL DEFAULT 1,
+  created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+  updated_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_pages_edition ON pages(edition_id);
+CREATE INDEX IF NOT EXISTS idx_pages_parent ON pages(parent_id);
+
+CREATE TABLE IF NOT EXISTS page_comments (
+  id TEXT PRIMARY KEY,
+  page_id TEXT NOT NULL REFERENCES pages(id) ON DELETE CASCADE,
+  user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+  body TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_page_comments_page ON page_comments(page_id, created_at);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_editions_current ON editions(is_current);
 CREATE INDEX IF NOT EXISTS idx_editions_slug ON editions(slug);
@@ -331,6 +359,6 @@ CREATE INDEX IF NOT EXISTS idx_user_tokens_user ON user_tokens(user_id);
 -- Ruoli iniziali
 INSERT OR IGNORE INTO roles (id, name, description, permissions, is_system, sort_order) VALUES
   ('role-admin', 'Amministratore', 'Tutti i permessi, compresa la gestione di utenti e ruoli. Non si modifica.', '[]', 1, 0),
-  ('role-organizzazione', 'Organizzazione', 'Tutto tranne utenti, ruoli e impostazioni delle edizioni.', '["programma.view","programma.edit","programma.delete","artisti.view","artisti.edit","artisti.delete","media.view","media.edit","media.delete","editoriale.view","editoriale.edit","editoriale.delete","accrediti.view","accrediti.checkin","accrediti.delete","spuntino.view","spuntino.edit","spuntino.delete","menu.edit","categorie.edit","team.view","team.edit","note.view"]', 0, 1),
-  ('role-agenzia', 'Agenzia', 'Agenzia social e marketing: programma, artisti, media e piano editoriale. Vede e modifica, non elimina, non vede le note interne.', '["programma.view","programma.edit","artisti.view","artisti.edit","media.view","media.edit","editoriale.view","editoriale.edit"]', 0, 2),
+  ('role-organizzazione', 'Organizzazione', 'Tutto tranne utenti, ruoli e impostazioni delle edizioni.', '["programma.view","programma.edit","programma.delete","artisti.view","artisti.edit","artisti.delete","media.view","media.edit","media.delete","editoriale.view","editoriale.edit","editoriale.delete","accrediti.view","accrediti.checkin","accrediti.delete","spuntino.view","spuntino.edit","spuntino.delete","menu.edit","categorie.edit","team.view","team.edit","note.view","spunti.view","spunti.edit","spunti.delete"]', 0, 1),
+  ('role-agenzia', 'Agenzia', 'Agenzia social e marketing: programma, artisti, media, piano editoriale e spunti. Vede e modifica, non elimina, non vede le note interne.', '["programma.view","programma.edit","artisti.view","artisti.edit","media.view","media.edit","editoriale.view","editoriale.edit","spunti.view","spunti.edit"]', 0, 2),
   ('role-checkin', 'Check-in', 'Scanner dei biglietti all''ingresso, per i volontari il giorno dell''evento.', '["accrediti.checkin"]', 0, 3);

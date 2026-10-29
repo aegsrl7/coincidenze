@@ -85,6 +85,14 @@ Pagina `/admin/riunioni` con dettaglio `/admin/riunioni/:id` (permessi `riunioni
 
 Le registrazioni si trascrivono in locale con `tools/trascrizione/trascrivi.py` (Whisper mlx + pyannote per separare le voci; venv, versioni e token Hugging Face sono descritti nel file, l'audio non esce dal Mac). Poi: dare i nomi ai parlanti con l'utente, tenere solo le parti su Coincidenze, togliere giudizi personali, password e dati sensibili di terzi, segnare i tagli.
 
+### Spunti
+Pagine e sottopagine in stile Notion, per edizione: `/admin/spunti` (albero, ricerca, filtro per etichetta; selettore dell'edizione in alto) e `/admin/spunti/:id`. Permessi `spunti.view` (legge e commenta), `spunti.edit` (crea e modifica), `spunti.delete` (elimina pagine e commenti altrui); migration 0011 li dà a Organizzazione (tutti) e Agenzia (view + edit). Tabelle `pages` e `page_comments`, rotte `/api/pages` e `/api/page-comments` (`routes/pages.ts`).
+
+- Il testo è il JSON dell'editor Tiptap, mai HTML: l'API controlla che sia un documento (`type: 'doc'`, max 500 KB). `content_text` serve a ricerca e anteprime. Chi ha solo `spunti.view` vede lo stesso editor in sola lettura.
+- Una sottopagina sta sempre nell'edizione della madre (lo decide il server). Eliminare una pagina toglie sottopagine e commenti con una CTE ricorsiva.
+- Salvataggio automatico dopo 1,2 s senza digitare. Ogni salvataggio manda `version`: se nel frattempo qualcun altro ha salvato, l'API risponde 409 con la sua pagina e la UI chiede "Carica la sua versione / Tieni la mia".
+- Le due schermate sono caricate con `React.lazy` (`App.tsx`): Tiptap (circa 430 KB) non entra nel bundle principale.
+
 ### Header di sicurezza
 CSP e Permissions-Policy del sito stanno in `packages/web/public/_headers`. Librerie e font sono nel bundle (html5-qrcode, qrcode-generator, Fontsource): niente CDN per gli script. Esterni ammessi: Cloudflare Web Analytics, player YouTube/Vimeo/SoundCloud (react-player), iframe di Google Maps, immagini QR da api.qrserver.com. Una nuova risorsa esterna va aggiunta alla CSP, altrimenti il browser la blocca senza errori visibili.
 

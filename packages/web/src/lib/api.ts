@@ -23,6 +23,10 @@ import type {
   Meeting,
   MeetingListItem,
   MeetingInput,
+  Page,
+  PageListItem,
+  PageInput,
+  PageComment,
 } from '@/types'
 
 const API_BASE = import.meta.env.DEV ? '/api' : 'https://api.coincidenze.org/api'
@@ -123,6 +127,29 @@ export const api = {
   updateMeeting: (id: string, data: MeetingInput) =>
     request<Meeting>(`/meetings/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteMeeting: (id: string) => request<Ok>(`/meetings/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+
+  // Spunti (spunti.view / spunti.edit / spunti.delete; i commenti chiedono solo spunti.view)
+  getPages: (editionSlug?: string | null) => request<PageListItem[]>(withEdition('/pages', editionSlug)),
+  getPage: (id: string) => request<Page>(`/pages/${encodeURIComponent(id)}`),
+  createPage: (data: { title?: string; parent_id?: string | null; tags?: string[] }, editionSlug?: string | null) =>
+    request<Page>(withEdition('/pages', editionSlug), { method: 'POST', body: JSON.stringify(data) }),
+  /** Se qualcun altro ha salvato nel frattempo il server risponde 409: si restituisce la sua versione */
+  updatePage: async (id: string, data: PageInput): Promise<{ page: Page; conflict: boolean }> => {
+    const res = await fetch(`${API_BASE}/pages/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    })
+    if (res.status === 409) return { page: ((await res.json()) as { page: Page }).page, conflict: true }
+    if (!res.ok) throw await errorFromResponse(res, `Errore API (${res.status})`)
+    return { page: (await res.json()) as Page, conflict: false }
+  },
+  deletePage: (id: string) => request<Ok & { deleted: number }>(`/pages/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  getPageComments: (pageId: string) => request<PageComment[]>(`/page-comments?page=${encodeURIComponent(pageId)}`),
+  addPageComment: (pageId: string, body: string) =>
+    request<PageComment>('/page-comments', { method: 'POST', body: JSON.stringify({ page_id: pageId, body }) }),
+  deletePageComment: (id: string) => request<Ok>(`/page-comments/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
   // Notifiche sul telefono (ogni utente i propri dispositivi)
   getPushKey: () => request<{ key: string | null }>('/push/key'),

@@ -64,3 +64,38 @@
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-navy-light);
 }
+
+/* Spunti: testo dell'editor (Tiptap). Il titolo della pagina è l'h1, qui h2 e h3. */
+.spunti-editor {
+  outline: none;
+  min-height: 12rem;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--color-ink-light);
+  overflow-wrap: anywhere;
+}
+.spunti-editor > * + * { margin-top: 0.6em; }
+.spunti-editor h2 { font-size: 1.35rem; font-weight: 600; color: var(--color-navy); margin-top: 1.2em; line-height: 1.3; }
+.spunti-editor h3 { font-size: 1.1rem; font-weight: 600; color: var(--color-navy); margin-top: 1em; line-height: 1.35; }
+.spunti-editor strong { color: var(--color-navy); font-weight: 600; }
+.spunti-editor a { color: var(--color-viola); text-decoration: underline; }
+.spunti-editor ul { list-style: disc; padding-left: 1.4rem; }
+.spunti-editor ol { list-style: decimal; padding-left: 1.4rem; }
+.spunti-editor li > p { margin: 0; }
+.spunti-editor li + li { margin-top: 0.2em; }
+.spunti-editor blockquote { border-left: 3px solid var(--color-viola); padding-left: 0.9rem; color: var(--color-ink-muted); font-style: italic; }
+.spunti-editor hr { border: none; border-top: 1px solid color-mix(in srgb, var(--color-navy) 15%, transparent); margin: 1.2em 0; }
+.spunti-editor code { font-size: 0.85em; background: color-mix(in srgb, var(--color-navy) 8%, transparent); border-radius: 4px; padding: 0.1em 0.3em; }
+.spunti-editor ul[data-type="taskList"] { list-style: none; padding-left: 0.1rem; }
+.spunti-editor ul[data-type="taskList"] li { display: flex; align-items: flex-start; gap: 0.55rem; }
+.spunti-editor ul[data-type="taskList"] li > label { margin-top: 0.3em; flex-shrink: 0; }
+.spunti-editor ul[data-type="taskList"] li > label input { width: 1rem; height: 1rem; accent-color: var(--color-navy); }
+.spunti-editor ul[data-type="taskList"] li > div { flex: 1; min-width: 0; }
+.spunti-editor ul[data-type="taskList"] li[data-checked="true"] > div { color: var(--color-ink-muted); text-decoration: line-through; }
+.spunti-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--color-ink-muted);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

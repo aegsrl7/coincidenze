@@ -18,6 +18,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/utenti': 'Utenti',
   '/admin/ruoli': 'Ruoli e permessi',
   '/admin/riunioni': 'Riunioni',
+  '/admin/spunti': 'Spunti',
   '/admin/account': 'Il mio account',
 }
 
@@ -32,6 +33,7 @@ const SCOPED_PATHS = new Set([
   '/admin/check-in',
   '/admin/spuntino',
   '/admin/piano-editoriale',
+  '/admin/spunti',
 ])
 
 interface HeaderProps {

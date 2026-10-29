@@ -1,5 +1,6 @@
-import { useEffect, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Loader2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { RequireAuth } from '@/components/RequireAuth'
 import { LoginPage } from '@/features/auth/LoginPage'
@@ -28,6 +29,9 @@ import { UtentiPage } from '@/features/users/UtentiPage'
 import { RuoliPage } from '@/features/users/RuoliPage'
 import { RiunioniPage } from '@/features/meetings/RiunioniPage'
 import { RiunioneDetailPage } from '@/features/meetings/RiunioneDetailPage'
+// Spunti a parte: l'editor (Tiptap) pesa e serve solo lì
+const SpuntiPage = lazy(() => import('@/features/spunti/SpuntiPage').then((m) => ({ default: m.SpuntiPage })))
+const PaginaRoute = lazy(() => import('@/features/spunti/PaginaPage').then((m) => ({ default: m.PaginaRoute })))
 import { AdminHome } from '@/components/AdminHome'
 import { ADMIN_NAV } from '@/lib/adminNav'
 import { useAuthStore } from '@/stores/authStore'
@@ -45,6 +49,7 @@ const ADMIN_PAGES: Record<string, ReactNode> = {
   '/admin/media': <MediaPage />,
   '/admin/piano-editoriale': <PianoEditorialePage />,
   '/admin/riunioni': <RiunioniPage />,
+  '/admin/spunti': <Lazy><SpuntiPage /></Lazy>,
   '/admin/edizioni': <AdminEdizioniPage />,
   '/admin/utenti': <UtentiPage />,
   '/admin/ruoli': <RuoliPage />,
@@ -100,6 +105,9 @@ export default function App() {
             <Route element={<RequireAuth permission="riunioni.view" />}>
               <Route path="/admin/riunioni/:id" element={<RiunioneDetailPage />} />
             </Route>
+            <Route element={<RequireAuth permission="spunti.view" />}>
+              <Route path="/admin/spunti/:id" element={<Lazy><PaginaRoute /></Lazy>} />
+            </Route>
           </Route>
         </Route>
 
@@ -123,4 +131,12 @@ function EditionRoute() {
     return <Navigate to="/" replace />
   }
   return <EditionPage key={slug} slug={slug} />
+}
+
+function Lazy({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={<div className="py-16 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-navy/40" /></div>}>
+      {children}
+    </Suspense>
+  )
 }

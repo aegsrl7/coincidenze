@@ -14,6 +14,7 @@ export const PERMISSION_AREAS = [
   { key: 'team', label: 'Team e task', actions: ['view', 'edit'] },
   { key: 'edizioni', label: 'Edizioni e pagine pubbliche', actions: ['edit'] },
   { key: 'riunioni', label: 'Riunioni', actions: ['view', 'edit'] },
+  { key: 'spunti', label: 'Spunti', actions: ['view', 'edit', 'delete'] },
   { key: 'note', label: 'Note interne', actions: ['view'] },
   { key: 'utenti', label: 'Utenti e ruoli', actions: ['manage'] },
 ] as const
@@ -36,6 +37,9 @@ export const PERMISSION_HINTS: Record<string, string> = {
   'edizioni.edit': 'Impostazioni delle edizioni, apertura accrediti, testi e galleria delle pagine pubbliche',
   'note.view': 'Legge e scrive le note interne di artisti, eventi e media',
   'riunioni.view': 'Verbali, punti chiave e trascrizioni delle riunioni organizzative',
+  'spunti.view': 'Legge le pagine degli spunti e ci scrive commenti',
+  'spunti.edit': 'Crea pagine e sottopagine e ne modifica testo ed etichette',
+  'spunti.delete': 'Elimina pagine (con le sottopagine) e i commenti degli altri',
   'utenti.manage': 'Invita utenti, assegna ruoli, modifica i permessi',
 }
 
